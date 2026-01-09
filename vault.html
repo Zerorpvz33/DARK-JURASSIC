@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | The Vault</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { background-color: #050505; color: white; opacity: 0; transition: 0.5s; font-family: 'Courier New', Courier, monospace; }
+        
+        .vault-header {
+            border-bottom: 1px solid #e63946;
+            padding: 40px 0;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .vault-header h1 { font-size: 2.5rem; letter-spacing: 5px; color: #e63946; }
+        .vault-header p { color: #555; text-transform: uppercase; font-size: 0.8rem; }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 50px;
+        }
+
+        .file-card {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .file-card.locked { opacity: 0.6; cursor: not-allowed; filter: grayscale(1); }
+        .file-card.locked::before {
+            content: "\f023"; /* Lock icon */
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: rgba(230, 57, 70, 0.3);
+            z-index: 2;
+        }
+
+        .file-card:not(.locked):hover {
+            border-color: #e63946;
+            background: #111;
+            box-shadow: 0 0 20px rgba(230, 57, 70, 0.1);
+        }
+
+        .file-icon { font-size: 3rem; margin-bottom: 15px; color: #333; }
+        .file-card:not(.locked) .file-icon { color: #e63946; }
+
+        .file-info h3 { font-size: 1rem; margin-bottom: 5px; color: #eee; }
+        .file-info span { font-size: 0.7rem; color: #444; text-transform: uppercase; }
+
+        .access-notice {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #e63946;
+            color: black;
+            font-size: 0.6rem;
+            text-align: center;
+            padding: 5px 0;
+            font-weight: bold;
+        }
+
+        /* Overlay for viewing files */
+        #viewer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000; flex-direction: column;
+        }
+        #viewer img { max-width: 80%; max-height: 80%; border: 2px solid #e63946; }
+        .close-viewer { position: absolute; top: 20px; right: 20px; font-size: 2rem; cursor: pointer; color: #e63946; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo"><span>DarkJurassic</span></div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i> The Vault</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="vault-header">
+        <h1>IN-GEN TERMINAL</h1>
+        <p>Restricted Access - Unauthorized decryption is punishable by termination</p>
+    </div>
+
+    <div class="file-grid" id="file-container">
+        </div>
+
+    <div id="viewer" onclick="this.style.display='none'">
+        <span class="close-viewer">&times;</span>
+        <img id="view-img" src="">
+        <h2 id="view-title" style="margin-top: 20px;"></h2>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        const inGenFiles = [
+            { name: "Project Indominus.pdf", type: "Genetics", xp: 0, img: "https://images.squarespace-cdn.com/content/v1/51b3dc8ee4b051b96ceb10de/1433253591461-F2JUXG7O6N2C62C6X8Y4/Indominus_Rex_Blueprint.jpg" },
+            { name: "Site B Evacuation.log", type: "Security", xp: 500, img: "https://i.pinimg.com/736x/8a/8a/8a/8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a.jpg" },
+            { name: "Nedry_System_Backdoor.bat", type: "System", xp: 1500, img: "https://i.redd.it/9n6u8h6u4v311.jpg" },
+            { name: "Embryo_Inventory_v4.xls", type: "Assets", xp: 3000, img: "https://jurassicoutpost.com/wp-content/uploads/2016/05/Cryocan_Schematic.jpg" },
+            { name: "Wu_Secret_Hybrid_Draft.dna", type: "Classified", xp: 7500, img: "https://i.pinimg.com/originals/74/4d/74/744d7482810931215161093121516.jpg" },
+            { name: "Lockwood_Clone_Thesis.doc", type: "Forbidden", xp: 15000, img: "https://static.wikia.nocookie.net/jurassicpark/images/a/a2/Lockwood_Diary.png" }
+        ];
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const username = user.email.split('@')[0];
+                document.body.style.opacity = "1";
+                
+                db.ref('users/' + username).on('value', snap => {
+                    const userData = snap.val() || {};
+                    renderVault(userData.xp || 0);
+                });
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function renderVault(userXP) {
+            const container = document.getElementById('file-container');
+            container.innerHTML = inGenFiles.map(file => {
+                const isLocked = userXP < file.xp;
+                return `
+                    <div class="file-card ${isLocked ? 'locked' : ''}" onclick="openFile('${file.img}', '${file.name}', ${isLocked})">
+                        <div class="file-icon"><i class="fa fa-file-code"></i></div>
+                        <div class="file-info">
+                            <h3>${file.name}</h3>
+                            <span>Sector: ${file.type}</span>
+                        </div>
+                        ${isLocked ? `<div class="access-notice">REQUIRED: ${file.xp} XP</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openFile(img, title, locked) {
+            if (locked) {
+                alert("ACCESS DENIED. Onvoldoende clearance level (XP te laag).");
+                return;
+            }
+            document.getElementById('view-img').src = img;
+            document.getElementById('view-title').innerText = title;
+            document.getElementById('viewer').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
