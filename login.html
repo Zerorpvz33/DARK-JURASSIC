@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | Access Database</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+</head>
+<body style="background-color: #000; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+
+    <div class="login-container" style="width: 100%; max-width: 400px; padding: 20px; text-align: center;">
+        <img src="https://www.jurassic-pedia.com/wp-content/uploads/2024/05/DarkJurassicLogo.png" alt="Dark Jurassic" style="width: 120px; margin-bottom: 20px;">
+        
+        <h2 style="color: #e63946; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Access Database</h2>
+        <p style="color: #88a; font-size: 0.8rem; margin-bottom: 30px;">Identify yourself, Truth Seeker.</p>
+
+        <div id="login-form" style="background: #111; padding: 30px; border-radius: 10px; border: 1px solid #331111; box-shadow: 0 0 20px rgba(230, 57, 70, 0.1);">
+            <input type="email" id="email" placeholder="Email Adres" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #000; color: white; border: 1px solid #444; border-radius: 5px;">
+            <input type="password" id="password" placeholder="Wachtwoord" style="width: 100%; padding: 12px; margin-bottom: 25px; background: #000; color: white; border: 1px solid #444; border-radius: 5px;">
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="register()" style="flex: 1; padding: 12px; background: #222; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">Registreren</button>
+                <button onclick="login()" style="flex: 1; padding: 12px; background: #e63946; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">Inloggen</button>
+            </div>
+            
+            <p id="message" style="margin-top: 20px; font-size: 0.8rem; min-height: 1.2em;"></p>
+        </div>
+    </div>
+
+    <script>
+        // JOUW FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+
+        // Initialiseer Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Check of gebruiker al is ingelogd
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = "index.html";
+            }
+        });
+
+        // Functie: Inloggen
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const msg = document.getElementById('message');
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    msg.style.color = "#27ae60";
+                    msg.innerText = "Toegang verleend. Bezig met laden...";
+                    window.location.href = "index.html";
+                })
+                .catch((error) => {
+                    msg.style.color = "#e63946";
+                    msg.innerText = "Fout: " + error.message;
+                });
+        }
+
+        // Functie: Registreren
+        function register() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const msg = document.getElementById('message');
+
+            if(password.length < 6) {
+                msg.style.color = "#e63946";
+                msg.innerText = "Wachtwoord moet minimaal 6 tekens zijn.";
+                return;
+            }
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    msg.style.color = "#27ae60";
+                    msg.innerText = "Account aangemaakt! Inloggen...";
+                })
+                .catch((error) => {
+                    msg.style.color = "#e63946";
+                    msg.innerText = "Fout: " + error.message;
+                });
+        }
+    </script>
+</body>
+</html>

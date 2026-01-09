@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | Forum</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { background-color: #050505; color: white; font-family: 'Segoe UI', sans-serif; opacity: 0; transition: 0.5s; }
+        
+        .container { max-width: 1000px; margin: 50px auto; padding: 0 20px; }
+        .controls { display: flex; gap: 15px; margin-bottom: 25px; }
+        .new-thread-btn { background: #e63946; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        /* Thread Cards */
+        .thread-card { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 25px; display: flex; gap: 20px; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
+        .thread-card:hover { border-color: #e63946; }
+        .thread-icon { width: 50px; height: 50px; background: #1a2a3a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #5dade2; flex-shrink: 0; }
+        .thread-title { font-size: 1.2rem; font-weight: bold; color: #eee; margin-bottom: 5px; }
+        .thread-meta { font-size: 0.75rem; color: #444; }
+
+        /* Single Thread View */
+        #single-thread-view { display: none; }
+        .back-btn { color: #e63946; cursor: pointer; margin-bottom: 20px; display: inline-block; }
+        .main-post { background: #0a0a0a; padding: 30px; border-radius: 12px; border: 1px solid #222; margin-bottom: 30px; }
+        
+        /* Comments Section */
+        #comments-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .comment { background: #111; padding: 15px; border-radius: 8px; border-left: 3px solid #e63946; }
+        .comment-meta { font-size: 0.7rem; color: #555; margin-bottom: 5px; }
+
+        /* Input Area */
+        .input-area { display: flex; gap: 10px; margin-top: 20px; }
+        .input-area input { flex-grow: 1; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 5px; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: #0a0a0a; padding: 30px; border-radius: 10px; width: 500px; border: 1px solid #e63946; }
+        .modal-content input, .modal-content textarea { width: 100%; margin-bottom: 15px; background: #000; color: white; border: 1px solid #333; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html" style="text-decoration: none; display: flex; align-items: center;">
+                    <img src="logo.png" alt="Logo">
+                    <span>DarkJurassic</span>
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div id="forum-list-view">
+            <div class="forum-header">
+                <h1>Forum</h1>
+                <p>Explore discussions about de-extinction and living dinosaurs</p>
+            </div>
+            <div class="controls">
+                <button class="new-thread-btn" onclick="openModal()">+ New Discussion</button>
+            </div>
+            <div id="thread-list"></div>
+        </div>
+
+        <div id="single-thread-view">
+            <div class="back-btn" onclick="showListView()"><i class="fa fa-arrow-left"></i> Terug naar lijst</div>
+            <div id="thread-content-area"></div>
+            <hr style="border: 0; border-top: 1px solid #222; margin: 30px 0;">
+            <h3>Comments</h3>
+            <div id="comments-box"></div>
+            <div class="input-area">
+                <input type="text" id="comment-input" placeholder="Schrijf een reactie...">
+                <button onclick="postComment()" style="background:#e63946; border:none; color:white; padding:10px 20px; border-radius:5px; cursor:pointer;">Plaats</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="threadModal" class="modal">
+        <div class="modal-content">
+            <h2>Nieuwe Discussie</h2>
+            <input type="text" id="newTitle" placeholder="Titel">
+            <textarea id="newBody" rows="5" placeholder="Inhoud"></textarea>
+            <button onclick="saveThread()" style="background:#e63946; border:none; color:white; padding:10px 20px; cursor:pointer;">Plaatsen</button>
+            <button onclick="closeModal()" style="background:transparent; border:none; color:#555; cursor:pointer;">Annuleren</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        let currentThreadId = null;
+        let currentUser = "";
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user.email.split('@')[0];
+                document.body.style.opacity = "1";
+                loadThreads();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function loadThreads() {
+            db.ref('forum_threads').on('value', snap => {
+                const list = document.getElementById('thread-list');
+                list.innerHTML = "";
+                snap.forEach(child => {
+                    const t = child.val();
+                    list.innerHTML += `
+                        <div class="thread-card" onclick="viewThread('${child.key}')">
+                            <div class="thread-icon">${t.author.charAt(0).toUpperCase()}</div>
+                            <div class="thread-content">
+                                <div class="thread-title">${t.title}</div>
+                                <div class="thread-meta">Door ${t.author}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function viewThread(id) {
+            currentThreadId = id;
+            document.getElementById('forum-list-view').style.display = 'none';
+            document.getElementById('single-thread-view').style.display = 'block';
+
+            db.ref('forum_threads/' + id).once('value', snap => {
+                const t = snap.val();
+                document.getElementById('thread-content-area').innerHTML = `
+                    <div class="main-post">
+                        <h2>${t.title}</h2>
+                        <p style="color:#aaa; margin-bottom:20px;">Door ${t.author}</p>
+                        <p>${t.body}</p>
+                    </div>
+                `;
+            });
+            loadComments(id);
+        }
+
+        function loadComments(id) {
+            db.ref('forum_comments/' + id).on('value', snap => {
+                const box = document.getElementById('comments-box');
+                box.innerHTML = "";
+                snap.forEach(child => {
+                    const c = child.val();
+                    box.innerHTML += `
+                        <div class="comment">
+                            <div class="comment-meta">${c.user}</div>
+                            <div>${c.text}</div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function postComment() {
+            const input = document.getElementById('comment-input');
+            if (input.value.trim() && currentThreadId) {
+                db.ref('forum_comments/' + currentThreadId).push().set({
+                    user: currentUser,
+                    text: input.value,
+                    timestamp: Date.now()
+                });
+                input.value = "";
+            }
+        }
+
+        function saveThread() {
+            const title = document.getElementById('newTitle').value;
+            const body = document.getElementById('newBody').value;
+            if (title && body) {
+                db.ref('forum_threads').push().set({
+                    title: title,
+                    body: body,
+                    author: currentUser,
+                    timestamp: Date.now()
+                });
+                closeModal();
+            }
+        }
+
+        function showListView() {
+            document.getElementById('forum-list-view').style.display = 'block';
+            document.getElementById('single-thread-view').style.display = 'none';
+        }
+
+        function openModal() { document.getElementById('threadModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('threadModal').style.display = 'none'; }
+    </script>
+</body>
+</html>

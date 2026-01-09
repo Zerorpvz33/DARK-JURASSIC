@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | Agent Profile</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { opacity: 0; transition: opacity 0.5s; background-color: #000; color: white; }
+        
+        .profile-container {
+            max-width: 900px;
+            margin: 40px auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+        }
+
+        .profile-sidebar, .profile-main {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 10px;
+            padding: 30px;
+        }
+
+        .avatar-large {
+            width: 150px;
+            height: 150px;
+            background: #e63946;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(230, 57, 70, 0.2);
+        }
+
+        .stat-box {
+            background: #111;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #222;
+        }
+
+        .xp-progress-container {
+            background: #222;
+            height: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .xp-bar-fill {
+            background: #e63946;
+            height: 100%;
+            width: 0%;
+            transition: width 1s ease-in-out;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: #000;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .save-btn {
+            background: #e63946;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html" style="text-decoration: none; display: flex; align-items: center;">
+                    <img src="logo.png" alt="Logo">
+                    <span>DarkJurassic</span>
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="profile-container">
+            <div class="profile-sidebar">
+                <div class="avatar-large" id="profile-initial">?</div>
+                <h3 id="display-username" style="text-align:center; color: #e63946;">Agent</h3>
+                <p id="display-rank" style="text-align:center; font-size: 0.8rem; color: #888; text-transform: uppercase;">Novice Observer</p>
+                
+                <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="stat-box">
+                        <small style="color:#555">XP</small>
+                        <div id="user-xp" style="font-weight:bold">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <small style="color:#555">ROLE</small>
+                        <div id="user-role" style="font-weight:bold; font-size: 0.7rem;">USER</div>
+                    </div>
+                </div>
+
+                <div class="xp-progress-container">
+                    <div class="xp-bar-fill" id="xp-bar"></div>
+                </div>
+                <small id="xp-needed" style="color: #444; font-size: 0.7rem;">100 XP until next rank</small>
+                
+                <button onclick="auth.signOut()" class="save-btn" style="background: transparent; border: 1px solid #444; margin-top: 40px;">
+                    <i class="fa fa-sign-out-alt"></i> Abort Mission (Logout)
+                </button>
+            </div>
+
+            <div class="profile-main">
+                <h2 style="margin-bottom: 20px;"><i class="fa fa-id-card"></i> Personnel Files</h2>
+                
+                <label style="color:#666; font-size: 0.8rem;">BIOGRAPHY / STATUS</label>
+                <textarea id="user-bio" rows="4" placeholder="Vertel andere agenten over je missie of uitrusting..."></textarea>
+                
+                <label style="color:#666; font-size: 0.8rem; margin-top: 20px; display: block;">CODENAME (EMAIL)</label>
+                <input type="text" id="user-email" disabled style="opacity: 0.5;">
+
+                <button onclick="saveProfile()" class="save-btn">UPDATE PERSONNEL FILE</button>
+                
+                <div id="status-msg" style="margin-top: 15px; text-align: center; font-size: 0.8rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.body.style.opacity = "1";
+                loadProfileData(user);
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function getRankInfo(xp) {
+            if (xp >= 1500) return { title: "InGen Whistleblower", next: 5000 };
+            if (xp >= 500) return { title: "Special Agent", next: 1500 };
+            if (xp >= 100) return { title: "Field Observer", next: 500 };
+            return { title: "Civilian", next: 100 };
+        }
+
+        function loadProfileData(user) {
+            const username = user.email.split('@')[0];
+            document.getElementById('user-email').value = user.email;
+            document.getElementById('display-username').innerText = username;
+            document.getElementById('profile-initial').innerText = username.charAt(0).toUpperCase();
+
+            db.ref('users/' + username).on('value', snap => {
+                const data = snap.val() || {};
+                const xp = data.xp || 0;
+                const rank = getRankInfo(xp);
+
+                document.getElementById('user-xp').innerText = xp;
+                document.getElementById('user-role').innerText = (data.role || "USER").toUpperCase();
+                document.getElementById('display-rank').innerText = rank.title;
+                document.getElementById('user-bio').value = data.bio || "";
+
+                // XP Balk berekening
+                const progress = (xp / rank.next) * 100;
+                document.getElementById('xp-bar').style.width = Math.min(progress, 100) + "%";
+                document.getElementById('xp-needed').innerText = (rank.next - xp) + " XP until next clearance level";
+            });
+        }
+
+        function saveProfile() {
+            const username = auth.currentUser.email.split('@')[0];
+            const bio = document.getElementById('user-bio').value;
+            const statusMsg = document.getElementById('status-msg');
+
+            db.ref('users/' + username).update({
+                bio: bio
+            }).then(() => {
+                statusMsg.style.color = "#2ecc71";
+                statusMsg.innerText = "Personnel files updated successfully.";
+                setTimeout(() => statusMsg.innerText = "", 3000);
+            }).catch(err => {
+                statusMsg.style.color = "#e63946";
+                statusMsg.innerText = "Error updating files: " + err.message;
+            });
+        }
+    </script>
+</body>
+</html>

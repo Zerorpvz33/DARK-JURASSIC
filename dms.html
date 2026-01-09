@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | Secure DMs</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { opacity: 0; transition: 0.5s; background: #000; color: white; overflow: hidden; }
+        
+        .dm-container { 
+            display: grid; 
+            grid-template-columns: 280px 1fr; 
+            gap: 0; 
+            height: calc(100vh - 70px); 
+            background: #050505;
+        }
+        
+        .user-sidebar { 
+            background: #0a0a0a; 
+            border-right: 1px solid #222; 
+            padding: 15px; 
+            overflow-y: auto; 
+        }
+
+        .user-item { 
+            padding: 12px; 
+            cursor: pointer; 
+            border-radius: 5px;
+            margin-bottom: 5px;
+            border: 1px solid transparent;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #888;
+        }
+
+        .user-item:hover { background: #111; color: #fff; }
+        .user-item.active { background: #1a1a1a; color: #e63946; border-color: #e63946; }
+
+        .chat-area { display: flex; flex-direction: column; background: #000; }
+
+        #dm-header { 
+            padding: 15px 25px; 
+            background: #0a0a0a; 
+            border-bottom: 1px solid #222; 
+            font-weight: bold; 
+            color: #e63946;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #dm-window { 
+            flex-grow: 1; 
+            padding: 25px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+        }
+        
+        .bubble { 
+            padding: 10px 15px; 
+            border-radius: 8px; 
+            max-width: 65%; 
+            font-size: 0.9rem; 
+            word-wrap: break-word;
+        }
+
+        .sent { align-self: flex-end; background: #e63946; color: white; }
+        .received { align-self: flex-start; background: #222; color: #ccc; }
+
+        .input-bar { 
+            padding: 20px; 
+            background: #0a0a0a; 
+            display: flex; 
+            gap: 10px; 
+            border-top: 1px solid #222;
+        }
+
+        .input-bar input { 
+            flex-grow: 1; 
+            padding: 12px; 
+            background: #000; 
+            border: 1px solid #333; 
+            color: white; 
+            border-radius: 4px; 
+        }
+
+        .input-bar button {
+            background: #e63946; color: #fff; border: none; padding: 0 20px; border-radius: 4px; cursor: pointer;
+        }
+
+        /* Verberg scrollbars voor de clean look */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #222; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo"><a href="index.html"><span>DarkJurassic</span></a></div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="dm-container">
+        <div class="user-sidebar" id="user-list">
+            <h4 style="color:#444; font-size:0.7rem; margin-bottom:15px; letter-spacing:1px;">ACTIVE PERSONNEL</h4>
+            <div id="loading-users">Decrypting user list...</div>
+        </div>
+
+        <div class="chat-area">
+            <div id="dm-header">Select an agent to begin transmission</div>
+            <div id="dm-window">
+                <div style="margin: auto; text-align: center; color: #222;">
+                    <i class="fa fa-shield-alt" style="font-size: 4rem; margin-bottom: 20px;"></i>
+                    <p>Secure Communication Line</p>
+                </div>
+            </div>
+            <div class="input-bar">
+                <input type="text" id="dm-input" placeholder="Enter encrypted message..." autocomplete="off">
+                <button onclick="sendDM()"><i class="fa fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let selectedUser = "";
+        let chatRef = null;
+
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                document.body.style.opacity = "1";
+                loadUsers();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function loadUsers() {
+            const myUsername = auth.currentUser.email.split('@')[0];
+            db.ref('users').on('value', (snapshot) => {
+                const list = document.getElementById('user-list');
+                const loading = document.getElementById('loading-users');
+                if(loading) loading.remove();
+                
+                // Bewaar de huidige selectie
+                const currentSelected = selectedUser;
+                
+                // Clear de lijst behalve de titel
+                const title = list.querySelector('h4');
+                list.innerHTML = "";
+                list.appendChild(title);
+
+                snapshot.forEach(child => {
+                    const username = child.key;
+                    if(username !== myUsername) {
+                        const item = document.createElement('div');
+                        item.className = `user-item ${username === currentSelected ? 'active' : ''}`;
+                        item.innerHTML = `<i class="fa fa-circle" style="font-size:0.5rem; color:#2ecc71;"></i> ${username}`;
+                        item.onclick = () => startChat(username, item);
+                        list.appendChild(item);
+                    }
+                });
+            });
+        }
+
+        function startChat(username, element) {
+            selectedUser = username;
+            document.querySelectorAll('.user-item').forEach(i => i.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('dm-header').innerText = "COMM CHANNEL: " + username;
+
+            const myUsername = auth.currentUser.email.split('@')[0];
+            // Maak een unieke ID die voor beide gebruikers hetzelfde is
+            const chatId = [myUsername, username].sort().join("_CHAT_");
+            
+            if(chatRef) chatRef.off();
+            chatRef = db.ref('direct_messages/' + chatId);
+            
+            chatRef.on('value', (snapshot) => {
+                const win = document.getElementById('dm-window');
+                win.innerHTML = "";
+                
+                snapshot.forEach(child => {
+                    const m = child.val();
+                    const isMe = m.sender === myUsername;
+                    const bubble = document.createElement('div');
+                    bubble.className = `bubble ${isMe ? 'sent' : 'received'}`;
+                    bubble.innerText = m.text;
+                    win.appendChild(bubble);
+                });
+                win.scrollTop = win.scrollHeight;
+            });
+        }
+
+        function sendDM() {
+            const input = document.getElementById('dm-input');
+            const myUsername = auth.currentUser.email.split('@')[0];
+            if(input.value.trim() !== "" && selectedUser !== "") {
+                chatRef.push().set({
+                    sender: myUsername,
+                    text: input.value,
+                    timestamp: Date.now()
+                });
+                input.value = "";
+            }
+        }
+
+        document.getElementById('dm-input').addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendDM();
+        });
+    </script>
+</body>
+</html>

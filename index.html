@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | Terminal Access</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --red: #e63946;
+            --dark-bg: #050505;
+            --panel-bg: #0a0a0a;
+            --border: #222;
+        }
+
+        body { 
+            opacity: 0; 
+            transition: opacity 1s; 
+            background-color: var(--dark-bg); 
+            color: white; 
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Achtergrond Grid Effect */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(circle at 2px 2px, #111 1px, transparent 0);
+            background-size: 40px 40px;
+            z-index: -1;
+        }
+
+        /* Scanline Animatie */
+        body::after {
+            content: " ";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 3px 100%;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* Verbeterde Navbar uit screenshot */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 40px;
+            background: #000;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
+
+        .user-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-initial-badge {
+            background: var(--red);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        /* Hero Sectie */
+        .hero {
+            height: 85vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .glitch {
+            font-size: 4.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 10px;
+            margin: 0;
+            position: relative;
+        }
+
+        .blue-text { color: #eee; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        .red-text { color: var(--red); text-shadow: 0 0 15px rgba(230, 57, 70, 0.5); }
+
+        .terminal-window {
+            background: #000;
+            border: 1px solid #331111;
+            padding: 20px;
+            border-radius: 8px;
+            width: 600px;
+            margin: 30px auto;
+            text-align: left;
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+        }
+
+        .typewriter {
+            overflow: hidden;
+            border-right: .15em solid var(--red);
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: .15em;
+            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+        }
+
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: var(--red); } }
+
+        .btn-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .main-btn {
+            padding: 15px 40px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .primary { background: var(--red); color: white; border: 1px solid var(--red); }
+        .primary:hover { box-shadow: 0 0 20px var(--red); transform: translateY(-3px); }
+
+        .secondary { background: transparent; color: #eee; border: 1px solid #444; }
+        .secondary:hover { border-color: var(--red); color: var(--red); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html" style="text-decoration: none; display: flex; align-items: center;">
+                    <img src="logo.png" alt="Logo" style="height: 30px; margin-right: 10px;">
+                    <span style="color: white; font-weight: bold;">DarkJurassic</span>
+                </a>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+            </ul>
+
+            <div class="user-profile-header">
+                <i class="fa fa-bell" style="color: #555; cursor: pointer;"></i>
+                <div class="user-initial-badge" id="user-initial">?</div>
+                <span id="user-name" style="font-size: 0.85rem; color: #eee; font-weight: 500;">...</span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="hero">
+        <div class="content">
+            <h1 class="glitch">
+                <span class="blue-text">DARK</span> <span class="red-text">JURASSIC</span>
+            </h1>
+            
+            <div class="terminal-window">
+                <div style="color: #444; font-size: 0.7rem; margin-bottom: 10px;">> DE-EXTINCTION_MAINFRAME_v4.2.1</div>
+                <div class="typewriter" style="color: #2ecc71;">[CONNECTED] ACCESSING CLASSIFIED DATA...</div>
+                <div style="margin-top: 15px; color: #888; font-size: 0.8rem; line-height: 1.6;">
+                    System Status: <span style="color: var(--red);">Critical</span><br>
+                    Active Assets: Detected in multiple sectors.<br>
+                    Global Containment: <span style="color: #f1c40f;">Failing</span>
+                </div>
+            </div>
+
+            <div class="btn-container">
+                <a href="forum.html" class="main-btn primary">
+                    Explore Intel <i class="fa fa-unlock-alt" style="margin-left: 10px;"></i>
+                </a>
+                <a href="sightings.html" class="main-btn secondary">
+                    Track Assets <i class="fa fa-crosshairs" style="margin-left: 10px;"></i>
+                </a>
+            </div>
+
+            <div style="margin-top: 60px; display: flex; justify-content: center; gap: 40px;">
+                <div style="text-align: left;">
+                    <div style="color: var(--red); font-size: 1.2rem; font-weight: bold;">1,284</div>
+                    <div style="color: #444; font-size: 0.6rem; letter-spacing: 2px;">ACTIVE AGENTS</div>
+                </div>
+                <div style="text-align: left;">
+                    <div style="color: var(--red); font-size: 1.2rem; font-weight: bold;">42</div>
+                    <div style="color: #444; font-size: 0.6rem; letter-spacing: 2px;">CONFIRMED SPECIES</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                const username = user.email.split('@')[0];
+                document.getElementById('user-name').innerText = username.toLowerCase();
+                document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
+                document.body.style.opacity = "1";
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+</body>
+</html>

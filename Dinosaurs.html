@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | Global Species Database</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { opacity: 0; transition: 0.5s; background: #000; color: white; }
+        
+        /* Formulier Stijl */
+        .upload-section {
+            background: #0a0a0a;
+            border: 1px solid #331111;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        input, textarea, select {
+            background: #000;
+            border: 1px solid #222;
+            color: white;
+            padding: 12px;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input:focus { border-color: #e63946; }
+
+        /* Dino Card Stijl */
+        .dino-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .dino-card {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .dino-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-bottom: 2px solid #e63946;
+        }
+
+        .dino-content { padding: 15px; }
+        .diet-tag {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .carnivore { background: #e63946; }
+        .herbivore { background: #2ecc71; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo"><a href="index.html"><span>DarkJurassic</span></a></div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h2 class="page-title"><i class="fa fa-database"></i> Species Contribution Mainframe</h2>
+        
+        <div class="upload-section">
+            <h3 style="color:#e63946; font-size: 1rem;"><i class="fa fa-plus-circle"></i> ADD NEW SPECIES DATA (+100 XP)</h3>
+            <div class="input-group">
+                <input type="text" id="dino-name" placeholder="Naam (bijv: Spinosaurus)">
+                <select id="dino-diet">
+                    <option value="Carnivore">Carnivore (Vleeseter)</option>
+                    <option value="Herbivore">Herbivore (Planteneter)</option>
+                    <option value="Omnivore">Omnivore (Alleseter)</option>
+                </select>
+                <input type="text" id="dino-img" placeholder="Afbeelding URL (van Fandom Wiki)">
+                <input type="text" id="dino-source" placeholder="Fandom Wiki Link">
+                <textarea id="dino-desc" placeholder="Korte beschrijving van het wezen..." style="grid-column: span 2;"></textarea>
+                <button onclick="contributeDino()" style="grid-column: span 2; background:#e63946; color:white; border:none; padding:15px; font-weight:bold; cursor:pointer;">SUBMIT TO DATABASE</button>
+            </div>
+        </div>
+
+        <div id="dino-list" class="dino-grid">
+            </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                document.body.style.opacity = 1;
+                loadDinos();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function contributeDino() {
+            const name = document.getElementById('dino-name').value;
+            const diet = document.getElementById('dino-diet').value;
+            const img = document.getElementById('dino-img').value;
+            const desc = document.getElementById('dino-desc').value;
+            const user = auth.currentUser.email.split('@')[0];
+
+            if(name && img && desc) {
+                db.ref('shared_dinos').push().set({
+                    name: name,
+                    diet: diet,
+                    image: img,
+                    desc: desc,
+                    contributor: user,
+                    timestamp: Date.now()
+                }).then(() => {
+                    // XP Beloning geven
+                    db.ref('users/' + user).transaction(currentData => {
+                        if (currentData) {
+                            currentData.xp = (currentData.xp || 0) + 100;
+                        }
+                        return currentData;
+                    });
+
+                    alert("Data geüpload! +100 XP verdiend.");
+                    location.reload(); // Ververs om velden leeg te maken
+                });
+            } else {
+                alert("Vul alle velden in!");
+            }
+        }
+
+        function loadDinos() {
+            db.ref('shared_dinos').on('value', snap => {
+                const list = document.getElementById('dino-list');
+                list.innerHTML = "";
+                
+                snap.forEach(child => {
+                    const d = child.val();
+                    const dietClass = d.diet.toLowerCase();
+                    
+                    list.innerHTML += `
+                        <div class="dino-card">
+                            <img src="${d.image}" class="dino-img">
+                            <div class="dino-content">
+                                <span class="diet-tag ${dietClass}">${d.diet}</span>
+                                <h4 style="margin:10px 0 5px 0; color:#e63946;">${d.name}</h4>
+                                <p style="font-size:0.8rem; color:#aaa; margin-bottom:10px;">${d.desc}</p>
+                                <div style="font-size:0.6rem; color:#444; border-top:1px solid #111; pt:5px;">
+                                    CONTRIBUTOR: ${d.contributor}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+    </script>
+</body>
+</html>

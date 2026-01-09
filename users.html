@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | Agent Directory</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { opacity: 0; transition: 0.5s; background: #000; color: white; }
+        .leaderboard-card {
+            background: #0a0a0a; border: 1px solid #222; padding: 20px;
+            border-radius: 10px; margin-bottom: 15px; display: flex;
+            align-items: center; justify-content: space-between;
+            border-left: 3px solid #e63946;
+        }
+        .rank-badge {
+            padding: 5px 12px; border-radius: 4px; font-size: 0.7rem;
+            font-weight: bold; text-transform: uppercase;
+        }
+        .xp-bar { height: 4px; background: #222; width: 150px; border-radius: 10px; overflow: hidden; margin-top: 8px; }
+        .xp-progress { height: 100%; background: #e63946; transition: width 1s; }
+        .agent-name { font-size: 1.1rem; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html" style="text-decoration:none; display:flex; align-items:center;">
+                    <img src="logo.png" alt="Logo">
+                    <span>DarkJurassic</span>
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h2 class="page-title"><i class="fa fa-id-badge"></i> Personnel Database</h2>
+        <div id="leaderboard">
+            <p style="text-align:center; color:#555; padding: 50px;">
+                <i class="fa fa-spinner fa-spin"></i> Initializing Neural Link...
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        function getRank(xp) {
+            if (xp >= 1500) return { title: "InGen Whistleblower", color: "#f1c40f" };
+            if (xp >= 500) return { title: "Special Agent", color: "#e63946" };
+            if (xp >= 100) return { title: "Field Observer", color: "#3498db" };
+            return { title: "Civilian", color: "#7f8c8d" };
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.body.style.opacity = "1";
+                const myUsername = user.email.split('@')[0];
+                
+                // Zorg dat de huidige gebruiker sowieso in de lijst staat
+                db.ref('users/' + myUsername).once('value', snap => {
+                    if (!snap.exists()) {
+                        db.ref('users/' + myUsername).set({ xp: 0 });
+                    }
+                });
+
+                loadLeaderboard();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function loadLeaderboard() {
+            db.ref('users').on('value', snap => {
+                const leaderboard = document.getElementById('leaderboard');
+                leaderboard.innerHTML = "";
+                let agents = [];
+                
+                snap.forEach(child => {
+                    agents.push({ name: child.key, xp: child.val().xp || 0 });
+                });
+
+                agents.sort((a, b) => b.xp - a.xp);
+
+                agents.forEach((agent, index) => {
+                    const rank = getRank(agent.xp);
+                    const progress = Math.min((agent.xp / 1500) * 100, 100);
+
+                    leaderboard.innerHTML += `
+                        <div class="leaderboard-card">
+                            <div>
+                                <span style="color:#e63946; font-family:monospace; margin-right:10px;">#${index + 1}</span>
+                                <strong class="agent-name">${agent.name}</strong>
+                                <div class="xp-bar"><div class="xp-progress" style="width: ${progress}%"></div></div>
+                            </div>
+                            <div class="rank-badge" style="background: ${rank.color}">${rank.title}</div>
+                        </div>
+                    `;
+                });
+            });
+        }
+    </script>
+</body>
+</html>

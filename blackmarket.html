@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | Black Market</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { background-color: #050505; color: white; font-family: 'Segoe UI', sans-serif; opacity: 0; transition: 0.5s; }
+        
+        .market-header { margin-bottom: 40px; border-left: 4px solid #e63946; padding-left: 20px; }
+        .market-header h1 { font-size: 2.5rem; margin-bottom: 5px; color: #e63946; }
+        .market-header p { color: #88a; font-size: 1rem; }
+
+        .currency-status {
+            background: #111;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid #222;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .role-card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 12px;
+            padding: 25px;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .role-card:hover { border-color: #e63946; transform: translateY(-5px); }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            width: fit-content;
+        }
+
+        /* Verschillende Role Kleuren */
+        .color-mercenary { background: rgba(127, 140, 141, 0.2); color: #95a5a6; border: 1px solid #95a5a6; }
+        .color-traitor { background: rgba(230, 57, 70, 0.2); color: #e63946; border: 1px solid #e63946; }
+        .color-hacker { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
+        .color-informant { background: rgba(241, 196, 15, 0.2); color: #f1c40f; border: 1px solid #f1c40f; }
+
+        .role-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
+        .role-desc { color: #666; font-size: 0.9rem; line-height: 1.4; margin-bottom: 20px; }
+
+        .buy-btn {
+            background: #e63946;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .buy-btn:hover:not(:disabled) { background: #ff4d5a; box-shadow: 0 0 15px rgba(230, 57, 70, 0.4); }
+        .buy-btn:disabled { background: #222; color: #444; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html" style="text-decoration: none; display: flex; align-items: center;">
+                    <img src="logo.png" alt="Logo" style="height: 30px; margin-right: 10px;">
+                    <span style="color: white; font-weight: bold;">DarkJurassic</span>
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container" style="max-width: 1100px; margin: 50px auto; padding: 0 20px;">
+        <div class="market-header">
+            <h1>Black Market</h1>
+            <p>Spend your hard-earned XP to acquire specialized roles within the network.</p>
+        </div>
+
+        <div class="currency-status">
+            <i class="fa fa-dna" style="color: #e63946; font-size: 1.5rem;"></i>
+            <div>
+                <small style="color: #555; display: block; text-transform: uppercase;">Available Credits</small>
+                <span style="font-size: 1.2rem; font-weight: bold;"><span id="user-xp">0</span> XP</span>
+            </div>
+        </div>
+
+        <div class="market-grid" id="roles-container">
+            </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        let currentXP = 0;
+        let username = "";
+
+        const availableRoles = [
+    // --- ECHELON 1: THE DISPOSABLES (250 - 500 XP) ---
+    { id: "r1", name: "Mercenary", color: "mercenary", price: 250, desc: "A entry-level role for those who work for the highest bidder." },
+    { id: "r2", name: "Gatekeeper", color: "mercenary", price: 275, desc: "You watch the perimeter of the digital exclusion zone." },
+    { id: "r3", name: "Scavenger", color: "mercenary", price: 300, desc: "Picking up the scraps InGen left behind in Site B." },
+    { id: "r4", name: "Drifter", color: "mercenary", price: 325, desc: "No loyalty, just looking for the next big score." },
+    { id: "r5", name: "Courier", color: "mercenary", price: 350, desc: "Transporting sensitive data through hostile territory." },
+    { id: "r6", name: "Lookout", color: "mercenary", price: 375, desc: "You see them before they see you." },
+    { id: "r7", name: "Tracker", color: "mercenary", price: 400, desc: "Following the footprints of giants." },
+    { id: "r8", name: "Novice Hacker", color: "hacker", price: 425, desc: "Just learned how to bypass basic encryption." },
+    { id: "r9", name: "Runner", color: "mercenary", price: 450, desc: "Fast enough to outrun a raptor... maybe." },
+    { id: "r10", name: "Bounty Hunter", color: "mercenary", price: 500, desc: "Capturing assets for private collectors." },
+    { id: "r11", name: "Sentry", color: "mercenary", price: 520, desc: "Standing guard at the edge of the abyss." },
+    { id: "r12", name: "Recruit", color: "mercenary", price: 540, desc: "The latest addition to the resistance." },
+    { id: "r13", name: "Pathfinder", color: "mercenary", price: 560, desc: "Mapping the unexplored jungles of Sorna." },
+    { id: "r14", name: "Smuggler", color: "mercenary", price: 580, desc: "Getting DNA samples off the island is your specialty." },
+    { id: "r15", name: "Technician", color: "hacker", price: 600, desc: "Fixing the gear that keeps us alive." },
+    { id: "r16", name: "Guard Dog", color: "mercenary", price: 620, desc: "Loyal to the credits, nothing else." },
+    { id: "r17", name: "Outcast", color: "mercenary", price: 640, desc: "Banished from InGen, welcomed here." },
+    { id: "r18", name: "Whisperer", color: "informant", price: 660, desc: "Talking to the things behind the fences." },
+    { id: "r19", name: "Poacher", color: "mercenary", price: 680, desc: "Trading scales for silver." },
+    { id: "r20", name: "Survivor", color: "mercenary", price: 700, desc: "You lived through the San Diego incident." },
+    { id: "r21", name: "Informant", color: "informant", price: 750, desc: "Gain trust. You have ears everywhere in the InGen facilities." },
+    { id: "r22", name: "Mole", color: "informant", price: 780, desc: "Digging deep into corporate secrets." },
+    { id: "r23", name: "Researcher", color: "informant", price: 810, desc: "Studying the errors in the genetic code." },
+    { id: "r24", name: "Field Agent", color: "mercenary", price: 840, desc: "Direct action against illegal cloning labs." },
+    { id: "r25", name: "Code Breaker", color: "hacker", price: 870, desc: "Encryption is just a puzzle to you." },
+    { id: "r26", name: "Bio-Thief", color: "informant", price: 900, desc: "Stealing embryos from under their noses." },
+    { id: "r27", name: "Signals Expert", color: "hacker", price: 930, desc: "Intercepting satellite transmissions." },
+    { id: "r28", name: "Saboteur", color: "traitor", price: 960, desc: "Cutting the power at the worst possible time." },
+    { id: "r29", name: "Ranger", color: "mercenary", price: 1000, desc: "Master of the wild assets." },
+    { id: "r30", name: "Analyst", color: "informant", price: 1050, desc: "Connecting the dots InGen wants hidden." },
+    { id: "r31", name: "Asset Handler", color: "mercenary", price: 1100, desc: "You know the temperament of every carnivore." },
+    { id: "r32", name: "Deep Cover", color: "informant", price: 1150, desc: "Your own family doesn't know who you work for." },
+    { id: "r33", name: "Netrunner", color: "hacker", price: 1200, desc: "Sliding through the fiber optics like a ghost." },
+    { id: "r34", name: "Whistleblower", color: "informant", price: 1250, desc: "The truth will set them free, or kill us all." },
+    { id: "r35", name: "Void Walker", color: "hacker", price: 1300, desc: "Accessing the dark sectors of the mainframe." },
+    { id: "r36", name: "Blackout", color: "hacker", price: 1350, desc: "When you arrive, the lights go out." },
+    { id: "r37", name: "Geneticist", color: "informant", price: 1400, desc: "Reading the book of life in four letters." },
+    { id: "r38", name: "Infiltrator", color: "traitor", price: 1450, desc: "Inside the compound, outside the law." },
+    { id: "r39", name: "Nightshade", color: "informant", price: 1480, desc: "Operating in the shadows of the canopy." },
+    { id: "r40", name: "Data Broker", color: "informant", price: 1500, desc: "Everything has a price, especially the truth." },
+    { id: "r41", name: "System Breaker", color: "hacker", price: 1600, desc: "Unlock high-level encryption. Your name glows in the digital dark." },
+    { id: "r42", name: "Crisis Manager", color: "mercenary", price: 1650, desc: "Called in when the fences go down." },
+    { id: "r43", name: "Encryption Lord", color: "hacker", price: 1700, desc: "Your firewalls are legendary." },
+    { id: "r44", name: "Spec-Ops", color: "mercenary", price: 1750, desc: "Tactical elimination of rogue assets." },
+    { id: "r45", name: "Double Agent", color: "traitor", price: 1800, desc: "Playing both sides for maximum profit." },
+    { id: "r46", name: "Ghost in the Machine", color: "hacker", price: 1850, desc: "You are the bug in InGen's ear." },
+    { id: "r47", name: "Asset Reaper", color: "mercenary", price: 1900, desc: "Sent to clean up the biological messes." },
+    { id: "r48", name: "Network Sovereign", color: "hacker", price: 1950, desc: "The web bends to your will." },
+    { id: "r49", name: "Tactician", color: "mercenary", price: 2000, desc: "Planning the raids on the breeding labs." },
+    { id: "r50", name: "The Architect", color: "hacker", price: 2100, desc: "You built the backdoors we use." },
+    { id: "r51", name: "Chief Security", color: "mercenary", price: 2150, desc: "You know every weakness in the perimeter." },
+    { id: "r52", name: "Void Specialist", color: "hacker", price: 2200, desc: "Operating where no signal can reach." },
+    { id: "r53", name: "Bio-Hazard", color: "informant", price: 2250, desc: "You carry the secrets that could infect the world." },
+    { id: "r54", name: "Neural Linker", color: "hacker", price: 2300, desc: "Connecting minds to the machine." },
+    { id: "r55", name: "Vanguard", color: "mercenary", price: 2350, desc: "First in, last out." },
+    { id: "r56", name: "Warden", color: "mercenary", price: 2400, desc: "Keeper of the most dangerous secrets." },
+    { id: "r57", name: "Payload Expert", color: "hacker", price: 2450, desc: "Delivering digital viruses with precision." },
+    { id: "r58", name: "Executioner", color: "traitor", price: 2500, desc: "Terminating projects and personnel." },
+    { id: "r59", name: "High Inquisitor", color: "informant", price: 2550, desc: "Extracting data through any means." },
+    { id: "r60", name: "Mastermind", color: "hacker", price: 2600, desc: "Thinking three steps ahead of the AI." },
+    { id: "r61", name: "InGen Traitor", color: "traitor", price: 3000, desc: "The ultimate mark of shame or honor. You leaked the deepest secrets." },
+    { id: "r62", name: "Project Lead", color: "informant", price: 3100, desc: "You ran the labs before you turned." },
+    { id: "r63", name: "Cyber Commander", color: "hacker", price: 3200, desc: "Leading the digital assault on the mainframe." },
+    { id: "r64", name: "Asset Overlord", color: "mercenary", price: 3300, desc: "Even the Indominus bows to you." },
+    { id: "r65", name: "The Oracle", color: "informant", price: 3400, desc: "You see the future InGen is building." },
+    { id: "r66", name: "Shadow Admin", color: "hacker", price: 3500, desc: "You have root access to reality." },
+    { id: "r67", name: "Defector", color: "traitor", price: 3600, desc: "Leaving behind a burning empire." },
+    { id: "r68", name: "Neural King", color: "hacker", price: 3700, desc: "Sovereign of the synthesized mind." },
+    { id: "r69", name: "Bio-Warlord", color: "mercenary", price: 3800, desc: "Commanding a private army of saurians." },
+    { id: "r70", name: "The Prophet", color: "informant", price: 3900, desc: "Preaching the return of the ancient ones." },
+    { id: "r71", name: "System God", color: "hacker", price: 4000, desc: "Laws are just suggestions in your world." },
+    { id: "r72", name: "Apex Traitor", color: "traitor", price: 4100, desc: "The highest bounty in InGen history." },
+    { id: "r73", name: "Genetic Ghost", color: "informant", price: 4200, desc: "You no longer exist in any database." },
+    { id: "r74", name: "Mainframe Wraith", color: "hacker", price: 4300, desc: "Possessing the servers from the inside." },
+    { id: "r75", name: "Saurian Sage", color: "informant", price: 4400, desc: "You speak the primal language." },
+    { id: "r76", name: "Dark Director", color: "traitor", price: 4500, desc: "Orchestrating the fall from the top." },
+    { id: "r77", name: "Code Titan", color: "hacker", price: 4600, desc: "Your scripts can level cities." },
+    { id: "r78", name: "Primal Alpha", color: "mercenary", price: 4700, desc: "Leader of the pack." },
+    { id: "r79", name: "Nexus Point", color: "hacker", price: 4800, desc: "The center of the digital storm." },
+    { id: "r80", name: "The Endbringer", color: "traitor", price: 5000, desc: "Initiating the final sequence." },
+    { id: "r81", name: "Hammond's Ghost", color: "informant", price: 7500, desc: "Spared no expense to find the truth." },
+    { id: "r82", name: "The Glitch", color: "hacker", price: 8000, desc: "A error in the matrix that won't go away." },
+    { id: "r83", name: "Sorna Sentinel", color: "mercenary", price: 8500, desc: "Eternal guardian of the lost island." },
+    { id: "r84", name: "Project Lazarus", color: "traitor", price: 9000, desc: "Rising from the corporate grave." },
+    { id: "r85", name: "Binary Beast", color: "hacker", price: 9500, desc: "Half man, half code, all predator." },
+    { id: "r86", name: "The Harbinger", color: "informant", price: 10000, desc: "Announcing the dawn of the new Mesozoic." },
+    { id: "r87", name: "Chaos Theory", color: "traitor", price: 11000, desc: "Unpredictable. Unstoppable. Essential." },
+    { id: "r88", name: "Root User", color: "hacker", price: 12000, desc: "The absolute authority." },
+    { id: "r89", name: "Isla Nublar Legend", color: "mercenary", price: 13000, desc: "You were there when it all began." },
+    { id: "r90", name: "Extinction Event", color: "traitor", price: 14000, desc: "The end of the old world." },
+    { id: "r91", name: "DNA Architect", color: "informant", price: 15000, desc: "Designing life with a keystroke." },
+    { id: "r92", name: "Digital Dino", color: "hacker", price: 16000, desc: "An entity born from the leaked files." },
+    { id: "r93", name: "The Whistle", color: "informant", price: 17000, desc: "The sound that broke the silence." },
+    { id: "r94", name: "Asset Zero", color: "mercenary", price: 18000, desc: "The first successful clone." },
+    { id: "r95", name: "Infinite Loop", color: "hacker", price: 19000, desc: "History repeating itself forever." },
+    { id: "r96", name: "Amber Soul", color: "informant", price: 20000, desc: "Preserved for eternity." },
+    { id: "r97", name: "Void Emperor", color: "hacker", price: 21000, desc: "Master of the digital nothingness." },
+    { id: "r98", name: "The Fossil", color: "informant", price: 22000, desc: "Ancient wisdom in a modern shell." },
+    { id: "r99", name: "Zenith", color: "traitor", price: 23000, desc: "The peak of the resistance." },
+    { id: "r100", name: "Dark Jurassic Founder", color: "traitor", price: 25000, desc: "The one who started it all." },
+    { id: "n1", name: "Darius Bowman", color: "informant", price: 1200, desc: "De ultieme dino-nerd en leider van de Nublar Six." },
+    { id: "n2", name: "Brooklynn", color: "hacker", price: 1200, desc: "Unboxing Jurassic World. Niets blijft geheim voor jouw volgers." },
+    { id: "n3", name: "Kenji Kon", color: "mercenary", price: 1100, desc: "De zoon van de grote baas, maar een hart van goud." },
+    { id: "n4", name: "Yaz Fadoula", color: "mercenary", price: 1100, desc: "Topatleet. Niemand rent sneller voor een raptor dan jij." },
+    { id: "n5", name: "Sammy Gutierrez", color: "informant", price: 1000, desc: "Spion tegen wil en dank om haar familie-ranch te redden." },
+    { id: "n6", name: "Ben Pincus", color: "mercenary", price: 1300, desc: "Van bangerik naar jungle-overlever met Bumpy aan je zijde." },
+    { id: "p1", name: "Dr. Alan Grant", color: "informant", price: 15000, desc: "Paleontoloog die liever met fossielen werkt dan met mensen." },
+    { id: "p2", name: "Dr. Ellie Sattler", color: "informant", price: 14000, desc: "Paleobotanicus. Jij ziet de details die anderen missen." },
+    { id: "p3", name: "Dr. Ian Malcolm", color: "informant", price: 16000, desc: "Chaos-expert. Jij voorspelde de val van het park al." },
+    { id: "p4", name: "John Hammond", color: "traitor", price: 20000, desc: "De man met de droom en de wandelstok van barnsteen." },
+    { id: "p5", name: "Robert Muldoon", color: "mercenary", price: 5000, desc: "Jachtopziener. Je hebt respect voor je prooi." },
+    { id: "p6", name: "Dennis Nedry", color: "hacker", price: 500, desc: "Je zette de hekken uit voor een koffer vol geld." },
+    { id: "p7", name: "Ray Arnold", color: "hacker", price: 2000, desc: "Hoofd-engineer. 'Hold onto your butts!'" },
+    { id: "p8", name: "Donald Gennaro", color: "traitor", price: 400, desc: "De advocaat die alleen dollars zag, tot de T-Rex kwam." },
+    { id: "p9", name: "Lex Murphy", color: "hacker", price: 3000, desc: "Hacker avant-la-lettre. 'It's a UNIX system!'" },
+    { id: "p10", name: "Tim Murphy", color: "informant", price: 2500, desc: "Dino-fanaat die de 10.000 volt overleefde." },
+    { id: "p11", name: "Roland Tembo", color: "mercenary", price: 4500, desc: "Grootwildjager op zoek naar een waardige tegenstander." },
+    { id: "p12", name: "Nick Van Owen", color: "informant", price: 1500, desc: "Documentairemaker en saboteur van InGen-plannen." },
+    { id: "p13", name: "Dr. Sarah Harding", color: "informant", price: 4000, desc: "Gedragsbioloog die te dicht bij de roofdieren kwam." },
+    { id: "p14", name: "Eddie Carr", color: "mercenary", price: 2200, desc: "De tech-expert die zichzelf opofferde voor zijn team." },
+    { id: "p15", name: "Kelly Curtis", color: "mercenary", price: 800, desc: "Gymnastiek is een dodelijk wapen tegen raptors." },
+    { id: "p16", name: "Paul Kirby", color: "mercenary", price: 600, desc: "De vader die alles deed om zijn zoon te vinden." },
+    { id: "p17", name: "Amanda Kirby", color: "mercenary", price: 500, desc: "Schreeuwen op Isla Sorna is niet ongevaarlijk." },
+    { id: "p18", name: "Billy Brennan", color: "informant", price: 1800, desc: "Alan Grant's assistent met een zwakte voor raptor-eieren." },
+    { id: "p19", name: "Udesky", color: "mercenary", price: 700, desc: "De piloot die vast kwam te zitten in de val van de raptors." },
+    { id: "w1", name: "Owen Grady", color: "mercenary", price: 18000, desc: "Raptor-trainer en de Alpha van de Blue-pack." },
+    { id: "w2", name: "Claire Dearing", color: "informant", price: 12000, desc: "Van kille zakenvrouw naar vurige dino-activist." },
+    { id: "w3", name: "Simon Masrani", color: "traitor", price: 6000, desc: "De eigenaar die dacht dat hij de natuur kon temmen." },
+    { id: "w4", name: "Vic Hoskins", color: "traitor", price: 3500, desc: "Jij zag oorlogswapens in de ogen van een raptor." },
+    { id: "w5", name: "Lowery Cruthers", color: "hacker", price: 1500, desc: "De controlekamer-held met een vintage hart." },
+    { id: "w6", name: "Barry Sembène", color: "mercenary", price: 4000, desc: "Owen's rechterhand in de raptor-arena." },
+    { id: "w7", name: "Dr. Henry Wu", color: "traitor", price: 9000, desc: "De man die monsters maakte in naam van de wetenschap." },
+    { id: "w8", name: "Eli Mills", color: "traitor", price: 4500, desc: "De man die Lockwood verraadde voor puur gewin." },
+    { id: "w9", name: "Franklin Webb", color: "hacker", price: 1200, desc: "Systeembeheerder die liever veilig binnen blijft." },
+    { id: "w10", name: "Zia Rodriguez", color: "informant", price: 1400, desc: "Paleo-veterinair voor de Dinosaur Protection Group." },
+    { id: "w11", name: "Maisie Lockwood", color: "informant", price: 7000, desc: "Het meisje dat de wereld deelde met de dinosaurussen." },
+    { id: "w12", name: "Ken Wheatley", color: "mercenary", price: 2500, desc: "Tandenverzamelaar zonder moreel kompas." },
+    { id: "w13", name: "Sir Benjamin Lockwood", color: "informant", price: 3000, desc: "De man die de droom van Hammond levend hield." },
+    { id: "w14", name: "Kayla Watts", color: "mercenary", price: 5500, desc: "Smokkelpiloot die de juiste kant koos in Dominion." },
+    { id: "w15", name: "Ramsay Cole", color: "informant", price: 4000, desc: "De klokkenluider binnen het Biosyn-systeem." },
+    { id: "w16", name: "Lewis Dodgson", color: "traitor", price: 8000, desc: "De baas van Biosyn. 'We've got Nedry here!'" },
+    { id: "w17", name: "Rainn Delacourt", color: "mercenary", price: 3200, desc: "Dino-smokkelaar met de littekens om het te bewijzen." },
+    { id: "w18", name: "Soyona Santos", color: "traitor", price: 5000, desc: "Zij controleert de Atrociraptors met een laserpointer." },
+    { id: "f1", name: "Mr. DNA", color: "informant", price: 10000, desc: "De geanimeerde gids door je eigen genetische code." },
+    { id: "f2", name: "InGen Harbor Master", color: "mercenary", price: 300, desc: "Jij zag de SS Venture de haven binnenvaren." },
+    { id: "f3", name: "San Diego Pedestrian", color: "mercenary", price: 100, desc: "Je rende weg voor een Rex in de buitenwijken." },
+    { id: "f4", name: "Isla Nublar Tour Guide", color: "informant", price: 500, desc: "De stem uit de auto die de attracties uitlegt." },
+    { id: "f5", name: "ACU Sniper", color: "mercenary", price: 1500, desc: "Jij moest de Indominus uitschakelen." },
+    { id: "f6", name: "Gyrosphere Operator", color: "mercenary", price: 600, desc: "Jij helpt gasten hun eigen dood tegemoet te rijden." },
+    { id: "f7", name: "Mainland Police Officer", color: "mercenary", price: 200, desc: "Verkeer regelen voor een overstekende Parasaurolophus." },
+    { id: "f8", name: "Biosyn Technician", color: "hacker", price: 1100, desc: "Werken aan de sprinkhanen-plaag van Dodgson." },
+    { id: "f9", name: "Lockwood Estate Guard", color: "mercenary", price: 800, desc: "Bewaker van de duurste veiling ter wereld." },
+    { id: "f10", name: "Site B Cook", color: "mercenary", price: 300, desc: "Iemand moet de jagers voeden op Isla Sorna." },
+];
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                username = user.email.split('@')[0];
+                document.body.style.opacity = "1";
+                
+                // Haal XP en huidige rol op
+                db.ref('users/' + username).on('value', snap => {
+                    const data = snap.val() || {};
+                    currentXP = data.xp || 0;
+                    const currentRole = data.role || "";
+                    document.getElementById('user-xp').innerText = currentXP;
+                    renderMarket(currentRole);
+                });
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function renderMarket(userRole) {
+            const container = document.getElementById('roles-container');
+            container.innerHTML = availableRoles.map(role => {
+                const isOwned = userRole === role.name;
+                return `
+                <div class="role-card">
+                    <div>
+                        <div class="role-badge color-${role.color}">${role.name}</div>
+                        <div class="role-name">${role.name}</div>
+                        <p class="role-desc">${role.desc}</p>
+                    </div>
+                    <button class="buy-btn" 
+                        onclick="purchaseRole('${role.name}', ${role.price})"
+                        ${(currentXP < role.price || isOwned) ? 'disabled' : ''}>
+                        ${isOwned ? 'CURRENT ROLE' : `PURCHASE FOR ${role.price} XP`}
+                    </button>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function purchaseRole(roleName, price) {
+            if (confirm(`Weet je zeker dat je de rol '${roleName}' wilt kopen voor ${price} XP?`)) {
+                db.ref('users/' + username).update({
+                    xp: currentXP - price,
+                    role: roleName
+                }).then(() => {
+                    alert(`Gefeliciteerd! Je bent nu een ${roleName}.`);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dark Jurassic | Dino Stones DB</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { background-color: #050505; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; }
+        
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            background: radial-gradient(circle at center, #1a0505 0%, #050505 100%);
+            min-height: 100vh;
+        }
+
+        /* Skystones Board Design */
+        .board-container {
+            position: relative;
+            padding: 20px;
+            background: #000;
+            border: 4px solid #331111;
+            box-shadow: 0 0 50px rgba(230, 57, 70, 0.2);
+            border-radius: 15px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 130px);
+            grid-template-rows: repeat(3, 170px);
+            gap: 15px;
+        }
+
+        .slot {
+            background: #0a0a0a;
+            border: 2px solid #222;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+        .slot:hover { background: #111; border-color: #444; }
+
+        /* Card Visuals */
+        .card {
+            width: 120px;
+            height: 160px;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-size: cover;
+            background-position: center;
+            border: 3px solid #444;
+        }
+        .card.player { border-color: #3498db; box-shadow: inset 0 0 20px rgba(52, 152, 219, 0.5); }
+        .card.enemy { border-color: #e63946; box-shadow: inset 0 0 20px rgba(230, 57, 70, 0.5); }
+        
+        .card-name {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 0;
+        }
+
+        /* Skystones Stats Positions */
+        .stat { 
+            position: absolute; 
+            width: 25px; height: 25px; 
+            background: rgba(0,0,0,0.8); 
+            border: 1px solid #555;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.9rem;
+        }
+        .stat.top { top: -10px; left: 50%; transform: translateX(-50%); color: #fff; }
+        .stat.right { right: -10px; top: 50%; transform: translateY(-50%); color: #fff; }
+        .stat.bottom { bottom: -10px; left: 50%; transform: translateX(-50%); color: #fff; }
+        .stat.left { left: -10px; top: 50%; transform: translateY(-50%); color: #fff; }
+
+        .hand-label { font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .hand { display: flex; flex-direction: column; gap: 15px; padding: 20px; }
+        
+        .active-selection { border: 3px solid #f1c40f !important; transform: scale(1.1) translateY(-10px); z-index: 100; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo"><span>DarkJurassic</span></div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="game-wrapper">
+        <h2 id="turn-indicator" style="color: #3498db; margin-bottom: 30px;">UW BEURT - SELECTEER EEN KAART</h2>
+        
+        <div style="display: flex; align-items: flex-start; gap: 60px;">
+            <div class="hand">
+                <div class="hand-label">Agent Hand</div>
+                <div id="player-hand"></div>
+            </div>
+
+            <div class="board-container">
+                <div class="grid" id="game-board">
+                    <div class="slot" onclick="placeOnBoard(0)"></div>
+                    <div class="slot" onclick="placeOnBoard(1)"></div>
+                    <div class="slot" onclick="placeOnBoard(2)"></div>
+                    <div class="slot" onclick="placeOnBoard(3)"></div>
+                    <div class="slot" onclick="placeOnBoard(4)"></div>
+                    <div class="slot" onclick="placeOnBoard(5)"></div>
+                    <div class="slot" onclick="placeOnBoard(6)"></div>
+                    <div class="slot" onclick="placeOnBoard(7)"></div>
+                    <div class="slot" onclick="placeOnBoard(8)"></div>
+                </div>
+            </div>
+
+            <div class="hand">
+                <div class="hand-label">InGen Enemy</div>
+                <div id="enemy-hand"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Uitgebreide Database gebaseerd op JWE2
+// Database en instellingen
+const cardLibrary = [
+    // --- CARNIVOREN (Hoge aanval) ---
+    { name: "Acrocanthosaurus", stats: [8, 7, 5, 7] },
+    { name: "Albertosaurus", stats: [7, 6, 4, 6] },
+    { name: "Allosaurus", stats: [7, 7, 5, 6] },
+    { name: "Atrociraptor", stats: [5, 8, 3, 8] },
+    { name: "Baryonyx", stats: [6, 7, 4, 5] },
+    { name: "Carcharodontosaurus", stats: [9, 8, 6, 7] },
+    { name: "Carnotaurus", stats: [8, 5, 4, 8] },
+    { name: "Ceratosaurus", stats: [6, 6, 4, 6] },
+    { name: "Compsognathus", stats: [2, 5, 1, 5] },
+    { name: "Cryolophosaurus", stats: [6, 5, 4, 7] },
+    { name: "Deinonychus", stats: [4, 8, 2, 8] },
+    { name: "Dilophosaurus", stats: [5, 6, 3, 6] },
+    { name: "Giganotosaurus", stats: [9, 9, 6, 8] },
+    { name: "Herrerasaurus", stats: [5, 5, 3, 5] },
+    { name: "Indominus Rex", stats: [9, 9, 9, 9] },
+    { name: "Indoraptor", stats: [8, 9, 5, 9] },
+    { name: "Majungasaurus", stats: [7, 6, 4, 5] },
+    { name: "Metriacanthosaurus", stats: [6, 6, 4, 6] },
+    { name: "Pyroraptor", stats: [5, 9, 2, 9] },
+    { name: "Qianzhousaurus", stats: [7, 8, 3, 6] },
+    { name: "Spinosaurus", stats: [9, 9, 7, 6] },
+    { name: "Suchomimus", stats: [7, 8, 5, 6] },
+    { name: "Tarbosaurus", stats: [8, 7, 6, 7] },
+    { name: "Therizinosaurus", stats: [9, 9, 4, 4] },
+    { name: "Troodon", stats: [3, 7, 2, 7] },
+    { name: "Tyrannosaurus Rex", stats: [9, 7, 8, 7] },
+    { name: "Velociraptor", stats: [4, 9, 2, 9] },
+    { name: "Yutyrannus", stats: [8, 7, 5, 7] },
+
+    // --- HERBIVOREN (Hoge defensie) ---
+    { name: "Ankylosaurus", stats: [3, 5, 9, 5] },
+    { name: "Apatosaurus", stats: [9, 4, 8, 4] },
+    { name: "Brachiosaurus", stats: [9, 3, 9, 3] },
+    { name: "Camarasaurus", stats: [8, 4, 7, 4] },
+    { name: "Chasmosaurus", stats: [6, 4, 5, 4] },
+    { name: "Corythosaurus", stats: [5, 3, 5, 3] },
+    { name: "Diplodocus", stats: [8, 5, 8, 5] },
+    { name: "Dreadnoughtus", stats: [9, 5, 9, 5] },
+    { name: "Dryosaurus", stats: [2, 4, 2, 4] },
+    { name: "Edmontosaurus", stats: [6, 4, 6, 4] },
+    { name: "Euoplocephalus", stats: [3, 4, 8, 4] },
+    { name: "Gallimimus", stats: [2, 6, 2, 6] },
+    { name: "Gigantspinosaurus", stats: [5, 6, 7, 6] },
+    { name: "Homalocephale", stats: [3, 3, 3, 3] },
+    { name: "Iguanodon", stats: [6, 6, 5, 6] },
+    { name: "Kentrosaurus", stats: [5, 7, 7, 7] },
+    { name: "Maiasaura", stats: [5, 4, 5, 4] },
+    { name: "Nasutoceratops", stats: [7, 5, 6, 5] },
+    { name: "Nigersaurus", stats: [5, 3, 5, 3] },
+    { name: "Ouranosaurus", stats: [5, 5, 4, 5] },
+    { name: "Pachycephalosaurus", stats: [7, 4, 4, 4] },
+    { name: "Parasaurolophus", stats: [6, 4, 5, 4] },
+    { name: "Pentaceratops", stats: [7, 5, 7, 5] },
+    { name: "Stegosaurus", stats: [4, 8, 8, 8] },
+    { name: "Styracosaurus", stats: [8, 5, 6, 5] },
+    { name: "Triceratops", stats: [8, 6, 7, 6] },
+
+    // --- VLIEGEND & MARINE ---
+    { name: "Cearadactylus", stats: [6, 7, 3, 7] },
+    { name: "Dimorphodon", stats: [4, 6, 2, 6] },
+    { name: "Pteranodon", stats: [5, 7, 3, 7] },
+    { name: "Quetzalcoatlus", stats: [7, 6, 4, 9] },
+    { name: "Tupandactylus", stats: [5, 5, 3, 8] },
+    { name: "Elasmosaurus", stats: [8, 5, 6, 5] },
+    { name: "Kronosaurus", stats: [9, 8, 7, 8] },
+    { name: "Mosasaurus", stats: [9, 9, 8, 8] },
+    { name: "Plesiosaurus", stats: [6, 5, 5, 5] },
+    { name: "Tylosaurus", stats: [8, 8, 7, 7] }
+];
+
+let boardState = Array(9).fill(null);
+let selectedCard = null;
+let isPlayerTurn = true;
+let movesMade = 0;
+
+function initGame() {
+    // Reset variabelen
+    boardState = Array(9).fill(null);
+    movesMade = 0;
+    isPlayerTurn = true;
+    selectedCard = null;
+    
+    // Maak UI leeg
+    document.getElementById('player-hand').innerHTML = "";
+    document.getElementById('enemy-hand').innerHTML = "";
+    document.querySelectorAll('.slot').forEach(slot => slot.innerHTML = "");
+    updateTurnStatus();
+
+    // Deel 5 kaarten uit
+    const pHand = document.getElementById('player-hand');
+    const eHand = document.getElementById('enemy-hand');
+    for(let i=0; i<5; i++) {
+        pHand.appendChild(renderCard(cardLibrary[Math.floor(Math.random()*cardLibrary.length)], 'player', i));
+        eHand.appendChild(renderCard(cardLibrary[Math.floor(Math.random()*cardLibrary.length)], 'enemy', i));
+    }
+}
+
+function renderCard(data, owner, id) {
+    const card = document.createElement('div');
+    card.className = `card ${owner}`;
+    card.id = `${owner}-card-${id}`;
+    card.dataset.stats = JSON.stringify(data.stats);
+    card.onclick = () => selectCard(owner, id);
+    card.innerHTML = `
+        <div class="stat top">${data.stats[0]}</div>
+        <div class="stat right">${data.stats[1]}</div>
+        <div class="stat bottom">${data.stats[2]}</div>
+        <div class="stat left">${data.stats[3]}</div>
+        <div class="card-name">${data.name}</div>
+    `;
+    return card;
+}
+
+function selectCard(owner, id) {
+    if(owner !== 'player' || !isPlayerTurn) return;
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active-selection'));
+    const c = document.getElementById(`player-card-${id}`);
+    if(c) {
+        c.classList.add('active-selection');
+        selectedCard = { id, stats: JSON.parse(c.dataset.stats) };
+    }
+}
+
+function placeOnBoard(slot) {
+    if(!selectedCard || boardState[slot]) return;
+
+    const el = document.getElementById(`player-card-${selectedCard.id}`);
+    document.querySelectorAll('.slot')[slot].appendChild(el);
+    boardState[slot] = { owner: 'player', stats: selectedCard.stats };
+    
+    el.classList.remove('active-selection');
+    el.onclick = null;
+    
+    battle(slot);
+    movesMade++;
+    selectedCard = null;
+    
+    if (checkGameOver()) return;
+
+    isPlayerTurn = false;
+    updateTurnStatus();
+    setTimeout(enemyAI, 1000);
+}
+
+function battle(idx) {
+    const current = boardState[idx];
+    const neighbors = [
+        { pos: idx-3, s: 0, os: 2 }, // Top
+        { pos: idx+1, s: 1, os: 3, row: true }, // Right
+        { pos: idx+3, s: 2, os: 0 }, // Bottom
+        { pos: idx-1, s: 3, os: 1, row: true }  // Left
+    ];
+
+    neighbors.forEach(n => {
+        if(n.pos >= 0 && n.pos < 9 && boardState[n.pos]) {
+            if(n.row && Math.floor(n.pos/3) !== Math.floor(idx/3)) return;
+            const other = boardState[n.pos];
+            if(other.owner !== current.owner && current.stats[n.s] > other.stats[n.os]) {
+                other.owner = current.owner;
+                const cardEl = document.querySelectorAll('.slot')[n.pos].querySelector('.card');
+                cardEl.className = `card ${current.owner}`;
+            }
+        }
+    });
+}
+
+function enemyAI() {
+    const empty = boardState.map((s,i) => s === null ? i : null).filter(s => s !== null);
+    const eCards = document.querySelectorAll('#enemy-hand .card');
+    
+    if(empty.length > 0 && eCards.length > 0) {
+        const slot = empty[Math.floor(Math.random()*empty.length)];
+        const el = eCards[0];
+        document.querySelectorAll('.slot')[slot].appendChild(el);
+        boardState[slot] = { owner: 'enemy', stats: JSON.parse(el.dataset.stats) };
+        battle(slot);
+        movesMade++;
+    }
+
+    if (!checkGameOver()) {
+        isPlayerTurn = true;
+        updateTurnStatus();
+    }
+}
+
+function checkGameOver() {
+    if (movesMade === 9) {
+        let pCount = 0;
+        let eCount = 0;
+        boardState.forEach(s => {
+            if (s.owner === 'player') pCount++;
+            else eCount++;
+        });
+
+        const msg = pCount > eCount ? `GEWONNEN! (${pCount}-${eCount})` : `VERLOREN... (${eCount}-${pCount})`;
+        document.getElementById('turn-indicator').innerText = msg + " - HERSTARTEN...";
+        document.getElementById('turn-indicator').style.color = "#f1c40f";
+
+        // Automatische herstart na 3 seconden
+        setTimeout(initGame, 3000);
+        return true;
+    }
+    return false;
+}
+
+function updateTurnStatus() {
+    const i = document.getElementById('turn-indicator');
+    i.innerText = isPlayerTurn ? "UW BEURT - SELECTEER EEN KAART" : "INGEN ANALYSEERT...";
+    i.style.color = isPlayerTurn ? "#3498db" : "#e63946";
+}
+
+initGame();
+    </script>
+</body>
+</html>

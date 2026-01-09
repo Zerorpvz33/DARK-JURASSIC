@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Jurassic | Dino Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body { opacity: 0; transition: 0.5s; background: #000; color: white; }
+        
+        #map { 
+            height: 450px; 
+            width: 100%; 
+            border-radius: 10px; 
+            border: 1px solid #331111; 
+            margin-bottom: 20px;
+            z-index: 1;
+        }
+        
+        .tracker-layout { 
+            display: grid; 
+            grid-template-columns: 1fr 350px; 
+            gap: 20px; 
+        }
+        
+        .recent-list { 
+            background: #0a0a0a; 
+            border: 1px solid #331111; 
+            border-radius: 10px; 
+            padding: 20px; 
+            height: 450px; 
+            overflow-y: auto; 
+        }
+
+        .sighting-item { 
+            border-bottom: 1px solid #1a0505; 
+            padding: 12px 0; 
+            font-size: 0.85rem; 
+        }
+
+        .sighting-item:last-child { border: none; }
+
+        .btn-report { 
+            display: block; 
+            width: 100%; 
+            padding: 15px; 
+            background: #e63946; 
+            color: white; 
+            text-align: center; 
+            text-decoration: none; 
+            font-weight: bold; 
+            border-radius: 5px; 
+            margin-top: 15px;
+            transition: 0.3s;
+        }
+
+        .btn-report:hover { background: #ff4d5a; box-shadow: 0 0 15px rgba(230, 57, 70, 0.4); }
+
+        /* Dark mode map filter voor Leaflet */
+        .leaflet-tile-container { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #111; color: white; border: 1px solid #e63946; }
+
+        @media (max-width: 900px) { .tracker-layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html" style="text-decoration: none; display: flex; align-items: center;">
+                    <img src="logo.png" alt="Logo">
+                    <span>DarkJurassic</span>
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="container">
+        <h2 class="page-title"><i class="fa fa-crosshairs"></i> Global Dino Tracker</h2>
+        <p style="color: #88a; margin-bottom: 20px;">Klik op de kaart om een waarneming te rapporteren. Markers vervallen na 24 uur.</p>
+        
+        <div class="tracker-layout">
+            <div class="map-section">
+                <div id="map"></div>
+            </div>
+
+            <div class="info-section">
+                <div class="recent-list">
+                    <h3 style="font-size: 1rem; color: #e63946; margin-bottom: 15px; border-bottom: 1px solid #331111; padding-bottom: 10px;">
+                        <i class="fa fa-broadcast-tower"></i> Live Feed
+                    </h3>
+                    <div id="activity-feed">Verbinding maken met satelliet...</div>
+                </div>
+                <a href="#report-form" class="btn-report" onclick="showForm()">
+                    <i class="fa fa-plus-circle"></i> MELD WAARNEMING
+                </a>
+            </div>
+        </div>
+
+        <div id="report-form" style="display:none; background: #0a0a0a; padding: 30px; border-radius: 10px; border: 1px solid #e63946; margin-top: 30px; box-shadow: 0 0 20px rgba(230, 57, 70, 0.1);">
+            <h3 style="color: #e63946; margin-bottom: 5px;">Waarneming Registreren</h3>
+            <p id="latlng-text" style="font-size: 0.8rem; color: #888; margin-bottom: 20px; font-family: monospace;"></p>
+            
+            <label style="font-size: 0.8rem; color: #666; text-transform: uppercase;">Naam van het wezen</label>
+            <input type="text" id="dino-name" placeholder="Bijv: Tyrannosaurus Rex...">
+            
+            <label style="font-size: 0.8rem; color: #666; text-transform: uppercase;">Afbeelding URL</label>
+            <input type="text" id="dino-img" placeholder="https://link-naar-foto.jpg">
+            
+            <div style="margin-top: 20px;">
+                <button onclick="sendSighting()">VERZENDEN NAAR DATABASE</button>
+                <button onclick="hideForm()" style="background:transparent; color:#888; border: 1px solid #333; margin-left:10px;">ANNULEREN</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let map, selectedLat, selectedLng;
+        let markers = [];
+
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                document.body.style.opacity = "1";
+                initTracker();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function initTracker() {
+            map = L.map('map').setView([52.1326, 5.2913], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+            map.on('click', function(e) {
+                selectedLat = e.latlng.lat;
+                selectedLng = e.latlng.lng;
+                showForm();
+            });
+
+            loadData();
+        }
+
+        function showForm() {
+            document.getElementById('report-form').style.display = 'block';
+            document.getElementById('latlng-text').innerText = "Locatie: " + selectedLat.toFixed(6) + ", " + selectedLng.toFixed(6);
+            document.getElementById('report-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideForm() { document.getElementById('report-form').style.display = 'none'; }
+
+        function sendSighting() {
+            const name = document.getElementById('dino-name').value;
+            const img = document.getElementById('dino-img').value;
+            const user = auth.currentUser;
+            const myUsername = user.email.split('@')[0];
+
+            if (name && selectedLat) {
+                // 1. Opslaan van de melding
+                db.ref('global_species').push().set({
+                    name: name,
+                    location: "GPS: " + selectedLat.toFixed(3) + ", " + selectedLng.toFixed(3),
+                    image: img || "https://via.placeholder.com/400x250?text=No+Photo+Evidence",
+                    reportedBy: myUsername,
+                    lat: selectedLat,
+                    lng: selectedLng,
+                    timestamp: Date.now()
+                }).then(() => {
+                    // 2. XP Transactie (+50 XP)
+                    const userRef = db.ref('users/' + myUsername);
+                    userRef.transaction(currentData => {
+                        if (currentData === null) {
+                            return { xp: 50 };
+                        } else {
+                            currentData.xp = (currentData.xp || 0) + 50;
+                            return currentData;
+                        }
+                    });
+
+                    hideForm();
+                    document.getElementById('dino-name').value = "";
+                    document.getElementById('dino-img').value = "";
+                    alert("Melding verzonden naar satelliet. +50 XP verdiend!");
+                });
+            } else {
+                alert("Selecteer eerst een locatie op de kaart.");
+            }
+        }
+
+        function loadData() {
+            db.ref('global_species').on('value', (snapshot) => {
+                const feed = document.getElementById('activity-feed');
+                feed.innerHTML = "";
+                
+                markers.forEach(m => map.removeLayer(m));
+                markers = [];
+
+                const now = Date.now();
+                const expirationTime = 24 * 60 * 60 * 1000; // 24 uur
+
+                if (!snapshot.exists()) {
+                    feed.innerHTML = "<p style='color:#444;'>Geen actieve waarnemingen.</p>";
+                    return;
+                }
+
+                snapshot.forEach((child) => {
+                    const data = child.val();
+                    const timePassed = now - data.timestamp;
+
+                    // Voeg toe aan feed
+                    const item = document.createElement('div');
+                    item.className = 'sighting-item';
+                    const status = timePassed > expirationTime ? '<span style="color:#444;">[VERLOPEN]</span>' : '<span style="color:#2ecc71;">[ACTIEF]</span>';
+                    
+                    item.innerHTML = `<strong>${data.name}</strong> ${status}<br>
+                                     <span style="color:#88a; font-size:0.75rem;">${data.location}</span><br>
+                                     <span style="color:#444; font-size:0.7rem;">Agent: ${data.reportedBy}</span>`;
+                    feed.prepend(item);
+
+                    // Voeg toe aan kaart als actief
+                    if (data.lat && data.lng && timePassed < expirationTime) {
+                        const m = L.marker([data.lat, data.lng]).addTo(map)
+                            .bindPopup(`<div style="text-align:center;">
+                                <b style="color:#e63946;">${data.name}</b><br>
+                                <img src="${data.image}" style="width:100px; margin:5px 0; border-radius:3px;"><br>
+                                <small>Live Sighting door ${data.reportedBy}</small>
+                            </div>`);
+                        markers.push(m);
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
