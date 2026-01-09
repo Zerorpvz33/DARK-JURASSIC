@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        body { opacity: 0; transition: opacity 0.5s; background-color: #000; color: white; }
+        body { opacity: 0; transition: opacity 0.5s; background-color: #000; color: white; font-family: 'Segoe UI', sans-serif; }
         
         .profile-container {
             max-width: 900px;
@@ -41,6 +41,7 @@
             font-size: 4rem;
             font-weight: bold;
             box-shadow: 0 0 20px rgba(230, 57, 70, 0.2);
+            text-transform: uppercase;
         }
 
         .stat-box {
@@ -64,9 +65,10 @@
             height: 100%;
             width: 0%;
             transition: width 1s ease-in-out;
+            box-shadow: 0 0 10px #e63946;
         }
 
-        input, textarea {
+        textarea {
             width: 100%;
             background: #000;
             border: 1px solid #333;
@@ -74,6 +76,7 @@
             padding: 12px;
             border-radius: 5px;
             margin-top: 10px;
+            resize: none;
         }
 
         .save-btn {
@@ -86,6 +89,19 @@
             font-weight: bold;
             margin-top: 20px;
             width: 100%;
+            transition: 0.3s;
+        }
+        .save-btn:hover { background: #ff4d5a; transform: translateY(-2px); }
+        
+        input:disabled {
+            background: #111;
+            border: 1px solid #222;
+            color: #666;
+            cursor: not-allowed;
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -95,20 +111,16 @@
         <nav class="navbar">
             <div class="logo">
                 <a href="index.html" style="text-decoration: none; display: flex; align-items: center;">
-                    <img src="logo.png" alt="Logo">
-                    <span>DarkJurassic</span>
+                    <span style="color: white; font-weight: bold; font-size: 1.5rem;">DarkJurassic</span>
                 </a>
             </div>
             <ul class="nav-links">
-                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
-                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
-                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
-                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
-                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="forum.html">Forum</a></li>
+                <li><a href="cards.html">Cards</a></li>
+                <li><a href="friends.html">Friends</a></li>
+                <li class="active"><a href="profile.html">Profile</a></li>
+                <li><a href="blackmarket.html">Black Market</a></li>
             </ul>
         </nav>
     </header>
@@ -117,44 +129,46 @@
         <div class="profile-container">
             <div class="profile-sidebar">
                 <div class="avatar-large" id="profile-initial">?</div>
-                <h3 id="display-username" style="text-align:center; color: #e63946;">Agent</h3>
-                <p id="display-rank" style="text-align:center; font-size: 0.8rem; color: #888; text-transform: uppercase;">Novice Observer</p>
+                <h3 id="display-username" style="text-align:center; color: #e63946; margin-bottom: 5px;">Agent</h3>
+                <p id="display-rank" style="text-align:center; font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px;">Civilian</p>
                 
                 <hr style="border: 0; border-top: 1px solid #222; margin: 20px 0;">
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="stat-box">
-                        <small style="color:#555">XP</small>
-                        <div id="user-xp" style="font-weight:bold">0</div>
+                        <small style="color:#555; display: block; margin-bottom: 5px;">DATA XP</small>
+                        <div id="user-xp" style="font-weight:bold; color: #e63946;">0</div>
                     </div>
                     <div class="stat-box">
-                        <small style="color:#555">ROLE</small>
-                        <div id="user-role" style="font-weight:bold; font-size: 0.7rem;">USER</div>
+                        <small style="color:#555; display: block; margin-bottom: 5px;">ROLE</small>
+                        <div id="user-role" style="font-weight:bold; font-size: 0.7rem; color: #fff;">USER</div>
                     </div>
                 </div>
 
                 <div class="xp-progress-container">
                     <div class="xp-bar-fill" id="xp-bar"></div>
                 </div>
-                <small id="xp-needed" style="color: #444; font-size: 0.7rem;">100 XP until next rank</small>
+                <small id="xp-needed" style="color: #444; font-size: 0.7rem; display: block; text-align: center;">Loading Clearance...</small>
                 
-                <button onclick="auth.signOut()" class="save-btn" style="background: transparent; border: 1px solid #444; margin-top: 40px;">
-                    <i class="fa fa-sign-out-alt"></i> Abort Mission (Logout)
+                <button onclick="logout()" class="save-btn" style="background: transparent; border: 1px solid #444; margin-top: 40px;">
+                    <i class="fa fa-sign-out-alt"></i> Abort Mission
                 </button>
             </div>
 
             <div class="profile-main">
-                <h2 style="margin-bottom: 20px;"><i class="fa fa-id-card"></i> Personnel Files</h2>
+                <h2 style="margin-bottom: 20px;"><i class="fa fa-id-card" style="color: #e63946;"></i> Personnel Files</h2>
                 
-                <label style="color:#666; font-size: 0.8rem;">BIOGRAPHY / STATUS</label>
-                <textarea id="user-bio" rows="4" placeholder="Vertel andere agenten over je missie of uitrusting..."></textarea>
+                <label style="color:#666; font-size: 0.8rem; text-transform: uppercase;">Biography / Operational Status</label>
+                <textarea id="user-bio" rows="6" placeholder="Voer hier je missie-doelen of achtergrondverhaal in..."></textarea>
                 
-                <label style="color:#666; font-size: 0.8rem; margin-top: 20px; display: block;">CODENAME (EMAIL)</label>
-                <input type="text" id="user-email" disabled style="opacity: 0.5;">
+                <label style="color:#666; font-size: 0.8rem; margin-top: 25px; display: block; text-transform: uppercase;">Codename (Email)</label>
+                <input type="text" id="user-email" disabled>
 
-                <button onclick="saveProfile()" class="save-btn">UPDATE PERSONNEL FILE</button>
+                <button onclick="saveProfile()" class="save-btn">
+                    <i class="fa fa-save"></i> UPDATE PERSONNEL FILE
+                </button>
                 
-                <div id="status-msg" style="margin-top: 15px; text-align: center; font-size: 0.8rem;"></div>
+                <div id="status-msg" style="margin-top: 15px; text-align: center; font-size: 0.8rem; height: 20px;"></div>
             </div>
         </div>
     </div>
@@ -183,19 +197,22 @@
             }
         });
 
+        // Bereken rang op basis van XP
         function getRankInfo(xp) {
-            if (xp >= 1500) return { title: "InGen Whistleblower", next: 5000 };
-            if (xp >= 500) return { title: "Special Agent", next: 1500 };
-            if (xp >= 100) return { title: "Field Observer", next: 500 };
-            return { title: "Civilian", next: 100 };
+            if (xp >= 5000) return { title: "InGen Director", next: 10000 };
+            if (xp >= 2500) return { title: "Elite Tracker", next: 5000 };
+            if (xp >= 1000) return { title: "Field Agent", next: 2500 };
+            if (xp >= 500) return { title: "Observer", next: 1000 };
+            return { title: "Civilian", next: 500 };
         }
 
         function loadProfileData(user) {
             const username = user.email.split('@')[0];
             document.getElementById('user-email').value = user.email;
             document.getElementById('display-username').innerText = username;
-            document.getElementById('profile-initial').innerText = username.charAt(0).toUpperCase();
+            document.getElementById('profile-initial').innerText = username.charAt(0);
 
+            // Real-time data ophalen
             db.ref('users/' + username).on('value', snap => {
                 const data = snap.val() || {};
                 const xp = data.xp || 0;
@@ -204,30 +221,43 @@
                 document.getElementById('user-xp').innerText = xp;
                 document.getElementById('user-role').innerText = (data.role || "USER").toUpperCase();
                 document.getElementById('display-rank').innerText = rank.title;
-                document.getElementById('user-bio').value = data.bio || "";
+                
+                // Alleen bio laden als de gebruiker niet aan het typen is
+                if (document.activeElement !== document.getElementById('user-bio')) {
+                    document.getElementById('user-bio').value = data.bio || "";
+                }
 
-                // XP Balk berekening
+                // XP Balk animatie
                 const progress = (xp / rank.next) * 100;
                 document.getElementById('xp-bar').style.width = Math.min(progress, 100) + "%";
-                document.getElementById('xp-needed').innerText = (rank.next - xp) + " XP until next clearance level";
+                document.getElementById('xp-needed').innerText = (rank.next - xp) + " XP until " + rank.title + " Level Up";
             });
         }
 
         function saveProfile() {
-            const username = auth.currentUser.email.split('@')[0];
-            const bio = document.getElementById('user-bio').value;
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const username = user.email.split('@')[0];
+            const bioText = document.getElementById('user-bio').value;
             const statusMsg = document.getElementById('status-msg');
 
             db.ref('users/' + username).update({
-                bio: bio
+                bio: bioText
             }).then(() => {
                 statusMsg.style.color = "#2ecc71";
-                statusMsg.innerText = "Personnel files updated successfully.";
+                statusMsg.innerHTML = "<i class='fa fa-check'></i> Records Synchronized.";
                 setTimeout(() => statusMsg.innerText = "", 3000);
             }).catch(err => {
                 statusMsg.style.color = "#e63946";
-                statusMsg.innerText = "Error updating files: " + err.message;
+                statusMsg.innerText = "Sync Failed: " + err.message;
             });
+        }
+
+        function logout() {
+            if (confirm("Are you sure you want to terminate the session?")) {
+                auth.signOut().then(() => window.location.href = "login.html");
+            }
         }
     </script>
 </body>
