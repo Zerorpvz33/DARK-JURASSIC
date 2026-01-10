@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | Terminal Access</title>
+    <title>Dark Jurassic | Secure Terminal</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -14,231 +14,172 @@
     <style>
         :root {
             --red: #e63946;
-            --dark-bg: #050505;
-            --panel-bg: #0a0a0a;
-            --border: #222;
+            --red-glow: rgba(230, 57, 70, 0.4);
+            --dark-bg: #030303;
+            --panel-bg: rgba(10, 10, 10, 0.9);
+            --border: rgba(255, 255, 255, 0.08);
         }
 
         body { 
             opacity: 0; 
-            transition: opacity 1s; 
+            transition: opacity 1s ease-in-out; 
             background-color: var(--dark-bg); 
             color: white; 
             margin: 0;
             overflow-x: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
-        /* Achtergrond Grid Effect */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: radial-gradient(circle at 2px 2px, #111 1px, transparent 0);
-            background-size: 40px 40px;
-            z-index: -1;
-        }
-
-        /* Scanline Animatie */
-        body::after {
-            content: " ";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 4px, 3px 100%;
-            z-index: 1000;
-            pointer-events: none;
-        }
-
-        /* Verbeterde Navbar uit screenshot */
+        /* --- NAVIGATION --- */
         .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 40px;
-            background: #000;
-            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 25px; height: 70px; background: rgba(0,0,0,0.95);
+            border-bottom: 1px solid var(--border); position: fixed;
+            top: 0; width: 100%; box-sizing: border-box; z-index: 9999;
+            backdrop-filter: blur(10px);
         }
 
-        .nav-links {
-            display: flex;
-            gap: 20px;
-            list-style: none;
+        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .brand img { height: 28px; }
+        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 1rem; }
+
+        .menu-toggle { 
+            display: none; color: white; font-size: 1.5rem; cursor: pointer; 
+            z-index: 10001;
         }
 
-        .nav-links a {
-            color: #888;
-            text-decoration: none;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.3s;
+        /* Nav Links Desktop */
+        .nav-links { display: flex; gap: 15px; list-style: none; margin: 0; padding: 0; }
+        .nav-links a { 
+            color: #888; text-decoration: none; font-size: 0.7rem; 
+            font-weight: 700; text-transform: uppercase; transition: 0.3s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .nav-links a i { font-size: 0.8rem; opacity: 0.5; }
+        .nav-links a:hover { color: var(--red); }
+
+        /* Mobile Nav Logic */
+        @media (max-width: 1150px) {
+            .menu-toggle { display: block; }
+            .nav-links {
+                position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
+                background: #0a0a0a; flex-direction: column; padding: 100px 30px;
+                transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+                border-left: 1px solid var(--red); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            }
+            .nav-links.active { right: 0; }
+            .nav-links a { font-size: 0.9rem; padding: 15px 0; border-bottom: 1px solid #111; width: 100%; }
+            .nav-links a i { color: var(--red); opacity: 1; width: 25px; }
         }
 
-        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
-
-        .user-profile-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        .nav-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 9998; backdrop-filter: blur(3px);
         }
+        .nav-overlay.active { display: block; }
 
-        .user-initial-badge {
-            background: var(--red);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.8rem;
-        }
-
-        /* Hero Sectie */
+        /* --- HERO & CONTENT --- */
         .hero {
-            height: 85vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
         }
 
-        .glitch {
-            font-size: 4.5rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 10px;
-            margin: 0;
-            position: relative;
+        .glitch-title {
+            font-size: clamp(2rem, 10vw, 5rem); font-weight: 900;
+            text-transform: uppercase; margin-bottom: 20px;
         }
+        .red-accent { color: var(--red); text-shadow: 0 0 20px var(--red-glow); }
 
-        .blue-text { color: #eee; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-        .red-text { color: var(--red); text-shadow: 0 0 15px rgba(230, 57, 70, 0.5); }
-
-        .terminal-window {
-            background: #000;
-            border: 1px solid #331111;
-            padding: 20px;
-            border-radius: 8px;
-            width: 600px;
-            margin: 30px auto;
-            text-align: left;
-            font-family: 'Courier New', Courier, monospace;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+        .terminal-container {
+            background: var(--panel-bg); border: 1px solid var(--border);
+            max-width: 500px; margin: 0 auto; border-radius: 4px; overflow: hidden;
         }
+        .terminal-header { background: #151515; padding: 10px; display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .terminal-body { padding: 20px; font-family: monospace; font-size: 0.8rem; text-align: left; }
 
-        .typewriter {
-            overflow: hidden;
-            border-right: .15em solid var(--red);
-            white-space: nowrap;
-            margin: 0 auto;
-            letter-spacing: .15em;
-            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
-        }
-
-        @keyframes typing { from { width: 0 } to { width: 100% } }
-        @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: var(--red); } }
-
-        .btn-container {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 40px;
-        }
-
-        .main-btn {
-            padding: 15px 40px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        .btn-group { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }
+        .btn {
+            padding: 15px 30px; text-transform: uppercase; font-weight: 800;
+            font-size: 0.7rem; letter-spacing: 1px; text-decoration: none; border-radius: 2px;
             transition: 0.3s;
-            font-size: 0.8rem;
         }
+        .btn-primary { background: var(--red); color: white; }
+        .btn-outline { border: 1px solid #444; color: white; }
 
-        .primary { background: var(--red); color: white; border: 1px solid var(--red); }
-        .primary:hover { box-shadow: 0 0 20px var(--red); transform: translateY(-3px); }
-
-        .secondary { background: transparent; color: #eee; border: 1px solid #444; }
-        .secondary:hover { border-color: var(--red); color: var(--red); }
+        @media (max-width: 600px) {
+            .btn-group { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <nav class="navbar">
-            <div class="logo">
-                <a href="index.html" style="text-decoration: none; display: flex; align-items: center;">
-                    <img src="logo.png" alt="Logo" style="height: 30px; margin-right: 10px;">
-                    <span style="color: white; font-weight: bold;">DarkJurassic</span>
-                </a>
-            </div>
-            
-            <ul class="nav-links">
-                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
-                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
-                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
-                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
-                <li><a href="vault.html"><i class="fa fa-lock"></i> The Vault</a></li>
-                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <img src="logo.png" alt="DJ">
+            <span>DarkJurassic</span>
+        </a>
+        
+        <div class="menu-toggle" onclick="toggleMenu()"><i class="fa fa-bars"></i></div>
+        
+        <ul class="nav-links" id="nav-menu">
+            <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+            <li><a href="forum.html"><i class="fa fa-comments"></i> Intel</a></li>
+            <li><a href="sightings.html"><i class="fa fa-eye"></i> Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-users"></i> Agents</a></li>
+            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+            <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
+            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
+        </ul>
+    </nav>
 
-            </ul>
-
-            <div class="user-profile-header">
-                <i class="fa fa-bell" style="color: #555; cursor: pointer;"></i>
-                <div class="user-initial-badge" id="user-initial">?</div>
-                <span id="user-name" style="font-size: 0.85rem; color: #eee; font-weight: 500;">...</span>
-            </div>
-        </nav>
-    </header>
+    <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
 
     <main class="hero">
-        <div class="content">
-            <h1 class="glitch">
-                <span class="blue-text">DARK</span> <span class="red-text">JURASSIC</span>
-            </h1>
+        <div class="hero-content">
+            <h1 class="glitch-title">System <span class="red-accent">Breach</span></h1>
             
-            <div class="terminal-window">
-                <div style="color: #444; font-size: 0.7rem; margin-bottom: 10px;">> DE-EXTINCTION_MAINFRAME_v4.2.1</div>
-                <div class="typewriter" style="color: #2ecc71;">[CONNECTED] ACCESSING CLASSIFIED DATA...</div>
-                <div style="margin-top: 15px; color: #888; font-size: 0.8rem; line-height: 1.6;">
-                    System Status: <span style="color: var(--red);">Critical</span><br>
-                    Active Assets: Detected in multiple sectors.<br>
-                    Global Containment: <span style="color: #f1c40f;">Failing</span>
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <div class="dot" style="background:#ff5f56"></div>
+                    <div class="dot" style="background:#ffbd2e"></div>
+                    <div class="dot" style="background:#27c93f"></div>
+                </div>
+                <div class="terminal-body">
+                    <span style="color:var(--red)">[CRITICAL]</span> Connection Encrypted...<br>
+                    <span>> Initializing Resistance Protocol</span><br>
+                    <span style="color:#2ecc71;">> Welcome, Agent <span id="agent-name">...</span></span>
                 </div>
             </div>
 
-            <div class="btn-container">
-                <a href="forum.html" class="main-btn primary">
-                    Explore Intel <i class="fa fa-unlock-alt" style="margin-left: 10px;"></i>
-                </a>
-                <a href="sightings.html" class="main-btn secondary">
-                    Track Assets <i class="fa fa-crosshairs" style="margin-left: 10px;"></i>
-                </a>
-            </div>
-
-            <div style="margin-top: 60px; display: flex; justify-content: center; gap: 40px;">
-                <div style="text-align: left;">
-                    <div style="color: var(--red); font-size: 1.2rem; font-weight: bold;">1,284</div>
-                    <div style="color: #444; font-size: 0.6rem; letter-spacing: 2px;">ACTIVE AGENTS</div>
-                </div>
-                <div style="text-align: left;">
-                    <div style="color: var(--red); font-size: 1.2rem; font-weight: bold;">42</div>
-                    <div style="color: #444; font-size: 0.6rem; letter-spacing: 2px;">CONFIRMED SPECIES</div>
-                </div>
+            <div class="btn-group">
+                <a href="forum.html" class="btn btn-primary">Enter Intel</a>
+                <a href="profile.html" class="btn btn-outline">Profile</a>
             </div>
         </div>
     </main>
 
     <script>
+        // Navigatie Functie
+        function toggleMenu() {
+            const menu = document.getElementById('nav-menu');
+            const overlay = document.getElementById('nav-overlay');
+            const icon = document.querySelector('.menu-toggle i');
+            
+            menu.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            if(menu.classList.contains('active')) {
+                icon.className = 'fa fa-times';
+            } else {
+                icon.className = 'fa fa-bars';
+            }
+        }
+
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -255,8 +196,7 @@
         auth.onAuthStateChanged((user) => {
             if (user) {
                 const username = user.email.split('@')[0];
-                document.getElementById('user-name').innerText = username.toLowerCase();
-                document.getElementById('user-initial').innerText = username.charAt(0).toUpperCase();
+                document.getElementById('agent-name').innerText = username.toUpperCase();
                 document.body.style.opacity = "1";
             } else {
                 window.location.href = "login.html";

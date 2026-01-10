@@ -2,9 +2,8 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dark Jurassic | Secure DMs</title>
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -12,139 +11,181 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        body { opacity: 0; transition: 0.5s; background: #000; color: white; overflow: hidden; }
-        
-        .dm-container { 
-            display: grid; 
-            grid-template-columns: 280px 1fr; 
-            gap: 0; 
-            height: calc(100vh - 70px); 
-            background: #050505;
+        :root {
+            --red: #e63946;
+            --dark-bg: #030303;
+            --panel: #0d0d0d;
+            --border: rgba(255, 255, 255, 0.08);
         }
-        
+
+        body { 
+            background: var(--dark-bg); color: #e0e0e0; margin: 0; 
+            font-family: 'Inter', sans-serif; overflow: hidden;
+            opacity: 0; transition: opacity 0.5s;
+        }
+
+        /* --- STILLE NAVIGATIE FIX (GEEN BLUR OP TEKST) --- */
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; height: 65px; background: #000;
+            border-bottom: 1px solid var(--border); position: fixed;
+            top: 0; width: 100%; box-sizing: border-box; z-index: 10001;
+        }
+        .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+        .brand img { height: 24px; }
+        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 0.9rem; }
+
+        .menu-toggle { color: white; font-size: 1.3rem; cursor: pointer; z-index: 10002; }
+
+        .nav-links {
+            position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
+            background: #0a0a0a; flex-direction: column; padding: 80px 30px;
+            transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border-left: 1px solid var(--red); list-style: none; z-index: 10005; margin: 0;
+        }
+        .nav-links.active { right: 0; }
+        .nav-links a { 
+            color: #888; text-decoration: none; font-size: 0.85rem; padding: 15px 0;
+            font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #111;
+        }
+        .nav-links a i { color: var(--red); width: 20px; }
+        .nav-links li.active a { color: var(--red); }
+
+        .nav-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 10000; backdrop-filter: blur(4px);
+        }
+        .nav-overlay.active { display: block; }
+
+        /* --- DM CONTAINER --- */
+        .dm-container { 
+            display: grid; grid-template-columns: 320px 1fr; 
+            height: calc(100vh - 65px); margin-top: 65px; position: relative;
+        }
+
         .user-sidebar { 
-            background: #0a0a0a; 
-            border-right: 1px solid #222; 
-            padding: 15px; 
-            overflow-y: auto; 
+            background: #080808; border-right: 1px solid var(--border); 
+            padding: 10px; overflow-y: auto; z-index: 1;
         }
 
         .user-item { 
-            padding: 12px; 
-            cursor: pointer; 
-            border-radius: 5px;
-            margin-bottom: 5px;
-            border: 1px solid transparent;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #888;
+            padding: 12px; cursor: pointer; border-radius: 6px;
+            margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+            transition: 0.2s; background: rgba(255,255,255,0.02);
+        }
+        .user-item.active { background: var(--red); color: white; }
+
+        /* --- CHAT AREA --- */
+        .chat-area { 
+            display: flex; flex-direction: column; background: #050505; 
+            z-index: 5;
         }
 
-        .user-item:hover { background: #111; color: #fff; }
-        .user-item.active { background: #1a1a1a; color: #e63946; border-color: #e63946; }
-
-        .chat-area { display: flex; flex-direction: column; background: #000; }
-
         #dm-header { 
-            padding: 15px 25px; 
-            background: #0a0a0a; 
-            border-bottom: 1px solid #222; 
-            font-weight: bold; 
-            color: #e63946;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            padding: 12px 20px; background: var(--panel); 
+            border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px;
+        }
+
+        .back-btn { 
+            display: none; width: 32px; height: 32px; align-items: center; justify-content: center;
+            background: #1a1a1a; border-radius: 50%; cursor: pointer; 
         }
 
         #dm-window { 
-            flex-grow: 1; 
-            padding: 25px; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px;
+            flex-grow: 1; padding: 20px; overflow-y: auto; 
+            display: flex; flex-direction: column; gap: 10px;
         }
         
         .bubble { 
-            padding: 10px 15px; 
-            border-radius: 8px; 
-            max-width: 65%; 
-            font-size: 0.9rem; 
-            word-wrap: break-word;
+            padding: 10px 14px; border-radius: 10px; max-width: 80%; font-size: 0.85rem; 
         }
-
-        .sent { align-self: flex-end; background: #e63946; color: white; }
-        .received { align-self: flex-start; background: #222; color: #ccc; }
+        .sent { align-self: flex-end; background: var(--red); color: white; border-bottom-right-radius: 2px; }
+        .received { align-self: flex-start; background: #222; color: #eee; border-bottom-left-radius: 2px; }
 
         .input-bar { 
-            padding: 20px; 
-            background: #0a0a0a; 
-            display: flex; 
-            gap: 10px; 
-            border-top: 1px solid #222;
+            padding: 15px; background: var(--panel); display: flex; gap: 10px;
+            border-top: 1px solid var(--border);
         }
-
         .input-bar input { 
-            flex-grow: 1; 
-            padding: 12px; 
-            background: #000; 
-            border: 1px solid #333; 
-            color: white; 
-            border-radius: 4px; 
+            flex-grow: 1; padding: 12px; background: #000; border: 1px solid #333;
+            color: white; border-radius: 20px; outline: none;
         }
-
         .input-bar button {
-            background: #e63946; color: #fff; border: none; padding: 0 20px; border-radius: 4px; cursor: pointer;
+            background: var(--red); border: none; width: 42px; height: 42px;
+            border-radius: 50%; color: white; cursor: pointer;
         }
 
-        /* Verberg scrollbars voor de clean look */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #222; }
+        /* --- MOBILE LOGIC --- */
+        @media (max-width: 850px) {
+            .dm-container { grid-template-columns: 1fr; }
+            .user-sidebar { width: 100%; }
+            .chat-area {
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                transform: translateX(100%); transition: 0.3s ease;
+            }
+            .chat-area.active { transform: translateX(0); }
+            .back-btn { display: flex; }
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <nav class="navbar">
-            <div class="logo"><a href="index.html"><span>DarkJurassic</span></a></div>
-            <ul class="nav-links">
-                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
-                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
-                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
-                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
-                <li><a href="vault.html"><i class="fa fa-lock"></i> The Vault</a></li>
-                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
-            </ul>
-        </nav>
-    </header>
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <img src="logo.png" alt="DJ">
+            <span>DarkJurassic</span>
+        </a>
+        <div class="menu-toggle" onclick="toggleMenu()"><i class="fa fa-bars"></i></div>
+        <ul class="nav-links" id="nav-menu">
+            <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+            <li><a href="forum.html"><i class="fa fa-comments"></i> Intel</a></li>
+            <li><a href="sightings.html"><i class="fa fa-eye"></i> Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-users"></i> Agents</a></li>
+            <li class="active"><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+            <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
+            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
+        </ul>
+    </nav>
+    <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
 
     <div class="dm-container">
         <div class="user-sidebar" id="user-list">
-            <h4 style="color:#444; font-size:0.7rem; margin-bottom:15px; letter-spacing:1px;">ACTIVE PERSONNEL</h4>
-            <div id="loading-users">Decrypting user list...</div>
+            <h4 style="color:#444; font-size:0.6rem; margin:10px; text-transform:uppercase; letter-spacing:1px;">Agent Nodes</h4>
         </div>
 
-        <div class="chat-area">
-            <div id="dm-header">Select an agent to begin transmission</div>
-            <div id="dm-window">
-                <div style="margin: auto; text-align: center; color: #222;">
-                    <i class="fa fa-shield-alt" style="font-size: 4rem; margin-bottom: 20px;"></i>
-                    <p>Secure Communication Line</p>
+        <div class="chat-area" id="chat-screen">
+            <div id="dm-header">
+                <div class="back-btn" onclick="closeChat()"><i class="fa fa-arrow-left"></i></div>
+                <div>
+                    <div id="target-name" style="font-weight:900; font-size:0.8rem; text-transform:uppercase;">Select Agent</div>
+                    <div style="font-size:0.5rem; color:var(--red); letter-spacing:1px;">SECURE_CHANNEL</div>
                 </div>
             </div>
+            
+            <div id="dm-window"></div>
+
             <div class="input-bar">
-                <input type="text" id="dm-input" placeholder="Enter encrypted message..." autocomplete="off">
+                <input type="text" id="dm-input" placeholder="Type message..." autocomplete="off">
                 <button onclick="sendDM()"><i class="fa fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
 
     <script>
+        function toggleMenu() {
+            document.getElementById('nav-menu').classList.toggle('active');
+            document.getElementById('nav-overlay').classList.toggle('active');
+        }
+
+        function closeChat() { 
+            document.getElementById('chat-screen').classList.remove('active'); 
+        }
+
+        // Firebase Config (Gebruik jouw eigen data)
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -166,47 +207,43 @@
             if(user) {
                 document.body.style.opacity = "1";
                 loadUsers();
-            } else {
-                window.location.href = "login.html";
-            }
+            } else { window.location.href = "login.html"; }
         });
 
         function loadUsers() {
             const myUsername = auth.currentUser.email.split('@')[0];
             db.ref('users').on('value', (snapshot) => {
                 const list = document.getElementById('user-list');
-                const loading = document.getElementById('loading-users');
-                if(loading) loading.remove();
-                
-                // Bewaar de huidige selectie
-                const currentSelected = selectedUser;
-                
-                // Clear de lijst behalve de titel
-                const title = list.querySelector('h4');
-                list.innerHTML = "";
-                list.appendChild(title);
+                list.innerHTML = '<h4 style="color:#444; font-size:0.6rem; margin:10px; text-transform:uppercase; letter-spacing:1px;">Agent Nodes</h4>';
 
                 snapshot.forEach(child => {
                     const username = child.key;
                     if(username !== myUsername) {
+                        const data = child.val();
+                        const displayName = data.displayName || username;
                         const item = document.createElement('div');
-                        item.className = `user-item ${username === currentSelected ? 'active' : ''}`;
-                        item.innerHTML = `<i class="fa fa-circle" style="font-size:0.5rem; color:#2ecc71;"></i> ${username}`;
-                        item.onclick = () => startChat(username, item);
+                        item.className = `user-item ${username === selectedUser ? 'active' : ''}`;
+                        item.innerHTML = `
+                            <div style="width:30px; height:30px; background:#1a1a1a; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--red); font-size:0.7rem; font-weight:900;">
+                                ${displayName.charAt(0).toUpperCase()}
+                            </div>
+                            <span>${displayName}</span>
+                        `;
+                        item.onclick = () => startChat(username, displayName, item);
                         list.appendChild(item);
                     }
                 });
             });
         }
 
-        function startChat(username, element) {
+        function startChat(username, display, element) {
             selectedUser = username;
             document.querySelectorAll('.user-item').forEach(i => i.classList.remove('active'));
             element.classList.add('active');
-            document.getElementById('dm-header').innerText = "COMM CHANNEL: " + username;
+            document.getElementById('target-name').innerText = display;
+            document.getElementById('chat-screen').classList.add('active');
 
             const myUsername = auth.currentUser.email.split('@')[0];
-            // Maak een unieke ID die voor beide gebruikers hetzelfde is
             const chatId = [myUsername, username].sort().join("_CHAT_");
             
             if(chatRef) chatRef.off();
@@ -215,12 +252,10 @@
             chatRef.on('value', (snapshot) => {
                 const win = document.getElementById('dm-window');
                 win.innerHTML = "";
-                
                 snapshot.forEach(child => {
                     const m = child.val();
-                    const isMe = m.sender === myUsername;
                     const bubble = document.createElement('div');
-                    bubble.className = `bubble ${isMe ? 'sent' : 'received'}`;
+                    bubble.className = `bubble ${m.sender === myUsername ? 'sent' : 'received'}`;
                     bubble.innerText = m.text;
                     win.appendChild(bubble);
                 });
@@ -235,7 +270,7 @@
                 chatRef.push().set({
                     sender: myUsername,
                     text: input.value,
-                    timestamp: Date.now()
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
                 input.value = "";
             }

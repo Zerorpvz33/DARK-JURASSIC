@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | The Vault</title>
+    <title>Dark Jurassic | Classified Vault</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -12,122 +12,179 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        body { background-color: #050505; color: white; opacity: 0; transition: 0.5s; font-family: 'Courier New', Courier, monospace; }
-        
-        .vault-header {
-            border-bottom: 1px solid #e63946;
-            padding: 40px 0;
-            margin-bottom: 40px;
-            text-align: center;
+        :root {
+            --red: #e63946;
+            --dark-bg: #030303;
+            --panel: #0d0d0d;
+            --border: rgba(255, 255, 255, 0.08);
         }
 
-        .vault-header h1 { font-size: 2.5rem; letter-spacing: 5px; color: #e63946; }
-        .vault-header p { color: #555; text-transform: uppercase; font-size: 0.8rem; }
+        body { 
+            background-color: var(--dark-bg); color: #e0e0e0; 
+            font-family: 'Inter', sans-serif; margin: 0;
+            overflow-x: hidden; opacity: 0; transition: 0.5s;
+        }
 
+        /* --- NAVIGATION & MOBILE DRAWER --- */
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 25px; height: 70px; background: rgba(0,0,0,0.95);
+            border-bottom: 1px solid var(--border); position: fixed;
+            top: 0; width: 100%; box-sizing: border-box; z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .brand img { height: 28px; }
+        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 1rem; }
+
+        .menu-toggle { display: none; color: white; font-size: 1.5rem; cursor: pointer; z-index: 10001; }
+
+        .nav-links { display: flex; gap: 15px; list-style: none; margin: 0; padding: 0; }
+        .nav-links a { 
+            color: #888; text-decoration: none; font-size: 0.7rem; 
+            font-weight: 700; text-transform: uppercase; transition: 0.3s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
+
+        @media (max-width: 1150px) {
+            .menu-toggle { display: block; }
+            .nav-links {
+                position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
+                background: #0a0a0a; flex-direction: column; padding: 100px 30px;
+                transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+                border-left: 1px solid var(--red); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            }
+            .nav-links.active { right: 0; }
+            .nav-links a { font-size: 0.9rem; padding: 15px 0; border-bottom: 1px solid #111; width: 100%; }
+        }
+
+        .nav-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 9998; backdrop-filter: blur(3px);
+        }
+        .nav-overlay.active { display: block; }
+
+        /* --- VAULT HEADER --- */
+        .container { max-width: 1200px; margin: 100px auto 50px; padding: 0 20px; }
+
+        .vault-header {
+            border-left: 4px solid var(--red);
+            padding-left: 20px;
+            margin-bottom: 40px;
+        }
+        .vault-header h1 { font-size: 2rem; font-weight: 900; margin: 0; text-transform: uppercase; color: #fff; }
+        .vault-header p { color: #555; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 2px; }
+
+        /* --- FILE GRID --- */
         .file-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px 50px;
+            gap: 15px;
         }
 
         .file-card {
-            background: #0a0a0a;
-            border: 1px solid #222;
+            background: var(--panel);
+            border: 1px solid var(--border);
             padding: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: 0.3s;
             position: relative;
             overflow: hidden;
-            transition: 0.3s;
-            cursor: pointer;
         }
 
-        .file-card.locked { opacity: 0.6; cursor: not-allowed; filter: grayscale(1); }
-        .file-card.locked::before {
-            content: "\f023"; /* Lock icon */
-            font-family: "Font Awesome 5 Free";
-            font-weight: 900;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 3rem;
-            color: rgba(230, 57, 70, 0.3);
-            z-index: 2;
-        }
-
-        .file-card:not(.locked):hover {
-            border-color: #e63946;
+        .file-card:not(.locked):hover { 
+            border-color: var(--red); 
             background: #111;
-            box-shadow: 0 0 20px rgba(230, 57, 70, 0.1);
+            transform: translateY(-3px);
         }
 
-        .file-icon { font-size: 3rem; margin-bottom: 15px; color: #333; }
-        .file-card:not(.locked) .file-icon { color: #e63946; }
+        .file-card.locked { 
+            opacity: 0.3; 
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+        
+        .file-icon { font-size: 1.5rem; color: var(--red); }
+        .locked .file-icon { color: #333; }
 
-        .file-info h3 { font-size: 1rem; margin-bottom: 5px; color: #eee; }
-        .file-info span { font-size: 0.7rem; color: #444; text-transform: uppercase; }
+        .file-info h3 { font-size: 0.85rem; margin: 0; color: #fff; }
+        .file-info span { font-size: 0.6rem; color: #555; text-transform: uppercase; font-weight: 800; }
 
-        .access-notice {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #e63946;
-            color: black;
-            font-size: 0.6rem;
-            text-align: center;
-            padding: 5px 0;
-            font-weight: bold;
+        .xp-required {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: rgba(230, 57, 70, 0.1); color: var(--red); font-size: 0.55rem;
+            text-align: center; padding: 4px 0; font-weight: 900;
         }
 
-        /* Overlay for viewing files */
+        /* --- VIEWER --- */
         #viewer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.98);
             display: none; justify-content: center; align-items: center;
-            z-index: 1000; flex-direction: column;
+            z-index: 10000; flex-direction: column; padding: 20px;
+            backdrop-filter: blur(10px);
         }
-        #viewer img { max-width: 80%; max-height: 80%; border: 2px solid #e63946; }
-        .close-viewer { position: absolute; top: 20px; right: 20px; font-size: 2rem; cursor: pointer; color: #e63946; }
+        #viewer img { max-width: 95%; max-height: 70vh; border: 1px solid #222; }
+        #view-title { font-size: 0.9rem; color: #fff; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        .close-viewer { position: absolute; top: 25px; right: 25px; font-size: 1.5rem; cursor: pointer; color: #fff; }
+
+        @media (max-width: 600px) {
+            .vault-header h1 { font-size: 1.5rem; }
+            .file-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <nav class="navbar">
-            <div class="logo"><span>DarkJurassic</span></div>
-            <ul class="nav-links">
-                <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-                <li><a href="forum.html"><i class="fa fa-comments"></i> Forum</a></li>
-                <li><a href="sightings.html"><i class="fa fa-eye"></i> Sightings</a></li>
-                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Dinosaurs</a></li>
-                <li><a href="users.html"><i class="fa fa-users"></i> Users</a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-                <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-                <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Black Market</a></li>
-                <li><a href="vault.html"><i class="fa fa-lock"></i> The Vault</a></li>
-                <li><a href="profile.html"><i class="fa fa-user"></i> Profile</a></li>
-            </ul>
-        </nav>
-    </header>
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <img src="logo.png" alt="DJ">
+            <span>DarkJurassic</span>
+        </a>
+        <div class="menu-toggle" onclick="toggleMenu()"><i class="fa fa-bars"></i></div>
+        <ul class="nav-links" id="nav-menu">
+            <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
+            <li><a href="forum.html"><i class="fa fa-comments"></i> Intel</a></li>
+            <li><a href="sightings.html"><i class="fa fa-eye"></i> Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-users"></i> Agents</a></li>
+            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+            <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
+            <li class="active"><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
+        </ul>
+    </nav>
+    <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
 
-    <div class="vault-header">
-        <h1>IN-GEN TERMINAL</h1>
-        <p>Restricted Access - Unauthorized decryption is punishable by termination</p>
-    </div>
-
-    <div class="file-grid" id="file-container">
+    <div class="container">
+        <div class="vault-header">
+            <h1>Classified Vault</h1>
+            <p>InGen Internal Assets & Blueprints</p>
         </div>
 
+        <div class="file-grid" id="file-container">
+            </div>
+    </div>
+
     <div id="viewer" onclick="this.style.display='none'">
-        <span class="close-viewer">&times;</span>
+        <span class="close-viewer"><i class="fa fa-times"></i></span>
         <img id="view-img" src="">
-        <h2 id="view-title" style="margin-top: 20px;"></h2>
+        <h2 id="view-title"></h2>
+        <p style="color: var(--red); font-size: 0.6rem; font-weight: 900; margin-top: 10px; letter-spacing: 2px;">ENCRYPTED DATA // CLICK TO EXIT</p>
     </div>
 
     <script>
+        function toggleMenu() {
+            document.getElementById('nav-menu').classList.toggle('active');
+            document.getElementById('nav-overlay').classList.toggle('active');
+        }
+
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -142,12 +199,10 @@
         const auth = firebase.auth();
 
         const inGenFiles = [
-            { name: "Project Indominus.pdf", type: "Genetics", xp: 0, img: "https://images.squarespace-cdn.com/content/v1/51b3dc8ee4b051b96ceb10de/1433253591461-F2JUXG7O6N2C62C6X8Y4/Indominus_Rex_Blueprint.jpg" },
-            { name: "Site B Evacuation.log", type: "Security", xp: 500, img: "https://i.pinimg.com/736x/8a/8a/8a/8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a.jpg" },
-            { name: "Nedry_System_Backdoor.bat", type: "System", xp: 1500, img: "https://i.redd.it/9n6u8h6u4v311.jpg" },
-            { name: "Embryo_Inventory_v4.xls", type: "Assets", xp: 3000, img: "https://jurassicoutpost.com/wp-content/uploads/2016/05/Cryocan_Schematic.jpg" },
-            { name: "Wu_Secret_Hybrid_Draft.dna", type: "Classified", xp: 7500, img: "https://i.pinimg.com/originals/74/4d/74/744d7482810931215161093121516.jpg" },
-            { name: "Lockwood_Clone_Thesis.doc", type: "Forbidden", xp: 15000, img: "https://static.wikia.nocookie.net/jurassicpark/images/a/a2/Lockwood_Diary.png" }
+            { name: "Indominus_Blueprint.pdf", type: "Genetics", xp: 0, img: "https://images.squarespace-cdn.com/content/v1/51b3dc8ee4b051b96ceb10de/1433253591461-F2JUXG7O6N2C62C6X8Y4/Indominus_Rex_Blueprint.jpg" },
+            { name: "CryoCan_Schematic.log", type: "Security", xp: 500, img: "https://jurassicoutpost.com/wp-content/uploads/2016/05/Cryocan_Schematic.jpg" },
+            { name: "Nedry_Backdoor.sys", type: "Hacking", xp: 1500, img: "https://i.redd.it/9n6u8h6u4v311.jpg" },
+            { name: "Lockwood_Diary_v2.dna", type: "Classified", xp: 5000, img: "https://static.wikia.nocookie.net/jurassicpark/images/a/a2/Lockwood_Diary.png" }
         ];
 
         auth.onAuthStateChanged(user => {
@@ -159,9 +214,7 @@
                     const userData = snap.val() || {};
                     renderVault(userData.xp || 0);
                 });
-            } else {
-                window.location.href = "login.html";
-            }
+            } else { window.location.href = "login.html"; }
         });
 
         function renderVault(userXP) {
@@ -170,22 +223,19 @@
                 const isLocked = userXP < file.xp;
                 return `
                     <div class="file-card ${isLocked ? 'locked' : ''}" onclick="openFile('${file.img}', '${file.name}', ${isLocked})">
-                        <div class="file-icon"><i class="fa fa-file-code"></i></div>
+                        <div class="file-icon"><i class="fa ${isLocked ? 'fa-lock' : 'fa-file-contract'}"></i></div>
                         <div class="file-info">
                             <h3>${file.name}</h3>
-                            <span>Sector: ${file.type}</span>
+                            <span>${file.type}</span>
                         </div>
-                        ${isLocked ? `<div class="access-notice">REQUIRED: ${file.xp} XP</div>` : ''}
+                        ${isLocked ? `<div class="xp-required">CLEARANCE LEVEL: ${file.xp} XP</div>` : ''}
                     </div>
                 `;
             }).join('');
         }
 
         function openFile(img, title, locked) {
-            if (locked) {
-                alert("ACCESS DENIED. Onvoldoende clearance level (XP te laag).");
-                return;
-            }
+            if (locked) return;
             document.getElementById('view-img').src = img;
             document.getElementById('view-title').innerText = title;
             document.getElementById('viewer').style.display = 'flex';
