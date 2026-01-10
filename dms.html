@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dark Jurassic | Secure DMs</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -16,26 +16,27 @@
             --dark-bg: #030303;
             --panel: #0d0d0d;
             --border: rgba(255, 255, 255, 0.08);
+            --nav-height: 65px;
         }
 
         body { 
             background: var(--dark-bg); color: #e0e0e0; margin: 0; 
             font-family: 'Inter', sans-serif; overflow: hidden;
             opacity: 0; transition: opacity 0.5s;
+            height: 100vh; height: 100dvh;
         }
 
-        /* --- STILLE NAVIGATIE FIX (GEEN BLUR OP TEKST) --- */
+        /* --- NAVBAR --- */
         .navbar {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px; height: 65px; background: #000;
+            padding: 0 20px; height: var(--nav-height); background: #000;
             border-bottom: 1px solid var(--border); position: fixed;
             top: 0; width: 100%; box-sizing: border-box; z-index: 10001;
         }
         .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; }
         .brand img { height: 24px; }
         .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 0.9rem; }
-
-        .menu-toggle { color: white; font-size: 1.3rem; cursor: pointer; z-index: 10002; }
+        .menu-toggle { color: white; font-size: 1.3rem; cursor: pointer; }
 
         .nav-links {
             position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
@@ -49,24 +50,23 @@
             font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 12px;
             border-bottom: 1px solid #111;
         }
-        .nav-links a i { color: var(--red); width: 20px; }
-        .nav-links li.active a { color: var(--red); }
-
         .nav-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 10000; backdrop-filter: blur(4px);
         }
         .nav-overlay.active { display: block; }
 
-        /* --- DM CONTAINER --- */
+        /* --- DM LAYOUT --- */
         .dm-container { 
             display: grid; grid-template-columns: 320px 1fr; 
-            height: calc(100vh - 65px); margin-top: 65px; position: relative;
+            height: calc(100vh - var(--nav-height)); 
+            height: calc(100dvh - var(--nav-height));
+            margin-top: var(--nav-height); position: relative;
         }
 
         .user-sidebar { 
             background: #080808; border-right: 1px solid var(--border); 
-            padding: 10px; overflow-y: auto; z-index: 1;
+            padding: 10px; overflow-y: auto;
         }
 
         .user-item { 
@@ -76,15 +76,16 @@
         }
         .user-item.active { background: var(--red); color: white; }
 
-        /* --- CHAT AREA --- */
+        /* --- CHAT AREA FIXES --- */
         .chat-area { 
             display: flex; flex-direction: column; background: #050505; 
-            z-index: 5;
+            height: 100%; overflow: hidden;
         }
 
         #dm-header { 
             padding: 12px 20px; background: var(--panel); 
             border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 15px;
+            flex-shrink: 0;
         }
 
         .back-btn { 
@@ -93,36 +94,42 @@
         }
 
         #dm-window { 
-            flex-grow: 1; padding: 20px; overflow-y: auto; 
+            flex: 1; padding: 20px; overflow-y: auto; 
             display: flex; flex-direction: column; gap: 10px;
+            -webkit-overflow-scrolling: touch;
         }
         
-        .bubble { 
-            padding: 10px 14px; border-radius: 10px; max-width: 80%; font-size: 0.85rem; 
-        }
+        .bubble { padding: 10px 14px; border-radius: 12px; max-width: 85%; font-size: 0.85rem; line-height: 1.4; }
         .sent { align-self: flex-end; background: var(--red); color: white; border-bottom-right-radius: 2px; }
         .received { align-self: flex-start; background: #222; color: #eee; border-bottom-left-radius: 2px; }
 
         .input-bar { 
-            padding: 15px; background: var(--panel); display: flex; gap: 10px;
-            border-top: 1px solid var(--border);
+            padding: 12px 15px; background: var(--panel); display: flex; gap: 10px;
+            border-top: 1px solid var(--border); flex-shrink: 0;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
         }
         .input-bar input { 
-            flex-grow: 1; padding: 12px; background: #000; border: 1px solid #333;
-            color: white; border-radius: 20px; outline: none;
+            flex: 1; padding: 12px 18px; background: #000; border: 1px solid #333;
+            color: white; border-radius: 25px; outline: none; font-size: 16px; /* 16px voorkomt zoom op iOS */
         }
         .input-bar button {
-            background: var(--red); border: none; width: 42px; height: 42px;
-            border-radius: 50%; color: white; cursor: pointer;
+            background: var(--red); border: none; width: 44px; height: 44px;
+            border-radius: 50%; color: white; cursor: pointer; flex-shrink: 0;
         }
 
-        /* --- MOBILE LOGIC --- */
+        /* --- MOBILE RESPONSIVE --- */
         @media (max-width: 850px) {
             .dm-container { grid-template-columns: 1fr; }
-            .user-sidebar { width: 100%; }
             .chat-area {
-                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                transform: translateX(100%); transition: 0.3s ease;
+                position: fixed; 
+                top: var(--nav-height); 
+                left: 0; 
+                width: 100%; 
+                height: calc(100vh - var(--nav-height));
+                height: calc(100dvh - var(--nav-height));
+                transform: translateX(100%); 
+                transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 9999;
             }
             .chat-area.active { transform: translateX(0); }
             .back-btn { display: flex; }
@@ -185,7 +192,7 @@
             document.getElementById('chat-screen').classList.remove('active'); 
         }
 
-        // Firebase Config (Gebruik jouw eigen data)
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -211,7 +218,7 @@
         });
 
         function loadUsers() {
-            const myUsername = auth.currentUser.email.split('@')[0];
+            const myUsername = auth.currentUser.email.split('@')[0].replace(/\./g, '_');
             db.ref('users').on('value', (snapshot) => {
                 const list = document.getElementById('user-list');
                 list.innerHTML = '<h4 style="color:#444; font-size:0.6rem; margin:10px; text-transform:uppercase; letter-spacing:1px;">Agent Nodes</h4>';
@@ -220,7 +227,7 @@
                     const username = child.key;
                     if(username !== myUsername) {
                         const data = child.val();
-                        const displayName = data.displayName || username;
+                        const displayName = data.codename || data.displayName || username;
                         const item = document.createElement('div');
                         item.className = `user-item ${username === selectedUser ? 'active' : ''}`;
                         item.innerHTML = `
@@ -243,7 +250,7 @@
             document.getElementById('target-name').innerText = display;
             document.getElementById('chat-screen').classList.add('active');
 
-            const myUsername = auth.currentUser.email.split('@')[0];
+            const myUsername = auth.currentUser.email.split('@')[0].replace(/\./g, '_');
             const chatId = [myUsername, username].sort().join("_CHAT_");
             
             if(chatRef) chatRef.off();
@@ -265,7 +272,7 @@
 
         function sendDM() {
             const input = document.getElementById('dm-input');
-            const myUsername = auth.currentUser.email.split('@')[0];
+            const myUsername = auth.currentUser.email.split('@')[0].replace(/\./g, '_');
             if(input.value.trim() !== "" && selectedUser !== "") {
                 chatRef.push().set({
                     sender: myUsername,
@@ -273,11 +280,23 @@
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
                 input.value = "";
+                // Scroll naar beneden na versturen
+                const win = document.getElementById('dm-window');
+                setTimeout(() => { win.scrollTop = win.scrollHeight; }, 100);
             }
         }
 
+        // Enter-toets fix
         document.getElementById('dm-input').addEventListener("keypress", (e) => {
             if (e.key === "Enter") sendDM();
+        });
+
+        // Toetsenbord/Resize fix voor mobiel
+        window.visualViewport.addEventListener('resize', () => {
+            if (document.activeElement.tagName === 'INPUT') {
+                const win = document.getElementById('dm-window');
+                win.scrollTop = win.scrollHeight;
+            }
         });
     </script>
 </body>

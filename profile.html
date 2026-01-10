@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dark Jurassic | Intelligence Dossier</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -24,48 +24,45 @@
             overflow-x: hidden;
         }
 
-        /* --- NAVIGATION & MOBILE DRAWER --- */
+        /* --- NAVBAR & NAVIGATIE --- */
         .navbar {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 25px; height: 70px; background: rgba(0,0,0,0.95);
+            padding: 0 20px; height: 65px; background: #000;
             border-bottom: 1px solid var(--border); position: fixed;
-            top: 0; width: 100%; box-sizing: border-box; z-index: 9999;
-            backdrop-filter: blur(10px);
+            top: 0; width: 100%; box-sizing: border-box; z-index: 10001;
         }
         .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand img { height: 28px; }
-        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 1rem; }
+        .brand img { height: 26px; }
+        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 0.9rem; }
 
-        .menu-toggle { display: none; color: white; font-size: 1.5rem; cursor: pointer; z-index: 10001; }
+        .menu-toggle { color: white; font-size: 1.3rem; cursor: pointer; z-index: 10002; }
 
-        .nav-links { display: flex; gap: 15px; list-style: none; margin: 0; padding: 0; }
+        .nav-links {
+            position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
+            background: #0a0a0a; flex-direction: column; padding: 80px 30px;
+            transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border-left: 1px solid var(--red); list-style: none; z-index: 10005; margin: 0;
+            box-sizing: border-box;
+        }
+        .nav-links.active { right: 0; }
+        .nav-links li { width: 100%; }
         .nav-links a { 
-            color: #888; text-decoration: none; font-size: 0.7rem; 
-            font-weight: 700; text-transform: uppercase; transition: 0.3s;
-            display: flex; align-items: center; gap: 6px;
+            color: #888; text-decoration: none; font-size: 0.85rem; padding: 15px 0;
+            font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #111; transition: 0.3s;
         }
-        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
-
-        @media (max-width: 1150px) {
-            .menu-toggle { display: block; }
-            .nav-links {
-                position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
-                background: #0a0a0a; flex-direction: column; padding: 100px 30px;
-                transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-                border-left: 1px solid var(--red); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            }
-            .nav-links.active { right: 0; }
-            .nav-links a { font-size: 0.9rem; padding: 15px 0; border-bottom: 1px solid #111; width: 100%; }
-        }
+        .nav-links a i { color: var(--red); width: 20px; text-align: center; }
+        .nav-links li.active a { color: var(--red); }
+        .nav-links a:hover { color: #fff; }
 
         .nav-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 9998; backdrop-filter: blur(3px);
+            background: rgba(0,0,0,0.6); z-index: 10000; backdrop-filter: blur(4px);
         }
         .nav-overlay.active { display: block; }
 
-        /* --- PROFILE LAYOUT --- */
-        .container { max-width: 1100px; margin: 100px auto 50px; padding: 0 20px; }
+        /* --- DOSSIER LAYOUT --- */
+        .container { max-width: 1100px; margin: 90px auto 40px; padding: 0 20px; }
         .dossier-grid { display: grid; grid-template-columns: 320px 1fr; gap: 30px; }
 
         .sidebar-card, .main-card {
@@ -101,7 +98,7 @@
         input[type="text"], textarea {
             width: 100%; background: #000; border: 1px solid #222;
             color: #fff; padding: 12px; border-radius: 2px; font-family: inherit;
-            font-size: 0.9rem; box-sizing: border-box;
+            font-size: 1rem; box-sizing: border-box;
         }
         input[type="text"]:focus, textarea:focus { border-color: var(--red); outline: none; }
 
@@ -109,13 +106,16 @@
             background: var(--red); color: white; border: none;
             padding: 15px; border-radius: 2px; width: 100%;
             font-weight: 900; text-transform: uppercase; cursor: pointer;
-            transition: 0.3s; letter-spacing: 1px;
+            transition: 0.3s; letter-spacing: 1px; margin-top: 10px;
         }
         .btn-update:hover { filter: brightness(1.2); }
 
+        /* --- MOBILE OPTIMALISATIE --- */
         @media (max-width: 850px) {
             .dossier-grid { grid-template-columns: 1fr; }
             .container { margin-top: 80px; }
+            .sidebar-card { order: 2; }
+            .main-card { order: 1; }
         }
     </style>
 </head>
@@ -138,6 +138,11 @@
             <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
             <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
             <li class="active"><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
+            <li style="margin-top: 15px; border-top: 1px solid #222;">
+                <a href="#" onclick="logoutUser()" style="color: var(--red);">
+                    <i class="fa fa-sign-out-alt"></i> Logout
+                </a>
+            </li>
         </ul>
     </nav>
     <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
@@ -147,44 +152,46 @@
             <aside class="sidebar-card">
                 <div class="avatar-large" id="profile-initial">?</div>
                 <div class="profile-name" id="side-username">Agent</div>
-                <div class="profile-rank" id="display-rank">Synchronizing...</div>
+                <div class="profile-rank" id="display-rank">...</div>
                 
                 <div class="stat-item">
-                    <div style="font-size: 0.6rem; color: #555; text-transform: uppercase; font-weight: 900;">Credits (XP)</div>
+                    <div style="font-size: 0.6rem; color: #555; text-transform: uppercase; font-weight: 900;">Clearance Level (XP)</div>
                     <div id="user-xp" style="font-weight: 800; font-size: 1.2rem; color: #fff;">0</div>
                 </div>
 
                 <div class="xp-container">
                     <div class="xp-fill" id="xp-bar"></div>
                 </div>
-                <div id="xp-needed" style="font-size: 0.65rem; color: #444; text-align: center; font-family: monospace;">---</div>
+                <div id="xp-needed" style="font-size: 0.6rem; color: #444; text-align: center; font-family: monospace;">---</div>
             </aside>
 
             <main class="main-card">
-                <h2 style="margin-top:0; text-transform: uppercase; letter-spacing: 1px;">Agent Credentials</h2>
+                <h2 style="margin-top:0; text-transform: uppercase; letter-spacing: 1px; font-size: 1.2rem;">Identity Management</h2>
                 
                 <div class="input-group">
-                    <label>Display Name (Codename)</label>
-                    <input type="text" id="user-display-name" placeholder="Enter codename...">
+                    <label>Agent Codename (Display Name)</label>
+                    <input type="text" id="user-display-name" maxlength="15">
                 </div>
 
                 <div class="input-group">
-                    <label>Operational Biography</label>
-                    <textarea id="user-bio" rows="6" placeholder="Write your agent history..."></textarea>
+                    <label>Operational History (Bio)</label>
+                    <textarea id="user-bio" rows="5" placeholder="Enter service record..."></textarea>
                 </div>
 
-                <button onclick="saveProfile()" class="btn-update">Update System Dossier</button>
-                <div id="status-msg" style="margin-top: 15px; font-size: 0.8rem; text-align: center; font-weight: bold;"></div>
+                <button onclick="saveProfile()" class="btn-update">Update Credentials</button>
+                <div id="status-msg" style="margin-top: 15px; font-size: 0.8rem; text-align: center; font-weight: 800;"></div>
             </main>
         </div>
     </div>
 
     <script>
+        // Navigatie Toggle
         function toggleMenu() {
             document.getElementById('nav-menu').classList.toggle('active');
             document.getElementById('nav-overlay').classList.toggle('active');
         }
 
+        // Firebase Initialisatie
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -199,6 +206,7 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
+        // Auth Listener
         auth.onAuthStateChanged(user => {
             if (user) {
                 loadProfileData(user);
@@ -207,53 +215,58 @@
             }
         });
 
+        // Profiel Data Laden
         function loadProfileData(user) {
             const emailUsername = user.email.split('@')[0];
             
             db.ref('users/' + emailUsername).on('value', snap => {
                 const data = snap.val() || {};
                 const xp = data.xp || 0;
-                
-                // Als er een opgeslagen display name is, gebruik die, anders de email-naam
                 const displayName = data.displayName || emailUsername;
                 
                 document.getElementById('side-username').innerText = displayName;
                 document.getElementById('user-display-name').value = displayName;
                 document.getElementById('profile-initial').innerText = displayName.charAt(0).toUpperCase();
 
-                // Rang bepalen (kan je uitbreiden op basis van je Black Market rollen)
-                let rank = data.role || "InGen Trainee";
+                let rank = data.role || "Trainee";
                 document.getElementById('display-rank').innerText = rank;
-                
                 document.getElementById('user-xp').innerText = xp.toLocaleString();
                 document.getElementById('user-bio').value = data.bio || "";
 
-                // XP Bar berekening (voorbeeld: level per 2500 XP)
-                const nextLevel = Math.ceil((xp + 1) / 2500) * 2500;
-                const progress = (xp / nextLevel) * 100;
+                // XP Logica (elke 2000 XP een nieuw level)
+                const nextGoal = Math.ceil((xp + 1) / 2000) * 2000;
+                const progress = (xp / nextGoal) * 100;
                 document.getElementById('xp-bar').style.width = progress + "%";
-                document.getElementById('xp-needed').innerText = `${(nextLevel - xp).toLocaleString()} XP until next clearance`;
+                document.getElementById('xp-needed').innerText = `${(nextGoal - xp).toLocaleString()} XP to next Clearance`;
             });
         }
 
+        // Opslaan
         function saveProfile() {
             const user = auth.currentUser;
             const emailUsername = user.email.split('@')[0];
-            const newDisplayName = document.getElementById('user-display-name').value;
+            const newName = document.getElementById('user-display-name').value.trim();
             const bioText = document.getElementById('user-bio').value;
 
-            if(newDisplayName.length < 3) {
-                showStatus("Codename too short", "#e63946");
+            if(newName.length < 3) {
+                showStatus("Codename too short (min 3 chars)", "#e63946");
                 return;
             }
 
             db.ref('users/' + emailUsername).update({ 
-                displayName: newDisplayName,
+                displayName: newName,
                 bio: bioText 
             }).then(() => {
-                showStatus("Dossier Synchronized", "#2ecc71");
+                showStatus("Credentials Synchronized", "#2ecc71");
             }).catch(err => {
-                showStatus("Error: " + err.message, "#e63946");
+                showStatus("Update Failed: " + err.message, "#e63946");
+            });
+        }
+
+        // Logout Functie
+        function logoutUser() {
+            auth.signOut().then(() => {
+                window.location.href = "login.html";
             });
         }
 
