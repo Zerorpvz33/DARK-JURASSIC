@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8 Assembler">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dark Jurassic | Live Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -24,256 +24,159 @@
             --text-dim: #888888;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body { 
             background-color: var(--bg-dark); 
             color: var(--text-main); 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
             opacity: 0; 
-            transition: opacity 0.5s ease-in;
-            overflow-x: hidden;
+            transition: 0.5s; 
         }
 
-        /* --- Scanline Effect --- */
-        body::after {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 9999;
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none;
-        }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
 
-        /* --- Navigatie --- */
-        header {
-            background: rgba(0,0,0,0.95);
-            border-bottom: 2px solid var(--primary);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .logo { 
+        .header { 
             display: flex; 
+            justify-content: space-between; 
             align-items: center; 
-            gap: 12px; 
-            font-weight: bold; 
-            color: var(--primary); 
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-decoration: none;
-        }
-        
-        .logo img { height: 40px; width: auto; filter: drop-shadow(0 0 5px var(--primary)); }
-
-        .nav-links { 
-            display: flex; 
-            gap: 10px; 
-            list-style: none; 
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-        
-        .nav-links::-webkit-scrollbar { display: none; }
-
-        .nav-links li a {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 0.75rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: 0.3s;
-            min-width: 65px;
-            padding: 5px;
-            border-radius: 4px;
+            margin-bottom: 30px; 
+            border-left: 4px solid var(--primary);
+            padding-left: 20px;
         }
 
-        .nav-links li a i { font-size: 1.2rem; margin-bottom: 4px; }
-        .nav-links li a:hover, .nav-links li a.active { 
-            color: var(--primary); 
-            background: rgba(230, 57, 70, 0.1);
-        }
-
-        /* --- Tracker Layout --- */
-        .main-container {
+        .main-grid {
             display: grid;
             grid-template-columns: 1fr 350px;
             gap: 20px;
-            max-width: 1400px;
-            margin: 20px auto;
-            padding: 0 20px;
-            height: calc(100vh - 120px);
         }
 
-        #map {
-            background: #000;
+        #map { 
+            height: 500px; 
+            border-radius: 12px; 
             border: 1px solid var(--border);
-            border-radius: 8px;
             z-index: 1;
         }
 
-        /* Leaflet Dark Theme Overrides */
-        .leaflet-container { background: #000 !important; }
-        .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
-        .leaflet-popup-content-wrapper { background: #0d0d0d; color: white; border: 1px solid var(--primary); }
-        .leaflet-popup-tip { background: var(--primary); }
-
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        .widget {
+        .panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 15px;
-            border-left: 3px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px;
         }
 
-        .widget-title {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-dim);
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .sighting-feed {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .sighting-item {
-            background: #050505;
-            border: 1px solid #1a1a1a;
-            padding: 12px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            position: relative;
-        }
-
-        .status-tag {
-            font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 3px;
-            text-transform: uppercase;
-            font-weight: bold;
-            float: right;
-        }
-
-        .active-tag { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
-        .expired-tag { background: rgba(255, 255, 255, 0.05); color: #444; }
-
-        /* Form Controls */
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px; text-transform: uppercase; }
         input, select {
             width: 100%;
             background: #000;
             border: 1px solid #222;
-            color: white;
             padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
+            color: white;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            outline: none;
         }
+        input:focus { border-color: var(--primary); }
 
         .btn-report {
             width: 100%;
-            padding: 12px;
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 4px;
+            padding: 12px;
+            border-radius: 6px;
             font-weight: bold;
-            text-transform: uppercase;
             cursor: pointer;
             transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-report:hover { background: #ff4d5a; box-shadow: 0 0 15px var(--primary-glow); }
+
+        .feed-container {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
         }
 
-        .btn-report:hover {
-            box-shadow: 0 0 15px var(--primary-glow);
-            transform: translateY(-2px);
+        .sighting-item {
+            padding: 15px;
+            border-bottom: 1px solid #111;
+            font-size: 0.85rem;
         }
+
+        .status-tag {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+        .active-tag { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .expired-tag { background: rgba(255, 255, 255, 0.05); color: #555; }
+
+        .map-hint {
+            font-size: 0.7rem;
+            color: var(--accent);
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Leaflet Dark Theme Hack */
+        .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+        .leaflet-container { background: #000 !important; }
 
         @media (max-width: 900px) {
-            .main-container { grid-template-columns: 1fr; height: auto; }
-            #map { height: 350px; }
+            .main-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <nav class="navbar">
-            <a href="index.html" class="logo">
-                <img src="logo.png" alt="Logo">
-                <span>Dark Jurassic</span>
-            </a>
-            <ul class="nav-links">
-                <li><a href="index.html"><i class="fa fa-home"></i><span>Home</span></a></li>
-                <li><a href="forum.html"><i class="fa fa-comments"></i><span>Intel</span></a></li>
-                <li><a href="sightings.html" class="active"><i class="fa fa-eye"></i><span>Tracker</span></a></li>
-                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i><span>Species</span></a></li>
-                <li><a href="users.html"><i class="fa fa-users"></i><span>Agents</span></a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i><span>DMs</span></a></li>
-                <li><a href="cards.html"><i class="fa fa-th"></i><span>Cards</span></a></li>
-                <li><a href="blackmarket.html"><i class="fa fa-skull"></i><span>Market</span></a></li>
-                <li><a href="vault.html"><i class="fa fa-lock"></i><span>Vault</span></a></li>
-                <li><a href="profile.html"><i class="fa fa-user"></i><span>System</span></a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <div class="main-container">
-        <!-- Kaart Sectie -->
-        <div id="map"></div>
-
-        <!-- Sidebar Sectie -->
-        <div class="sidebar">
-            <!-- Nieuwe Waarneming -->
-            <div class="widget">
-                <div class="widget-title">
-                    <span>Meld Incident</span>
-                    <i class="fa fa-plus-circle"></i>
-                </div>
-                <input type="text" id="sighting-name" placeholder="Naam Species (bv. Blue)">
-                <input type="text" id="sighting-loc" placeholder="Locatie (Stad/Regio)">
-                <input type="text" id="sighting-img" placeholder="Bewijslast (Afbeelding URL)">
-                <p style="font-size: 0.65rem; color: var(--text-dim); margin-bottom: 10px;">
-                    <i class="fa fa-info-circle"></i> Coördinaten worden automatisch bepaald.
-                </p>
-                <button class="btn-report" onclick="reportSighting()">Verstuur Rapport</button>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1 style="margin:0; font-size: 1.5rem; letter-spacing: 2px;">THREAT_TRACKER</h1>
+                <p style="margin:0; color:var(--text-dim); font-size: 0.8rem;">Real-time InGen Asset Observation Map</p>
             </div>
+            <a href="index.html" style="color:var(--text-dim); text-decoration:none;"><i class="fa fa-chevron-left"></i> Terug</a>
+        </div>
 
-            <!-- Feed -->
-            <div class="widget">
-                <div class="widget-title">
-                    <span>Live Incident Feed</span>
-                    <i class="fa fa-broadcast-tower"></i>
+        <div class="main-grid">
+            <div id="map"></div>
+
+            <div class="panel">
+                <h3 style="margin-top:0; color:var(--primary); font-size: 0.9rem; border-bottom: 1px solid #222; padding-bottom: 10px;">NIEUWE MELDING</h3>
+                <p class="map-hint"><i class="fa fa-mouse-pointer"></i> Klik op de kaart om de locatie te selecteren.</p>
+                
+                <div class="input-group">
+                    <label>Species Name</label>
+                    <input type="text" id="dino-name" placeholder="bijv. Velociraptor">
                 </div>
-                <div id="sighting-list" class="sighting-feed">
-                    <p style="text-align:center; color:#333;">Scanning satelliet data...</p>
+                <div class="input-group">
+                    <label>Locatie (Stad/Regio)</label>
+                    <input type="text" id="dino-loc" placeholder="Klik op de kaart of typ hier">
+                </div>
+                <div class="input-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label>Latitude</label>
+                        <input type="text" id="dino-lat" readonly style="background: #080808; color: #666;">
+                    </div>
+                    <div>
+                        <label>Longitude</label>
+                        <input type="text" id="dino-lng" readonly style="background: #080808; color: #666;">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Image URL</label>
+                    <input type="text" id="dino-img" placeholder="https://...">
+                </div>
+                
+                <button class="btn-report" onclick="submitSighting()">Verstuur Rapport</button>
+
+                <div class="feed-container" id="sighting-feed">
+                    <!-- Feed items komen hier -->
                 </div>
             </div>
         </div>
@@ -294,14 +197,14 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        let map, userPos = [52.3676, 4.9041]; // Default Amsterdam
-        let markers = [];
-        let currentUser = "";
+        let map, markers = [];
+        let currentAgent = "Unknown";
+        let clickMarker = null;
 
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(user => {
             if (user) {
+                currentAgent = user.email.split('@')[0];
                 document.body.style.opacity = "1";
-                currentUser = user.email.split('@')[0];
                 initMap();
                 loadSightings();
             } else {
@@ -310,70 +213,109 @@
         });
 
         function initMap() {
-            map = L.map('map').setView(userPos, 7);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            map = L.map('map').setView([52.1326, 5.2913], 7); // Start op Nederland
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    userPos = [pos.coords.latitude, pos.coords.longitude];
-                    map.setView(userPos, 10);
-                });
-            }
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            // KLIK EVENT OP KAART
+            map.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+
+                // Update input velden
+                document.getElementById('dino-lat').value = lat;
+                document.getElementById('dino-lng').value = lng;
+
+                // Plaats of verplaats tijdelijke marker
+                if (clickMarker) {
+                    clickMarker.setLatLng(e.latlng);
+                } else {
+                    clickMarker = L.marker(e.latlng, {
+                        icon: L.divIcon({
+                            className: 'custom-div-icon',
+                            html: "<div style='background-color:var(--primary); width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px var(--primary);'></div>",
+                            iconSize: [12, 12],
+                            iconAnchor: [6, 6]
+                        })
+                    }).addTo(map);
+                }
+
+                // Reverse Geocoding (Stad opzoeken)
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const city = data.address.city || data.address.town || data.address.village || data.address.suburb || "Onbekende Locatie";
+                        const country = data.address.country || "";
+                        document.getElementById('dino-loc').value = city + (country ? `, ${country}` : "");
+                    })
+                    .catch(err => {
+                        console.error("Geocoding error:", err);
+                        document.getElementById('dino-loc').value = "Locatie geselecteerd";
+                    });
+            });
         }
 
-        function reportSighting() {
-            const name = document.getElementById('sighting-name').value;
-            const loc = document.getElementById('sighting-loc').value;
-            const img = document.getElementById('sighting-img').value;
+        function submitSighting() {
+            const name = document.getElementById('dino-name').value;
+            const loc = document.getElementById('dino-loc').value;
+            const lat = document.getElementById('dino-lat').value;
+            const lng = document.getElementById('dino-lng').value;
+            const img = document.getElementById('dino-img').value || "https://via.placeholder.com/150/000000/FFFFFF?text=NO_IMAGE";
 
-            if (!name || !loc) return alert("Naam en locatie zijn verplicht.");
-
-            // Gebruik huidige positie of random offset van default voor demo
-            const lat = userPos[0] + (Math.random() - 0.5) * 0.1;
-            const lng = userPos[1] + (Math.random() - 0.5) * 0.1;
+            if (!name || !loc || !lat || !lng) {
+                alert("Vul alle gegevens in! Klik op de kaart voor coördinaten.");
+                return;
+            }
 
             db.ref('sightings').push().set({
                 name: name,
                 location: loc,
-                image: img || "https://via.placeholder.com/150/111111/e63946?text=NO+IMAGE",
-                lat: lat,
-                lng: lng,
-                reportedBy: currentUser,
+                lat: parseFloat(lat),
+                lng: parseFloat(lng),
+                image: img,
+                reportedBy: currentAgent,
                 timestamp: Date.now()
             }).then(() => {
-                document.getElementById('sighting-name').value = "";
-                document.getElementById('sighting-loc').value = "";
-                document.getElementById('sighting-img').value = "";
+                // Reset form
+                document.getElementById('dino-name').value = "";
+                document.getElementById('dino-loc').value = "";
+                document.getElementById('dino-lat').value = "";
+                document.getElementById('dino-lng').value = "";
+                if (clickMarker) {
+                    map.removeLayer(clickMarker);
+                    clickMarker = null;
+                }
+                alert("Rapport succesvol verzonden!");
             });
         }
 
         function loadSightings() {
-            const expirationTime = 12 * 60 * 60 * 1000; // 12 uur
-            
-            db.ref('sightings').on('value', snap => {
-                const list = document.getElementById('sighting-list');
-                list.innerHTML = "";
-                
-                // Verwijder oude markers
+            const expirationTime = 3600000 * 24; // 24 uur geldig
+            const list = document.getElementById('sighting-feed');
+
+            db.ref('sightings').limitToLast(50).on('value', snap => {
+                // Wis oude markers
                 markers.forEach(m => map.removeLayer(m));
                 markers = [];
+                list.innerHTML = "";
 
-                let items = [];
-                snap.forEach(child => {
-                    items.push({ id: child.key, ...child.val() });
-                });
-
-                items.reverse().forEach(data => {
-                    const now = Date.now();
+                const now = Date.now();
+                
+                // Omkeren voor nieuwste bovenaan
+                let results = [];
+                snap.forEach(child => { results.push(child.val()); });
+                results.reverse().forEach(data => {
                     const active = (now - data.timestamp) < expirationTime;
-                    
+
                     // Feed Item
                     const item = document.createElement('div');
                     item.className = 'sighting-item';
                     item.innerHTML = `
                         <span class="status-tag ${active ? 'active-tag' : 'expired-tag'}">
                             ${active ? 'Actief' : 'Verlopen'}
-                        </span>
+                        </span><br>
                         <strong style="color:var(--primary)">${data.name}</strong><br>
                         <span style="font-size:0.7rem; color:var(--text-dim)">${data.location}</span><br>
                         <span style="font-size:0.6rem; color:#444;">AGENT_${data.reportedBy.toUpperCase()}</span>
@@ -386,7 +328,7 @@
                             .bindPopup(`
                                 <div style="text-align:center; color:white;">
                                     <strong style="color:var(--primary)">${data.name}</strong><br>
-                                    <img src="${data.image}" style="width:120px; margin:5px 0; border:1px solid #333;"><br>
+                                    <img src="${data.image}" style="width:120px; margin:5px 0; border:1px solid #333; border-radius:4px;"><br>
                                     <small>Gezien in ${data.location}</small>
                                 </div>
                             `);
