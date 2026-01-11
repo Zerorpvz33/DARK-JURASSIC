@@ -242,9 +242,9 @@
             <div class="forum-header">
                 <div>
                     <h1>Intel Feed</h1>
-                    <p style="color:var(--text-dim); font-size:0.8rem;">Gecodeerde communicatie tussen agenten.</p>
+                    <p style="color:var(--text-dim); font-size:0.8rem;">Encrypted communication between agents</p>
                 </div>
-                <button class="btn-action" onclick="openModal()"><i class="fa fa-plus"></i> Nieuw Intel</button>
+                <button class="btn-action" onclick="openModal()"><i class="fa fa-plus"></i> New Thread</button>
             </div>
             <div id="thread-list" class="thread-list">
                 <p style="text-align:center; color:#444;">Bezig met ontsleutelen van berichten...</p>
@@ -273,12 +273,12 @@
     <!-- Modal voor nieuwe thread -->
     <div id="threadModal" class="modal">
         <div class="modal-content">
-            <h2 style="color:var(--primary); margin-bottom:20px; text-transform:uppercase;">Nieuwe Intel Broadcast</h2>
-            <input type="text" id="newTitle" placeholder="Onderwerp (bv. Sightings in Sector 7)" style="margin-bottom:15px;">
-            <textarea id="newBody" placeholder="Beschrijf de situatie tot in detail..." rows="6"></textarea>
+            <h2 style="color:var(--primary); margin-bottom:20px; text-transform:uppercase;">New Intel Broadcast</h2>
+            <input type="text" id="newTitle" placeholder="Subject (e.g. Sightings in Sector 7)" style="margin-bottom:15px;">
+            <textarea id="newBody" placeholder="Describe the situation in detail..." rows="6"></textarea>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-                <button class="btn-action" style="background:#333;" onclick="closeModal()">Annuleren</button>
-                <button class="btn-action" onclick="saveThread()">Verzenden</button>
+                <button class="btn-action" style="background:#333;" onclick="closeModal()">Cancel</button>
+                <button class="btn-action" onclick="saveThread()">Submit</button>
             </div>
         </div>
     </div>
