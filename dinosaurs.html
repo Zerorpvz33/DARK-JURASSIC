@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,174 +17,124 @@
             --bg-dark: #050505;
             --card-bg: #0d0d0d;
             --border: #1a1a1a;
-            --herbivore: #2ecc71;
-            --carnivore: #e74c3c;
-            --omnivore: #f1c40f;
-            --text-main: #eeeeee;
+            --accent: #00d4ff;
+            --text-main: #f0f0f0;
             --text-dim: #888888;
+            --herbivore: #2ecc71;
+            --carnivore: #e63946;
+            --omnivore: #f1c40f;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
 
         body { 
             background-color: var(--bg-dark); 
-            color: var(--text-main); 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            opacity: 0; 
-            transition: opacity 0.5s ease-in;
-            overflow-x: hidden;
-            min-height: 100vh;
+            color: var(--text-main);
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
         }
 
-        /* --- Scanline Effect --- */
+        /* Scanline effect */
         body::after {
             content: " ";
             display: block;
             position: fixed;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
             z-index: 9999;
-            background-size: 100% 4px, 3px 100%;
+            background-size: 100% 2px, 3px 100%;
             pointer-events: none;
         }
 
-        /* --- Navigatie --- */
-        header {
-            background: rgba(0,0,0,0.95);
-            border-bottom: 2px solid var(--primary);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-
-        .navbar {
+        .top-bar {
+            height: 70px;
+            background: rgba(10, 10, 10, 0.95);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 20px;
-            max-width: 1400px;
-            margin: 0 auto;
+            padding: 0 30px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
-        .logo { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            font-weight: bold; 
-            color: var(--primary); 
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-decoration: none;
-        }
-        
-        .logo img { height: 40px; width: auto; filter: drop-shadow(0 0 5px var(--primary)); }
-
-        .nav-links { 
-            display: flex; 
-            gap: 10px; 
-            list-style: none; 
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-        
-        .nav-links::-webkit-scrollbar { display: none; }
-
-        .nav-links li a {
+        .back-btn {
             color: var(--text-dim);
             text-decoration: none;
-            font-size: 0.75rem;
+            font-size: 0.9rem;
             display: flex;
-            flex-direction: column;
             align-items: center;
+            gap: 10px;
             transition: 0.3s;
-            min-width: 65px;
-            padding: 5px;
-            border-radius: 4px;
         }
+        .back-btn:hover { color: var(--primary); }
 
-        .nav-links li a i { font-size: 1.2rem; margin-bottom: 4px; }
-        .nav-links li a:hover, .nav-links li a.active { 
-            color: var(--primary); 
-            background: rgba(230, 57, 70, 0.1);
-        }
-
-        /* --- Main Content --- */
         .container {
             max-width: 1200px;
-            margin: 40px auto;
+            margin: 30px auto;
             padding: 0 20px;
         }
 
-        .section-header {
-            margin-bottom: 30px;
-            border-left: 4px solid var(--primary);
-            padding-left: 15px;
+        .header-section {
+            margin-bottom: 40px;
+            border-left: 3px solid var(--primary);
+            padding-left: 20px;
         }
 
-        .section-header h1 { font-size: 1.8rem; text-transform: uppercase; letter-spacing: 2px; }
-        .section-header p { color: var(--text-dim); font-size: 0.9rem; }
+        .header-section h1 { font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--primary); }
+        .header-section p { color: var(--text-dim); font-size: 0.9rem; margin-top: 5px; }
 
-        /* Upload Form */
-        .upload-card {
+        /* Upload Panel */
+        .upload-panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            padding: 30px;
-            border-radius: 8px;
-            margin-bottom: 50px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 40px;
         }
 
-        .form-grid {
+        .upload-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
 
-        input, select, textarea {
-            width: 100%;
-            background: #000;
-            border: 1px solid #222;
+        .input-field {
+            background: #111;
+            border: 1px solid var(--border);
             color: white;
             padding: 12px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            outline: none;
-            transition: 0.3s;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: 100%;
         }
 
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 10px var(--primary-glow);
-        }
-
-        textarea { grid-column: span 2; height: 100px; resize: none; }
+        .input-field:focus { outline: none; border-color: var(--primary); }
 
         .btn-upload {
-            grid-column: span 2;
-            padding: 15px;
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 4px;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            cursor: pointer;
+            letter-spacing: 1px;
             transition: 0.3s;
+            grid-column: 1 / -1;
             margin-top: 10px;
         }
 
-        .btn-upload:hover {
-            box-shadow: 0 0 20px var(--primary-glow);
-            transform: translateY(-2px);
-        }
+        .btn-upload:hover { box-shadow: 0 0 20px var(--primary-glow); transform: translateY(-2px); }
 
-        /* Database Grid */
-        .species-grid {
+        /* Species Grid */
+        .dino-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 25px;
         }
 
@@ -193,139 +143,88 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
-            transition: 0.4s;
+            transition: 0.3s;
             position: relative;
         }
 
-        .dino-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-        }
-
-        .dino-img-container {
-            height: 180px;
-            overflow: hidden;
-            position: relative;
-        }
+        .dino-card:hover { border-color: var(--primary); transform: translateY(-5px); }
 
         .dino-img {
             width: 100%;
-            height: 100%;
+            height: 200px;
             object-fit: cover;
-            transition: 0.5s;
+            border-bottom: 1px solid var(--border);
         }
 
-        .dino-card:hover .dino-img { transform: scale(1.1); }
-
-        .diet-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 4px 10px;
-            border-radius: 20px;
+        .dino-body { padding: 20px; }
+        
+        .diet-tag {
             font-size: 0.65rem;
-            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
             text-transform: uppercase;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.1);
+            font-weight: 800;
+            display: inline-block;
+            margin-bottom: 10px;
         }
 
-        .diet-herbivore { background: rgba(46, 204, 113, 0.3); color: var(--herbivore); }
-        .diet-carnivore { background: rgba(231, 76, 60, 0.3); color: var(--carnivore); }
-        .diet-omnivore { background: rgba(241, 196, 15, 0.3); color: var(--omnivore); }
+        .diet-tag.herbivore { background: rgba(46, 204, 113, 0.2); color: var(--herbivore); }
+        .diet-tag.carnivore { background: rgba(230, 57, 70, 0.2); color: var(--carnivore); }
+        .diet-tag.omnivore { background: rgba(241, 196, 15, 0.2); color: var(--omnivore); }
 
-        .dino-info { padding: 20px; }
-        .dino-name { 
-            font-size: 1.2rem; 
-            color: var(--primary); 
-            margin-bottom: 8px; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-        }
-        .dino-desc { 
-            font-size: 0.8rem; 
-            color: var(--text-dim); 
-            line-height: 1.4; 
-            margin-bottom: 15px;
-            height: 45px;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-        }
+        .dino-name { font-size: 1.1rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin-bottom: 10px; }
+        .dino-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 15px; }
 
-        .dino-footer {
-            border-top: 1px solid #1a1a1a;
-            padding-top: 10px;
+        .contributor-tag {
+            font-size: 0.7rem;
+            color: #444;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            font-size: 0.65rem;
-            color: #444;
+            border-top: 1px solid #1a1a1a;
+            padding-top: 10px;
+            font-family: monospace;
         }
 
         @media (max-width: 768px) {
-            .form-grid { grid-template-columns: 1fr; }
-            textarea { grid-column: span 1; }
-            .btn-upload { grid-column: span 1; }
+            .upload-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body>
+<body onload="document.body.style.opacity='1'">
 
-    <header>
-        <nav class="navbar">
-            <a href="index.html" class="logo">
-                <img src="logo.png" alt="Logo">
-                <span>Dark Jurassic</span>
-            </a>
-            <ul class="nav-links">
-                <li><a href="index.html"><i class="fa fa-home"></i><span>Home</span></a></li>
-                <li><a href="forum.html"><i class="fa fa-comments"></i><span>Intel</span></a></li>
-                <li><a href="sightings.html"><i class="fa fa-eye"></i><span>Tracker</span></a></li>
-                <li><a href="dinosaurs.html" class="active"><i class="fa fa-dragon"></i><span>Species</span></a></li>
-                <li><a href="users.html"><i class="fa fa-users"></i><span>Agents</span></a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i><span>DMs</span></a></li>
-                <li><a href="cards.html"><i class="fa fa-th"></i><span>Cards</span></a></li>
-                <li><a href="blackmarket.html"><i class="fa fa-skull"></i><span>Market</span></a></li>
-                <li><a href="vault.html"><i class="fa fa-lock"></i><span>Vault</span></a></li>
-                <li><a href="profile.html"><i class="fa fa-user"></i><span>System</span></a></li>
-            </ul>
-        </nav>
-    </header>
+    <nav class="top-bar">
+        <a href="index.html" class="back-btn"><i class="fa fa-arrow-left"></i> RETURN TO TERMINAL</a>
+        <div style="font-size: 0.7rem; color: var(--text-dim); letter-spacing: 2px;">SECURE_DATA_ACCESS</div>
+    </nav>
 
     <div class="container">
-        <div class="section-header">
-            <h1>Species Database</h1>
-            <p>Upload nieuwe veldgegevens en bekijk de wereldwijde database van herstelde fauna.</p>
-        </div>
+        
+        <header class="header-section">
+            <h1>Intelligence Database</h1>
+            <p>Classified biological data on active field specimens.</p>
+        </header>
 
-        <!-- Invoer Sectie -->
-        <div class="upload-card">
-            <h3 style="margin-bottom: 20px; font-size: 0.9rem; color: var(--primary);">Nieuwe Data Invoeren</h3>
-            <div class="form-grid">
-                <input type="text" id="dino-name" placeholder="Naam van de soort (bv. Velociraptor)">
-                <select id="dino-diet">
-                    <option value="" disabled selected>Selecteer Dieet</option>
-                    <option value="Carnivore">Carnivoor</option>
-                    <option value="Herbivore">Herbivoor</option>
-                    <option value="Omnivore">Omnivoor</option>
+        <!-- Data Entry Section -->
+        <section class="upload-panel">
+            <h3 style="font-size: 0.8rem; letter-spacing: 1px; color: var(--text-dim);">[+] NEW SPECIES ENTRY</h3>
+            <div class="upload-grid">
+                <input type="text" id="dino-name" class="input-field" placeholder="Species Designation (e.g. T-Rex)">
+                <select id="dino-diet" class="input-field">
+                    <option value="Carnivore">Classification: Carnivore</option>
+                    <option value="Herbivore">Classification: Herbivore</option>
+                    <option value="Omnivore">Classification: Omnivore</option>
                 </select>
-                <input type="text" id="dino-img" placeholder="Afbeelding URL (Direct Link)">
-                <textarea id="dino-desc" placeholder="Beschrijving, gedragspatronen en risicoanalyse..."></textarea>
-                <button class="btn-upload" onclick="uploadDino()">Update Database (+100 XP)</button>
+                <input type="text" id="dino-img" class="input-field" placeholder="Intel Image URL">
+                <textarea id="dino-desc" class="input-field" placeholder="Biological Observations / Threat Analysis" style="grid-column: 1 / -1; height: 80px;"></textarea>
+                <button class="btn-upload" onclick="uploadDino()"><i class="fa fa-upload"></i> Upload to Central Core</button>
             </div>
+        </section>
+
+        <!-- Species List -->
+        <div id="dino-list" class="dino-grid">
+            <!-- Data populated via JS -->
         </div>
 
-        <!-- Grid Sectie -->
-        <div class="section-header">
-            <h1>Geïdentificeerde Soorten</h1>
-            <p>Real-time overzicht van alle bevestigde assets in het veld.</p>
-        </div>
-        <div id="dino-list" class="species-grid">
-            <!-- Data wordt hier geladen -->
-        </div>
     </div>
 
     <script>
@@ -343,12 +242,8 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        let currentUser = "";
-
         auth.onAuthStateChanged((user) => {
             if (user) {
-                document.body.style.opacity = "1";
-                currentUser = user.email.split('@')[0];
                 loadDinos();
             } else {
                 window.location.href = "login.html";
@@ -358,35 +253,53 @@
         function uploadDino() {
             const name = document.getElementById('dino-name').value;
             const diet = document.getElementById('dino-diet').value;
-            const img = document.getElementById('dino-img').value;
+            const image = document.getElementById('dino-img').value;
             const desc = document.getElementById('dino-desc').value;
+            const user = auth.currentUser;
 
-            if (name && diet && img && desc) {
-                const newDino = {
+            if (name && diet && image && desc) {
+                const username = user.email.split('@')[0].toUpperCase();
+                
+                db.ref('shared_dinos').push({
                     name: name,
                     diet: diet,
-                    image: img,
+                    image: image,
                     desc: desc,
-                    contributor: currentUser,
+                    contributor: username,
                     timestamp: Date.now()
-                };
-
-                db.ref('shared_dinos').push().set(newDino).then(() => {
-                    // Beloon agent met XP
-                    db.ref('users/' + currentUser + '/xp').transaction(current => (current || 0) + 100);
+                }).then(() => {
+                    // Reward XP logic
+                    const cleanUsername = user.email.split('@')[0].replace(/\./g, '_');
+                    db.ref('users/' + cleanUsername + '/xp').transaction(current => (current || 0) + 100);
                     
-                    // Reset velden
-                    document.getElementById('dino-name').value = "";
-                    document.getElementById('dino-diet').value = "";
-                    document.getElementById('dino-img').value = "";
-                    document.getElementById('dino-desc').value = "";
+                    // Reset fields
+                    document.getElementById('dino-name').value = '';
+                    document.getElementById('dino-img').value = '';
+                    document.getElementById('dino-desc').value = '';
                     
-                    // Notificatie simulatie
-                    console.log("Database bijgewerkt.");
+                    showNotification("Data successfully archived. +100 XP granted.");
                 });
             } else {
-                alert("Systeemfout: Onvolledige data-invoer gedetecteerd.");
+                showNotification("Error: Fields cannot be null.", true);
             }
+        }
+
+        function showNotification(msg, isError = false) {
+            const n = document.createElement('div');
+            n.style.position = 'fixed';
+            n.style.bottom = '20px';
+            n.style.right = '20px';
+            n.style.padding = '15px 25px';
+            n.style.background = isError ? 'var(--primary)' : '#1a1a1a';
+            n.style.color = 'white';
+            n.style.borderRadius = '8px';
+            n.style.zIndex = '10000';
+            n.style.fontSize = '0.8rem';
+            n.style.fontFamily = 'monospace';
+            n.style.border = '1px solid var(--border)';
+            n.innerText = `[SYSTEM_MSG] ${msg}`;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 4000);
         }
 
         function loadDinos() {
@@ -394,30 +307,28 @@
                 const list = document.getElementById('dino-list');
                 list.innerHTML = "";
                 
-                let dinos = [];
+                let data = [];
                 snap.forEach(child => {
-                    dinos.push(child.val());
+                    data.push(child.val());
                 });
 
-                dinos.reverse().forEach(d => {
+                // Show newest first
+                data.reverse().forEach(d => {
                     const dietClass = d.diet.toLowerCase();
-                    const card = document.createElement('div');
-                    card.className = 'dino-card';
-                    card.innerHTML = `
-                        <div class="dino-img-container">
-                            <img src="${d.image}" class="dino-img" onerror="this.src='https://via.placeholder.com/400x200/0a0a0a/e63946?text=STATIC+INTERFERENCE'">
-                            <span class="diet-badge diet-${dietClass}">${d.diet}</span>
-                        </div>
-                        <div class="dino-info">
-                            <h3 class="dino-name">${d.name}</h3>
-                            <p class="dino-desc">${d.desc}</p>
-                            <div class="dino-footer">
-                                <span><i class="fa fa-user-shield"></i> ${d.contributor.toUpperCase()}</span>
-                                <span><i class="fa fa-clock"></i> ${new Date(d.timestamp).toLocaleDateString()}</span>
+                    list.innerHTML += `
+                        <div class="dino-card">
+                            <img src="${d.image}" class="dino-img" onerror="this.src='https://via.placeholder.com/400x200?text=IMAGE_NOT_FOUND'">
+                            <div class="dino-body">
+                                <span class="diet-tag ${dietClass}">${d.diet}</span>
+                                <h4 class="dino-name">${d.name}</h4>
+                                <p class="dino-desc">${d.desc}</p>
+                                <div class="contributor-tag">
+                                    <span>SOURCE: ${d.contributor}</span>
+                                    <span>ID_${Math.floor(Math.random()*9000)+1000}</span>
+                                </div>
                             </div>
                         </div>
                     `;
-                    list.appendChild(card);
                 });
             });
         }

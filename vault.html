@@ -292,11 +292,11 @@
         const db = firebase.database();
 
         const CLASSIFIED_DATA = [
-            {
+{
                 id: 1,
                 name: "Project Regeneration",
                 type: "Genetics_Report",
-                desc: "De vroege logs van Dr. Wu betreffende de stabiele sequenties van de Tyrannosaurus Rex. Bevat details over de noodzakelijke amfibische DNA-substituties.",
+                desc: "Dr. Wu's early logs regarding the stable sequences of the Tyrannosaurus Rex. Contains details about the necessary amphibian DNA substitutions.",
                 img: "https://images.unsplash.com/photo-1510218830377-1e934a709460?auto=format&fit=crop&q=80&w=800",
                 req: 0
             },
@@ -304,7 +304,7 @@
                 id: 2,
                 name: "Site B Inventory",
                 type: "Logistics_Sheet",
-                desc: "Een lijst van alle actieve assets op Isla Sorna voor de evacuatie van 1997. Waarschuwing: Ongeautoriseerde toegang wordt geregistreerd.",
+                desc: "A list of all active assets on Isla Sorna prior to the 1997 evacuation. Warning: Unauthorized access will be logged.",
                 img: "https://images.unsplash.com/photo-1525385133512-2f3bdd039054?auto=format&fit=crop&q=80&w=800",
                 req: 100
             },
@@ -312,7 +312,7 @@
                 id: 3,
                 name: "Hybrid Protocols",
                 type: "Top_Secret",
-                desc: "Conceptuele schetsen en gedragsanalyses voor de 'Indominus' klasse. Vernietig na het lezen.",
+                desc: "Conceptual sketches and behavioral analyses for the 'Indominus' class. Destroy after reading.",
                 img: "https://images.unsplash.com/photo-1506466010722-395aa2bef877?auto=format&fit=crop&q=80&w=800",
                 req: 500
             },
@@ -320,10 +320,11 @@
                 id: 4,
                 name: "Chaos Theory Logs",
                 type: "Theory_Paper",
-                desc: "Interne memo's van Dr. Ian Malcolm over het onvermijdelijke falen van het containment systeem op Isla Nublar.",
+                desc: "Internal memos from Dr. Ian Malcolm regarding the inevitable failure of the containment system on Isla Nublar.",
                 img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800",
                 req: 1000
             }
+            
         ];
 
         auth.onAuthStateChanged(user => {

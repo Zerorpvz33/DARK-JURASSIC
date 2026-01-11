@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | Beveiligde Terminal</title>
+    <title>Dark Jurassic | Secure Terminal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -285,7 +285,7 @@
 
     <main>
         <section class="hero">
-            <h1>Systeem Toegang</h1>
+            <h1>System Access</h1>
             <div class="agent-id" id="agent-id">AGENT_PENDING...</div>
         </section>
 
@@ -293,24 +293,24 @@
             <!-- Systeem Status -->
             <div class="widget">
                 <div class="widget-title">
-                    <span>Systeem Status</span>
+                    <span>System Status</span>
                     <i class="fa fa-satellite-dish"></i>
                 </div>
                 <div class="stat-grid">
                     <div class="stat-box">
                         <span class="stat-value" id="count-agents">0</span>
-                        <span class="stat-label">Actieve Agenten</span>
+                        <span class="stat-label">Active Agents</span>
                     </div>
                     <div class="stat-box">
                         <span class="stat-value" id="count-species">0</span>
-                        <span class="stat-label">Species Geregistreerd</span>
+                        <span class="stat-label">Registered Species</span>
                     </div>
                 </div>
                 <div style="margin-top: 15px; font-size: 0.75rem;">
-                    <p style="color: #2ecc71"><i class="fa fa-check-circle"></i> Firewall: Actief</p>
-                    <p id="alert-status" style="color: var(--primary); margin-top: 5px;"><i class="fa fa-exclamation-triangle"></i> Scan bezig...</p>
+                    <p style="color: #2ecc71"><i class="fa fa-check-circle"></i> Firewall: Active</p>
+                    <p id="alert-status" style="color: var(--primary); margin-top: 5px;"><i class="fa fa-exclamation-triangle"></i> Scan in progress...</p>
                 </div>
-                <a href="vault.html" class="btn-full">Open De Vault</a>
+                <a href="vault.html" class="btn-full">Open the Vault</a>
             </div>
 
             <!-- Laatste Intel -->
@@ -320,9 +320,9 @@
                     <i class="fa fa-rss"></i>
                 </div>
                 <div id="intel-feed">
-                    <p style="color: #444; font-size: 0.8rem;">Gegevens ophalen uit versleutelde feed...</p>
+                    <p style="color: #444; font-size: 0.8rem;">Fetching data from encrypted feed...</p>
                 </div>
-                <a href="forum.html" class="btn-full">Bekijk Alle Berichten</a>
+                <a href="forum.html" class="btn-full">View All Posts</a>
             </div>
 
             <!-- Tracker Preview -->
@@ -334,9 +334,9 @@
                 <div style="height: 100px; background: #000; border: 1px solid #222; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                     <div style="width: 60px; height: 60px; border: 1px solid var(--primary); border-radius: 50%; animation: pulse 2s infinite;"></div>
                     <div style="position: absolute; top: 30%; left: 40%; width: 5px; height: 5px; background: var(--primary); border-radius: 50%;"></div>
-                    <span style="position: absolute; bottom: 5px; font-size: 0.6rem; color: #444;">RADAR BEREIK: 50KM</span>
+                    <span style="position: absolute; bottom: 5px; font-size: 0.6rem; color: #444;">RADAR RANGE: 50KM</span>
                 </div>
-                <p id="tracker-summary" style="margin-top: 10px; font-size: 0.8rem; color: var(--text-dim);">Scanning voor afwijkingen...</p>
+                <p id="tracker-summary" style="margin-top: 10px; font-size: 0.8rem; color: var(--text-dim);">Scanning for anomalies...</p>
                 <a href="sightings.html" class="btn-full">Open Live Tracker</a>
             </div>
         </div>
@@ -391,8 +391,8 @@
                 let items = [];
                 snap.forEach(child => items.push(child.val()));
                 
-                if(items.length === 0) {
-                    feed.innerHTML = "<p style='color:#444; font-size:0.8rem;'>Geen actieve broadcasts.</p>";
+                    if(items.length === 0) {
+                        feed.innerHTML = "<p style='color:#444; font-size:0.8rem;'>No active broadcasts.</p>";
                     return;
                 }
 
@@ -414,15 +414,15 @@
                         summary.innerHTML = `Laatste waarneming: <strong style="color:var(--primary)">${s.name}</strong> in ${s.location}.`;
                     });
                 } else {
-                    summary.innerText = "Geen actieve dreigingen op de radar.";
+                    summary.innerText = "No active threats on the radar.";
                 }
             });
 
             // Willekeurige Alert Status simulator
             const alerts = [
-                "Inbreuk gedetecteerd in Sector 4",
-                "Onbekend signaal in San Diego",
-                "DNA Corruptie waarschuwing",
+                "Breach detected in Sector 4",
+                "Unknown signal in San Diego",
+                "DNA corruption warning",
                 "Containment failure in Site B"
             ];
             setInterval(() => {
