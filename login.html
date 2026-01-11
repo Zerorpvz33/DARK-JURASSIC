@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | Secure Login</title>
-    <link rel="icon" type="image/png" href="logo.png">
-    <link rel="stylesheet" href="style.css">
+    <title>Dark Jurassic | System Breach</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- Firebase Legacy SDKs -->
@@ -14,180 +12,255 @@
 
     <style>
         :root {
-            --red: #e63946;
-            --red-glow: rgba(230, 57, 57, 0.4);
-            --dark-bg: #030303;
-            --panel-bg: rgba(15, 15, 15, 0.95);
-            --border: rgba(255, 255, 255, 0.08);
+            --red: #ff0015;
+            --white: #ffffff;
+            --dark: #050505;
         }
 
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            background-color: var(--dark-bg);
-            color: white;
-            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: var(--dark);
+            color: var(--white);
+            font-family: 'Courier New', Courier, monospace;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
             overflow: hidden;
-            background-image: 
-                radial-gradient(circle at 50% 50%, #1a0505 0%, #030303 100%);
+            position: relative;
         }
 
-        /* Overlay grid effect */
-        body::before {
-            content: "";
+        /* Subtiele scanlines over het hele scherm */
+        .scanlines {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-            background-size: 30px 30px;
+            background: linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+            background-size: 100% 4px;
+            z-index: 99;
             pointer-events: none;
-            z-index: 0;
+            opacity: 0.15;
         }
 
-        .login-card {
+        .glitch-container {
             position: relative;
-            z-index: 1;
             width: 100%;
             max-width: 400px;
+            z-index: 10;
+        }
+
+        .card {
+            background: rgba(5, 5, 5, 0.98);
+            border: 1px solid var(--white);
             padding: 40px;
-            background: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-top: 3px solid var(--red);
-            border-radius: 12px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.1);
+        }
+
+        /* Border flash effect */
+        .card::before {
+            content: "";
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border: 1px solid var(--red);
+            z-index: -1;
+            animation: border-flash 5s infinite;
+        }
+
+        @keyframes border-flash {
+            0%, 85%, 100% { opacity: 0; }
+            88%, 92% { opacity: 1; border-color: var(--white); }
+            90%, 95% { opacity: 1; border-color: var(--red); }
+        }
+
+        .header-logo {
             text-align: center;
-            backdrop-filter: blur(10px);
+            margin-bottom: 35px;
+            position: relative;
         }
 
-        .logo {
-            width: 100px;
-            height: auto;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 10px var(--red-glow));
-        }
-
-        h2 {
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            color: var(--red);
-        }
-
-        p.subtitle {
-            color: #666;
-            font-size: 0.8rem;
-            margin-bottom: 30px;
-        }
-
-        .input-field {
-            width: 100%;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            padding: 12px 15px;
-            border-radius: 6px;
-            color: white;
+        /* Logo Glitch Effect */
+        .logo-img {
+            height: 60px;
             margin-bottom: 15px;
-            outline: none;
-            transition: 0.3s;
-            box-sizing: border-box;
-            font-size: 0.9rem;
+            position: relative;
+            filter: grayscale(1) brightness(2);
         }
 
-        .input-field:focus {
-            border-color: var(--red);
-            background: rgba(255,255,255,0.06);
-            box-shadow: 0 0 10px var(--red-glow);
-        }
-
-        .btn-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        button {
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
+        /* Glitch Title Logic */
+        .glitch-title {
+            font-size: 2.2rem;
+            font-weight: 900;
             text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 1px;
-            transition: 0.3s;
+            position: relative;
+            display: inline-block;
+            color: var(--white);
+            letter-spacing: 5px;
+            line-height: 1;
         }
 
-        .btn-login {
-            background: var(--red);
-            color: white;
-        }
-
-        .btn-login:hover {
-            background: #ff4d5a;
-            box-shadow: 0 0 20px var(--red-glow);
-        }
-
-        .btn-register {
-            background: transparent;
-            color: #aaa;
-            border: 1px solid var(--border);
-        }
-
-        .btn-register:hover {
-            border-color: #666;
-            color: white;
-            background: rgba(255,255,255,0.05);
-        }
-
-        #message {
-            margin-top: 20px;
-            font-size: 0.8rem;
-            min-height: 1.2em;
-        }
-
-        /* Scanline effect */
-        .scanline {
-            width: 100%;
-            height: 2px;
-            background: rgba(230, 57, 70, 0.1);
+        .glitch-title::before, .glitch-title::after {
+            content: "DARK JURASSIC";
             position: absolute;
             top: 0;
             left: 0;
-            animation: scan 4s linear infinite;
-            z-index: 2;
-            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            background: var(--dark);
         }
 
-        @keyframes scan {
-            0% { top: 0; }
-            100% { top: 100%; }
+        /* De rode glitch laag */
+        .glitch-title::before {
+            left: 3px;
+            text-shadow: -3px 0 var(--red);
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 3s infinite linear alternate-reverse;
+        }
+
+        /* De witte glitch laag */
+        .glitch-title::after {
+            left: -3px;
+            text-shadow: -3px 0 var(--white);
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim-2 2s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(31px, 9999px, 94px, 0); }
+            5% { clip: rect(70px, 9999px, 71px, 0); }
+            10% { clip: rect(29px, 9999px, 83px, 0); }
+            15% { clip: rect(16px, 9999px, 91px, 0); }
+            20% { clip: rect(2px, 9999px, 23px, 0); }
+            25% { clip: rect(100px, 9999px, 10px, 0); }
+            30% { clip: rect(45px, 9999px, 56px, 0); }
+            100% { clip: rect(45px, 9999px, 56px, 0); }
+        }
+
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(65px, 9999px, 100px, 0); }
+            5% { clip: rect(10px, 9999px, 15px, 0); }
+            10% { clip: rect(77px, 9999px, 80px, 0); }
+            15% { clip: rect(3px, 9999px, 12px, 0); }
+            20% { clip: rect(55px, 9999px, 60px, 0); }
+            100% { clip: rect(55px, 9999px, 60px, 0); }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            background: transparent;
+            border: 1px solid #222;
+            padding: 15px;
+            color: var(--white);
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: all 0.2s;
+            border-radius: 0;
+        }
+
+        input:focus {
+            border-color: var(--white);
+            background: rgba(255, 255, 255, 0.03);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            border: 1px solid var(--white);
+            color: var(--white);
+            text-transform: uppercase;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+            transition: 0.3s;
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        .btn:hover {
+            background: var(--white);
+            color: var(--dark);
+        }
+
+        .btn-red {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .btn-red:hover {
+            background: var(--red);
+            color: var(--white);
+        }
+
+        #status {
+            margin-top: 25px;
+            font-size: 0.7rem;
+            text-align: center;
+            height: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .terminal-footer {
+            color: #333;
+            font-size: 0.55rem;
+            margin-top: 30px;
+            text-align: center;
+            letter-spacing: 1px;
+            border-top: 1px solid #111;
+            padding-top: 15px;
+        }
+
+        /* Flash overlay voor succes/fout */
+        #glitch-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            mix-blend-mode: overlay;
         }
     </style>
 </head>
 <body>
 
-    <div class="login-card">
-        <div class="scanline"></div>
-        <!-- Verwijzing naar lokale logo.png in dezelfde folder -->
-        <img src="logo.png" alt="Dark Jurassic Logo" class="logo" onerror="this.src='https://www.jurassic-pedia.com/wp-content/uploads/2024/05/DarkJurassicLogo.png'">
-        
-        <h2>System Access</h2>
-        <p class="subtitle">Identify yourself, Truth Seeker...</p>
+    <div id="glitch-overlay"></div>
+    <div class="scanlines"></div>
 
-        <input type="email" id="email" class="input-field" placeholder="Email Address">
-        <input type="password" id="password" class="input-field" placeholder="Security Password">
+    <div class="glitch-container">
+        <div class="card">
+            <div class="header-logo">
+                <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
+                <br>
+                <div class="glitch-title" data-text="DARK JURASSIC">DARK JURASSIC</div>
+                <!-- Slogan toegevoegd hieronder -->
+                <p style="font-size: 0.65rem; color: var(--red); margin-top: 10px; letter-spacing: 3px; font-weight: bold; text-transform: uppercase;">
+                    Life found a way. Now, find yours.
+                </p>
+            </div>
 
-        <div class="btn-container">
-            <button class="btn-login" onclick="login()">Login</button>
-            <button class="btn-register" onclick="register()">Register</button>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="> AGENT_ID" autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="password" placeholder="> SECURITY_KEY" autocomplete="off">
+            </div>
+
+            <button class="btn" onclick="handleAuth('login')">INITIALIZE_LOGIN</button>
+            <button class="btn btn-red" onclick="handleAuth('register')">REGISTER_NEW_ASSET</button>
+
+            <div id="status"></div>
+
+            <div class="terminal-footer">
+                CORE: RED_WHITE_SYSTEM // NO_TRESPASSING // INGEN_SECURE
+            </div>
         </div>
-
-        <div id="message"></div>
     </div>
 
     <script>
@@ -204,51 +277,57 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const msg = document.getElementById('message');
-
-            if(!email || !password) {
-                msg.style.color = "#e63946";
-                msg.innerText = "Voer alle gegevens in.";
+        async function handleAuth(type) {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+            const status = document.getElementById('status');
+            
+            if(!user || !pass) {
+                showFeedback("ERROR: NULL_DATA", "red");
                 return;
             }
 
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    msg.style.color = "#2ecc71";
-                    msg.innerText = "Toegang verleend. Bezig met laden...";
-                    setTimeout(() => { window.location.href = "index.html"; }, 1000);
-                })
-                .catch((error) => {
-                    msg.style.color = "#e63946";
-                    msg.innerText = "ERROR: " + error.message;
-                });
-        }
+            const email = user.toLowerCase() + "@darkjurassic.com";
+            status.style.color = "var(--white)";
+            status.innerText = "UPLOADING_CREDENTIALS...";
 
-        function register() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const msg = document.getElementById('message');
-
-            if(password.length < 6) {
-                msg.style.color = "#e63946";
-                msg.innerText = "Wachtwoord moet minimaal 6 tekens zijn.";
-                return;
+            try {
+                if(type === 'login') {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                    status.innerText = "ACCESS_GRANTED";
+                    flash("white", 0.3);
+                    setTimeout(() => window.location.href = "index.html", 800);
+                } else {
+                    await auth.createUserWithEmailAndPassword(email, pass);
+                    status.innerText = "ASSET_CREATED";
+                    flash("red", 0.3);
+                    setTimeout(() => window.location.href = "index.html", 800);
+                }
+            } catch (err) {
+                showFeedback(`FATAL: ${err.code.split('/')[1].toUpperCase()}`, "red");
             }
-
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(() => {
-                    msg.style.color = "#2ecc71";
-                    msg.innerText = "Account aangemaakt! Bezig met inloggen...";
-                    setTimeout(() => { window.location.href = "index.html"; }, 1000);
-                })
-                .catch((error) => {
-                    msg.style.color = "#e63946";
-                    msg.innerText = "ERROR: " + error.message;
-                });
         }
+
+        function showFeedback(msg, color) {
+            const status = document.getElementById('status');
+            status.style.color = color === "red" ? "var(--red)" : "var(--white)";
+            status.innerText = msg;
+            flash(color, 0.15);
+        }
+
+        function flash(color, intensity) {
+            const overlay = document.getElementById('glitch-overlay');
+            overlay.style.backgroundColor = color === "red" ? "var(--red)" : "white";
+            overlay.style.opacity = intensity;
+            setTimeout(() => overlay.style.opacity = 0, 150);
+        }
+
+        setInterval(() => {
+            if(Math.random() > 0.97) {
+                const color = Math.random() > 0.5 ? "white" : "red";
+                flash(color, 0.03);
+            }
+        }, 1500);
     </script>
 </body>
 </html>
