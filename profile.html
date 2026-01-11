@@ -24,250 +24,150 @@
             background-color: var(--dark-bg); 
             color: #e0e0e0; 
             margin: 0; 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif; 
+            padding-top: var(--nav-height);
             opacity: 0;
-            transition: opacity 0.8s ease;
+            transition: opacity 0.5s;
         }
 
         /* --- NAVIGATION --- */
-        .top-nav {
-            height: var(--nav-height);
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 25px;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--nav-height);
+            background: rgba(5, 5, 5, 0.9); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 20px; z-index: 1000;
+            backdrop-filter: blur(10px);
         }
 
-        .nav-left { display: flex; align-items: center; gap: 20px; }
-        .logo-img { height: 40px; filter: drop-shadow(0 0 5px var(--red)); }
-        
-        .nav-btn {
-            color: #888;
-            text-decoration: none;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: 0.3s;
-        }
+        .nav-logo { height: 40px; margin-right: 15px; }
 
-        .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
-
-        /* --- CONTENT --- */
+        /* --- PROFILE LAYOUT --- */
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .profile-grid {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 15px;
             display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 30px;
-        }
-
-        /* --- SIDEBAR --- */
-        .profile-sidebar {
-            background: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            height: fit-content;
-        }
-
-        .avatar-container {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 20px auto;
-            border: 2px solid var(--red);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(230, 57, 70, 0.05);
-            font-size: 3rem;
-            color: var(--red);
-            box-shadow: 0 0 20px var(--red-glow);
-        }
-
-        .rank-title {
-            color: var(--red);
-            font-weight: bold;
-            letter-spacing: 2px;
-            font-size: 0.8rem;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-
-        .agent-id {
-            color: #fff;
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
-        .stat-box {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-        }
-
-        .stat-label { font-size: 0.6rem; color: #555; text-transform: uppercase; }
-        .stat-value { font-size: 1.1rem; font-weight: bold; color: #eee; }
-
-        /* --- MAIN CONTENT --- */
-        .profile-main {
-            display: flex;
-            flex-direction: column;
+            grid-template-columns: 320px 1fr;
             gap: 25px;
         }
 
-        .card {
+        .sidebar, .main-content {
             background: var(--panel-bg);
             border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 25px;
         }
 
-        .card-title {
-            font-size: 1rem;
-            font-weight: bold;
-            color: var(--red);
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .sidebar { text-align: center; height: fit-content; }
+        
+        .avatar-circle {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: #111; margin: 0 auto 20px;
+            border: 2px solid var(--red);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; color: var(--red);
+            box-shadow: 0 0 15px var(--red-glow);
         }
 
-        /* --- PROGRESS BAR --- */
-        .xp-progress-container {
-            margin-bottom: 10px;
+        .agent-id { color: var(--red); font-weight: bold; font-family: monospace; letter-spacing: 2px; }
+        .clearance-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 4px;
+            font-size: 0.7rem; font-weight: bold; margin-top: 10px;
+            border: 1px solid var(--red); color: var(--red);
         }
-        .xp-info { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 8px; color: #888; }
-        .bar-bg { background: #111; height: 8px; border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; background: var(--red); width: 0%; transition: 1s ease-out; box-shadow: 0 0 10px var(--red-glow); }
+
+        /* --- BUTTONS --- */
+        .btn {
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            font-weight: bold; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;
+            margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
+        .btn-save { background: var(--red); color: white; }
+        .btn-save:hover { background: #ff4d5a; box-shadow: 0 0 15px var(--red-glow); }
+
+        .btn-logout { 
+            background: transparent; color: #888; border: 1px solid #333; margin-top: 40px; 
+        }
+        .btn-logout:hover { 
+            background: rgba(230, 57, 70, 0.1); border-color: var(--red); color: var(--red); 
+        }
+
+        /* --- XP BAR --- */
+        .xp-container { margin: 25px 0; text-align: left; }
+        .xp-header { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 8px; }
+        .xp-track { background: #1a1a1a; height: 8px; border-radius: 4px; overflow: hidden; }
+        .xp-bar { height: 100%; background: var(--red); width: 0%; transition: width 1s ease; }
 
         /* --- FORMS --- */
-        .input-group { margin-bottom: 20px; }
-        label { display: block; font-size: 0.7rem; color: #666; margin-bottom: 8px; text-transform: uppercase; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.7rem; color: #666; text-transform: uppercase; margin-bottom: 8px; }
         input, textarea {
-            width: 100%;
-            background: #000;
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 12px;
-            border-radius: 8px;
-            font-family: inherit;
-            box-sizing: border-box;
+            width: 100%; background: #080808; border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px; color: white; outline: none; box-sizing: border-box;
         }
-        input:focus, textarea:focus { border-color: var(--red); outline: none; }
-        textarea { height: 120px; resize: none; }
+        input:focus, textarea:focus { border-color: var(--red); }
 
-        .save-btn {
-            background: var(--red);
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            width: 100%;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .save-btn:hover { background: #ff4d5a; box-shadow: 0 0 20px var(--red-glow); }
-
-        #status-msg {
-            text-align: center;
-            font-size: 0.8rem;
-            margin-top: 15px;
-            min-height: 1.2rem;
-        }
+        #status-msg { height: 20px; font-size: 0.8rem; margin-top: 10px; text-align: center; }
 
         @media (max-width: 800px) {
-            .profile-grid { grid-template-columns: 1fr; }
+            .container { grid-template-columns: 1fr; }
+            .sidebar { order: 2; }
+            .main-content { order: 1; }
         }
     </style>
 </head>
 <body>
 
-    <nav class="top-nav">
-        <div class="nav-left">
-            <a href="index.html" class="nav-btn"><i class="fa fa-arrow-left"></i></a>
-            <img src="logo.png" alt="Logo" class="logo-img">
-        </div>
-        <div class="nav-right">
-            <span id="header-xp" style="color: var(--red); font-weight: bold; font-size: 0.9rem;"></span>
-        </div>
+    <nav class="navbar">
+        <img src="logo.png" class="nav-logo" alt="Logo">
+        <div style="flex-grow: 1; font-weight: bold; letter-spacing: 1px;">PERSONNEL FILES</div>
+        <a href="index.html" style="color: #666; text-decoration: none; font-size: 0.8rem;">BACK TO TERMINAL</a>
     </nav>
 
     <div class="container">
-        <div class="profile-grid">
-            <!-- Sidebar met Rang & XP -->
-            <div class="profile-sidebar">
-                <div class="avatar-container">
-                    <i class="fa fa-user-shield"></i>
+        <!-- Zijbalk met Agent Info & Uitloggen -->
+        <div class="sidebar">
+            <div class="avatar-circle">
+                <i class="fa fa-user-secret"></i>
+            </div>
+            <div class="agent-id" id="display-id">AGENT_NULL</div>
+            <div class="clearance-badge" id="display-rank">UNVERIFIED</div>
+            
+            <div class="xp-container">
+                <div class="xp-header">
+                    <span>PROGRESSION</span>
+                    <span id="user-xp">0 XP</span>
                 </div>
-                <div class="rank-title" id="display-rank">LOADING...</div>
-                <div class="agent-id" id="display-codename">AGENT_UNKNOWN</div>
-
-                <div class="stat-box">
-                    <div class="stat-label">Clearance XP</div>
-                    <div class="stat-value" id="stat-xp">0</div>
-                </div>
-
-                <div class="stat-box">
-                    <div class="stat-label">Authority Level</div>
-                    <div class="stat-value" id="stat-role">USER</div>
-                </div>
+                <div class="xp-track"><div class="xp-bar" id="xp-bar"></div></div>
+                <p id="xp-needed-text" style="font-size: 0.6rem; color: #555; margin-top: 10px; text-align: center;"></p>
             </div>
 
-            <!-- Main Content -->
-            <div class="profile-main">
-                <!-- XP Voortgang -->
-                <div class="card">
-                    <div class="card-title"><i class="fa fa-microchip"></i> Training Progress</div>
-                    <div class="xp-progress-container">
-                        <div class="xp-info">
-                            <span>LEVEL STATUS</span>
-                            <span id="xp-needed-text">Calculating...</span>
-                        </div>
-                        <div class="bar-bg">
-                            <div class="bar-fill" id="xp-bar"></div>
-                        </div>
-                    </div>
-                </div>
+            <!-- UITLOG KNOP -->
+            <button class="btn btn-logout" onclick="logout()">
+                <i class="fa fa-sign-out-alt"></i> Terminate Session
+            </button>
+        </div>
 
-                <!-- Dossier Bewerken -->
-                <div class="card">
-                    <div class="card-title"><i class="fa fa-file-signature"></i> Intelligence Dossier</div>
-                    <div class="input-group">
-                        <label>Agent Codename</label>
-                        <input type="text" id="user-display-name" placeholder="Kies je roepnaam...">
-                    </div>
-                    <div class="input-group">
-                        <label>Personnel Biography</label>
-                        <textarea id="user-bio" placeholder="Schrijf je achtergrondverhaal of specialisme..."></textarea>
-                    </div>
-                    <button class="save-btn" onclick="saveProfile()">Update Dossier</button>
-                    <div id="status-msg"></div>
-                </div>
+        <!-- Hoofdsectie met Dossier Bewerken -->
+        <div class="main-content">
+            <h3 style="margin-top: 0; color: var(--red);">Dossier Authorization</h3>
+            <p style="color: #666; font-size: 0.85rem; margin-bottom: 25px;">Update uw publieke codenaam en operationele achtergrond.</p>
+
+            <div class="form-group">
+                <label>Codename (Public Display Name)</label>
+                <input type="text" id="user-display-name" placeholder="Agent Alias">
             </div>
+
+            <div class="form-group">
+                <label>Operational Background (Bio)</label>
+                <textarea id="user-bio" rows="5" placeholder="Geef hier uw missie-ervaring op..."></textarea>
+            </div>
+
+            <button class="btn btn-save" onclick="saveProfile()">
+                <i class="fa fa-sync"></i> Synchronize Dossier
+            </button>
+            <div id="status-msg"></div>
         </div>
     </div>
 
@@ -286,56 +186,45 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        let currentXP = 0;
+        function getRank(xp) {
+            if (xp >= 5000) return { title: "OVERSEER", next: 10000 };
+            if (xp >= 2500) return { title: "ELITE AGENT", next: 5000 };
+            if (xp >= 1000) return { title: "FIELD OPERATIVE", next: 2500 };
+            if (xp >= 500) return { title: "RECON SPECIALIST", next: 1000 };
+            return { title: "INITIATE", next: 500 };
+        }
 
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.body.style.opacity = "1";
                 const username = user.email.split('@')[0].replace(/\./g, '_');
-                loadProfile(username);
+                document.getElementById('display-id').innerText = username.toUpperCase();
+                
+                db.ref('users/' + username).on('value', snap => {
+                    const data = snap.val() || {};
+                    const xp = data.xp || 0;
+                    const rank = getRank(xp);
+
+                    document.getElementById('user-xp').innerText = xp.toLocaleString() + " XP";
+                    document.getElementById('user-display-name').value = data.displayName || username;
+                    document.getElementById('user-bio').value = data.bio || "";
+                    document.getElementById('display-rank').innerText = rank.title;
+
+                    // Progress balk berekening
+                    const progress = (xp / rank.next) * 100;
+                    document.getElementById('xp-bar').style.width = Math.min(progress, 100) + "%";
+                    document.getElementById('xp-needed-text').innerText = `${(rank.next - xp).toLocaleString()} XP TOT VOLGENDE CLEARANCE`;
+                });
             } else {
                 window.location.href = "login.html";
             }
         });
-
-        function getRankInfo(xp) {
-            if (xp >= 5000) return { title: "Executive Director", next: 10000 };
-            if (xp >= 2500) return { title: "Special Operations", next: 5000 };
-            if (xp >= 1000) return { title: "Senior Researcher", next: 2500 };
-            if (xp >= 500) return { title: "Field Agent", next: 1000 };
-            if (xp >= 100) return { title: "Junior Intern", next: 500 };
-            return { title: "Civilian Observer", next: 100 };
-        }
-
-        function loadProfile(username) {
-            db.ref('users/' + username).on('value', snap => {
-                const data = snap.val() || {};
-                const xp = data.xp || 0;
-                currentXP = xp;
-                const rank = getRankInfo(xp);
-
-                document.getElementById('display-codename').innerText = (data.displayName || username).toUpperCase();
-                document.getElementById('user-display-name').value = data.displayName || "";
-                document.getElementById('user-bio').value = data.bio || "";
-                
-                document.getElementById('stat-xp').innerText = xp.toLocaleString();
-                document.getElementById('header-xp').innerText = xp.toLocaleString() + " XP";
-                document.getElementById('stat-role').innerText = (data.role || "USER").toUpperCase();
-                document.getElementById('display-rank').innerText = rank.title;
-
-                // Voortgangsbalk
-                const progress = (xp / rank.next) * 100;
-                document.getElementById('xp-bar').style.width = Math.min(progress, 100) + "%";
-                document.getElementById('xp-needed-text').innerText = `${(rank.next - xp).toLocaleString()} XP TOT VOLGENDE CLEARANCE`;
-            });
-        }
 
         function saveProfile() {
             const user = auth.currentUser;
             const username = user.email.split('@')[0].replace(/\./g, '_');
             const newName = document.getElementById('user-display-name').value;
             const newBio = document.getElementById('user-bio').value;
-            const status = document.getElementById('status-msg');
 
             if (newName.length < 3) {
                 showStatus("Error: Codename te kort", "#e63946");
@@ -349,6 +238,12 @@
                 showStatus("Dossier succesvol gesynchroniseerd", "#2ecc71");
             }).catch(err => {
                 showStatus("Sync fout: " + err.message, "#e63946");
+            });
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = "login.html";
             });
         }
 
