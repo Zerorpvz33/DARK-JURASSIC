@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dark Jurassic | Agent Directory</title>
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -13,139 +12,271 @@
 
     <style>
         :root {
-            --red: #e63946;
-            --dark-bg: #030303;
-            --panel: #0d0d0d;
-            --border: rgba(255, 255, 255, 0.08);
+            --primary: #e63946;
+            --primary-glow: rgba(230, 57, 70, 0.4);
+            --bg-dark: #050505;
+            --card-bg: #0d0d0d;
+            --border: #1a1a1a;
+            --text-main: #eeeeee;
+            --text-dim: #888888;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body { 
-            background: var(--dark-bg); color: #e0e0e0; margin: 0; 
-            font-family: 'Inter', sans-serif; overflow-x: hidden;
-            opacity: 0; transition: opacity 0.8s;
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            opacity: 0; 
+            transition: opacity 0.5s ease-in;
+            overflow-x: hidden;
+            min-height: 100vh;
         }
 
-        /* --- NAVIGATION & MOBILE DRAWER --- */
-        .navbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 25px; height: 70px; background: rgba(0,0,0,0.95);
-            border-bottom: 1px solid var(--border); position: fixed;
-            top: 0; width: 100%; box-sizing: border-box; z-index: 9999;
+        /* --- Scanline & CRT Effect --- */
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 9999;
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* --- Navigatie --- */
+        header {
+            background: rgba(0,0,0,0.95);
+            border-bottom: 2px solid var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
             backdrop-filter: blur(10px);
         }
-        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand img { height: 28px; }
-        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 1rem; }
 
-        .menu-toggle { display: none; color: white; font-size: 1.5rem; cursor: pointer; z-index: 10001; }
-
-        .nav-links { display: flex; gap: 15px; list-style: none; margin: 0; padding: 0; }
-        .nav-links a { 
-            color: #888; text-decoration: none; font-size: 0.7rem; 
-            font-weight: 700; text-transform: uppercase; transition: 0.3s;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
-
-        @media (max-width: 1150px) {
-            .menu-toggle { display: block; }
-            .nav-links {
-                position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
-                background: #0a0a0a; flex-direction: column; padding: 100px 30px;
-                transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-                border-left: 1px solid var(--red); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            }
-            .nav-links.active { right: 0; }
-            .nav-links a { font-size: 0.9rem; padding: 15px 0; border-bottom: 1px solid #111; width: 100%; }
-            .nav-links a i { color: var(--red); width: 25px; }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-        .nav-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 9998; backdrop-filter: blur(3px);
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-weight: bold; 
+            color: var(--primary); 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
         }
-        .nav-overlay.active { display: block; }
-
-        /* --- CONTENT --- */
-        .container { max-width: 900px; margin: 100px auto 50px; padding: 0 20px; }
         
-        .page-header {
-            border-left: 4px solid var(--red); padding-left: 20px; margin-bottom: 40px;
-        }
-        .page-header h2 { text-transform: uppercase; letter-spacing: 2px; margin: 0; font-size: 1.5rem; }
-        .page-header p { color: #555; font-size: 0.8rem; margin: 5px 0 0; font-family: monospace; }
+        .logo img { height: 40px; filter: drop-shadow(0 0 5px var(--primary)); }
 
-        /* --- AGENT CARDS --- */
-        .leaderboard-card {
-            background: var(--panel); border: 1px solid var(--border); padding: 20px;
-            border-radius: 4px; margin-bottom: 12px; display: grid;
-            grid-template-columns: 50px 1fr 180px; align-items: center; gap: 15px;
+        .nav-links { 
+            display: flex; 
+            gap: 10px; 
+            list-style: none; 
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav-links li a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             transition: 0.3s;
+            min-width: 65px;
+            padding: 5px;
+            border-radius: 4px;
         }
-        .leaderboard-card:hover { border-color: var(--red); transform: translateX(5px); }
 
-        .rank-num { font-family: monospace; color: var(--red); font-weight: 900; font-size: 1.2rem; }
-        .agent-name { font-weight: 800; color: #fff; font-size: 1rem; display: block; margin-bottom: 5px; }
+        .nav-links li a i { font-size: 1.2rem; margin-bottom: 4px; }
+        .nav-links li a:hover, .nav-links li a.active { 
+            color: var(--primary); 
+            background: rgba(230, 57, 70, 0.1);
+        }
 
-        .xp-bar-outer { height: 4px; background: #1a1a1a; width: 100%; border-radius: 2px; overflow: hidden; margin-top: 8px; }
-        .xp-bar-inner { height: 100%; background: var(--red); transition: width 1.5s ease-out; box-shadow: 0 0 10px var(--red); }
-        
+        /* --- Main Content --- */
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .section-header {
+            margin-bottom: 30px;
+            border-left: 4px solid var(--primary);
+            padding-left: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-text h1 { font-size: 1.8rem; text-transform: uppercase; letter-spacing: 2px; }
+        .header-text p { color: var(--text-dim); font-size: 0.9rem; }
+
+        /* Leaderboard */
+        .leaderboard-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .agent-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 15px 25px;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: 50px 1fr 150px;
+            align-items: center;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card:hover {
+            border-color: var(--primary);
+            background: #111;
+            transform: scale(1.02);
+        }
+
+        .rank-num {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .agent-main {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .agent-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #2ecc71;
+            border-radius: 50%;
+            box-shadow: 0 0 5px #2ecc71;
+        }
+
+        /* XP Progress */
+        .xp-container {
+            width: 100%;
+            max-width: 300px;
+            height: 6px;
+            background: #1a1a1a;
+            border-radius: 3px;
+            margin-top: 4px;
+            position: relative;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #550000, var(--primary));
+            border-radius: 3px;
+            transition: width 1s ease-out;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .xp-text {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Badge Styles */
         .rank-badge {
-            text-align: center; padding: 6px; border-radius: 2px; font-size: 0.6rem;
-            font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
-            border: 1px solid transparent;
+            justify-self: end;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            min-width: 120px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* --- MOBILE --- */
+        .badge-legend { color: #f1c40f; background: rgba(241, 196, 15, 0.1); border-color: #f1c40f; }
+        .badge-elite { color: #e67e22; background: rgba(230, 126, 34, 0.1); border-color: #e67e22; }
+        .badge-veteran { color: #9b59b6; background: rgba(155, 89, 182, 0.1); border-color: #9b59b6; }
+        .badge-operative { color: #3498db; background: rgba(52, 152, 219, 0.1); border-color: #3498db; }
+        .badge-novice { color: #95a5a6; background: rgba(149, 165, 166, 0.1); border-color: #95a5a6; }
+
         @media (max-width: 600px) {
-            .leaderboard-card { grid-template-columns: 40px 1fr; }
-            .rank-badge { grid-column: span 2; margin-top: 10px; width: 100%; box-sizing: border-box; }
-            .page-header h2 { font-size: 1.2rem; }
+            .agent-card {
+                grid-template-columns: 40px 1fr;
+                gap: 10px;
+            }
+            .rank-badge { grid-column: span 2; justify-self: start; margin-top: 10px; width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="brand">
-            <img src="logo.png" alt="DJ">
-            <span>DarkJurassic</span>
-        </a>
-        <div class="menu-toggle" onclick="toggleMenu()"><i class="fa fa-bars"></i></div>
-        <ul class="nav-links" id="nav-menu">
-            <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-            <li><a href="forum.html"><i class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-eye"></i> Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Species</a></li>
-            <li class="active"><a href="users.html"><i class="fa fa-users"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
-        </ul>
-    </nav>
-    <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
+    <header>
+        <nav class="navbar">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Logo">
+                <span>Dark Jurassic</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i><span>Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span>Intel</span></a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i><span>Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i><span>Species</span></a></li>
+                <li><a href="users.html" class="active"><i class="fa fa-users"></i><span>Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span>DMs</span></a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i><span>Cards</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i><span>Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span>Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i><span>System</span></a></li>
+            </ul>
+        </nav>
+    </header>
 
     <div class="container">
-        <div class="page-header">
-            <h2>Personnel Database</h2>
-            <p>ACCESS_LEVEL: RESTRICTED // ACTIVE_OPERATIVES_SCAN</p>
+        <div class="section-header">
+            <div class="header-text">
+                <h1>Agent Directory</h1>
+                <p>Geverifieerde Truth Seekers gerangschikt op operationele ervaring (XP).</p>
+            </div>
+            <div style="text-align: right; color: var(--text-dim); font-size: 0.7rem; letter-spacing: 1px;">
+                STATUS: ENCRYPTED CONNECTION<br>
+                <span id="active-count">0</span> AGENTS DETECTED
+            </div>
         </div>
-        
-        <div id="leaderboard">
-            <p style="text-align:center; color:#333; font-family:monospace; margin-top:50px;">
-                <i class="fa fa-cog fa-spin"></i> SYNCING AGENT DATA...
-            </p>
+
+        <div id="leaderboard" class="leaderboard-container">
+            <!-- Dynamisch geladen agenten -->
         </div>
     </div>
 
     <script>
-        function toggleMenu() {
-            document.getElementById('nav-menu').classList.toggle('active');
-            document.getElementById('nav-overlay').classList.toggle('active');
-        }
-
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -155,49 +286,70 @@
             messagingSenderId: "144100722100",
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
+        
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
         const auth = firebase.auth();
+        const db = firebase.database();
 
-        function getRank(xp) {
-            if (xp >= 15000) return { title: "Whistleblower", color: "#f1c40f", bg: "rgba(241, 196, 15, 0.1)" };
-            if (xp >= 5000) return { title: "Elite Operative", color: "#e63946", bg: "rgba(230, 57, 70, 0.1)" };
-            if (xp >= 1000) return { title: "Field Agent", color: "#3498db", bg: "rgba(52, 152, 219, 0.1)" };
-            if (xp >= 100) return { title: "Observer", color: "#2ecc71", bg: "rgba(46, 204, 113, 0.1)" };
-            return { title: "Civilian", color: "#7f8c8d", bg: "rgba(127, 140, 141, 0.1)" };
-        }
-
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged((user) => {
             if (user) {
                 document.body.style.opacity = "1";
                 loadLeaderboard();
-            } else { window.location.href = "login.html"; }
+            } else {
+                window.location.href = "login.html";
+            }
         });
+
+        function getRank(xp) {
+            if (xp >= 5000) return { title: "Legendary Seeker", class: "badge-legend" };
+            if (xp >= 2500) return { title: "Elite Operative", class: "badge-elite" };
+            if (xp >= 1000) return { title: "Senior Veteran", class: "badge-veteran" };
+            if (xp >= 300) return { title: "Field Agent", class: "badge-operative" };
+            return { title: "Recruit", class: "badge-novice" };
+        }
 
         function loadLeaderboard() {
             db.ref('users').on('value', snap => {
-                const leaderboard = document.getElementById('leaderboard');
-                leaderboard.innerHTML = "";
+                const container = document.getElementById('leaderboard');
+                const countEl = document.getElementById('active-count');
+                container.innerHTML = "";
+                
                 let agents = [];
-                snap.forEach(child => { agents.push({ name: child.key, xp: child.val().xp || 0 }); });
+                snap.forEach(child => {
+                    agents.push({ 
+                        name: child.key, 
+                        xp: child.val().xp || 0,
+                        role: child.val().role || "User"
+                    });
+                });
+
+                // Sorteren op XP (hoog naar laag)
                 agents.sort((a, b) => b.xp - a.xp);
+                countEl.innerText = agents.length;
 
                 agents.forEach((agent, index) => {
-                    const rank = getRank(agent.xp);
-                    const progress = Math.min((agent.xp / 15000) * 100, 100);
-                    leaderboard.innerHTML += `
-                        <div class="leaderboard-card">
-                            <div class="rank-num">0${index + 1}</div>
-                            <div class="agent-main">
-                                <span class="agent-name">@${agent.name}</span>
-                                <span style="font-family:monospace; font-size:0.65rem; color:#444;">DATA_POINTS: ${agent.xp}</span>
-                                <div class="xp-bar-outer"><div class="xp-bar-inner" style="width:${progress}%"></div></div>
+                    const rankData = getRank(agent.xp);
+                    const progress = Math.min((agent.xp / 5000) * 100, 100);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'agent-card';
+                    card.innerHTML = `
+                        <div class="rank-num">#${index + 1}</div>
+                        <div class="agent-main">
+                            <div class="agent-name">
+                                <div class="online-dot"></div>
+                                ${agent.name.toUpperCase()}
                             </div>
-                            <div class="rank-badge" style="color:${rank.color}; background:${rank.bg}; border-color:${rank.color}">
-                                ${rank.title}
+                            <div class="xp-text">${agent.xp} XP / 5000</div>
+                            <div class="xp-container">
+                                <div class="xp-fill" style="width: ${progress}%"></div>
                             </div>
                         </div>
+                        <div class="rank-badge ${rankData.class}">
+                            ${rankData.title}
+                        </div>
                     `;
+                    container.appendChild(card);
                 });
             });
         }

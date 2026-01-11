@@ -2,9 +2,8 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | Classified Vault</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dark Jurassic | InGen Classified Vault</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -14,177 +13,270 @@
     <style>
         :root {
             --red: #e63946;
+            --red-glow: rgba(230, 57, 70, 0.4);
             --dark-bg: #030303;
-            --panel: #0d0d0d;
+            --panel-bg: rgba(10, 10, 10, 0.95);
             --border: rgba(255, 255, 255, 0.08);
+            --nav-height: 70px;
         }
 
         body { 
-            background-color: var(--dark-bg); color: #e0e0e0; 
-            font-family: 'Inter', sans-serif; margin: 0;
-            overflow-x: hidden; opacity: 0; transition: 0.5s;
+            background-color: var(--dark-bg); 
+            color: #e0e0e0; 
+            margin: 0; 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            min-height: 100vh;
+            opacity: 0;
+            transition: opacity 0.8s ease;
         }
 
-        /* --- NAVIGATION & MOBILE DRAWER --- */
-        .navbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 25px; height: 70px; background: rgba(0,0,0,0.95);
-            border-bottom: 1px solid var(--border); position: fixed;
-            top: 0; width: 100%; box-sizing: border-box; z-index: 9999;
-            backdrop-filter: blur(10px);
-        }
-        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand img { height: 28px; }
-        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 1rem; }
-
-        .menu-toggle { display: none; color: white; font-size: 1.5rem; cursor: pointer; z-index: 10001; }
-
-        .nav-links { display: flex; gap: 15px; list-style: none; margin: 0; padding: 0; }
-        .nav-links a { 
-            color: #888; text-decoration: none; font-size: 0.7rem; 
-            font-weight: 700; text-transform: uppercase; transition: 0.3s;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
-
-        @media (max-width: 1150px) {
-            .menu-toggle { display: block; }
-            .nav-links {
-                position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
-                background: #0a0a0a; flex-direction: column; padding: 100px 30px;
-                transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-                border-left: 1px solid var(--red); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            }
-            .nav-links.active { right: 0; }
-            .nav-links a { font-size: 0.9rem; padding: 15px 0; border-bottom: 1px solid #111; width: 100%; }
+        /* --- NAVIGATION --- */
+        .top-nav {
+            height: var(--nav-height);
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        .nav-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 9998; backdrop-filter: blur(3px);
+        .nav-left { display: flex; align-items: center; gap: 20px; }
+        .logo-img { height: 40px; filter: drop-shadow(0 0 5px var(--red)); }
+        
+        .nav-btn {
+            color: #888;
+            text-decoration: none;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: 0.3s;
         }
-        .nav-overlay.active { display: block; }
 
-        /* --- VAULT HEADER --- */
-        .container { max-width: 1200px; margin: 100px auto 50px; padding: 0 20px; }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
 
-        .vault-header {
-            border-left: 4px solid var(--red);
+        /* --- CONTENT --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header-section {
+            border-left: 3px solid var(--red);
             padding-left: 20px;
             margin-bottom: 40px;
         }
-        .vault-header h1 { font-size: 2rem; font-weight: 900; margin: 0; text-transform: uppercase; color: #fff; }
-        .vault-header p { color: #555; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 2px; }
+
+        .header-section h1 {
+            font-size: 2rem;
+            margin: 0;
+            letter-spacing: 2px;
+            color: var(--red);
+            text-transform: uppercase;
+        }
+
+        .header-section p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .vault-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            padding: 15px 25px;
+            border-radius: 12px;
+        }
+
+        .stat-label { font-size: 0.6rem; color: #555; letter-spacing: 1px; text-transform: uppercase; }
+        .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--red); }
 
         /* --- FILE GRID --- */
         .file-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
+            gap: 20px;
         }
 
         .file-card {
-            background: var(--panel);
+            background: var(--panel-bg);
             border: 1px solid var(--border);
+            border-radius: 15px;
             padding: 20px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            cursor: pointer;
-            transition: 0.3s;
             position: relative;
             overflow: hidden;
+            transition: 0.3s;
+            cursor: pointer;
         }
 
-        .file-card:not(.locked):hover { 
-            border-color: var(--red); 
-            background: #111;
-            transform: translateY(-3px);
+        .file-card:hover:not(.locked) {
+            border-color: var(--red);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(230, 57, 70, 0.1);
         }
 
-        .file-card.locked { 
-            opacity: 0.3; 
+        .file-card.locked {
+            opacity: 0.6;
             cursor: not-allowed;
             filter: grayscale(1);
         }
-        
-        .file-icon { font-size: 1.5rem; color: var(--red); }
-        .locked .file-icon { color: #333; }
 
-        .file-info h3 { font-size: 0.85rem; margin: 0; color: #fff; }
-        .file-info span { font-size: 0.6rem; color: #555; text-transform: uppercase; font-weight: 800; }
-
-        .xp-required {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            background: rgba(230, 57, 70, 0.1); color: var(--red); font-size: 0.55rem;
-            text-align: center; padding: 4px 0; font-weight: 900;
+        .file-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--red);
         }
 
-        /* --- VIEWER --- */
-        #viewer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.98);
-            display: none; justify-content: center; align-items: center;
-            z-index: 10000; flex-direction: column; padding: 20px;
+        .file-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .file-type {
+            font-size: 0.75rem;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .lock-overlay {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 0.8rem;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: #f1c40f;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* --- VIEWER MODAL --- */
+        .viewer-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
             backdrop-filter: blur(10px);
         }
-        #viewer img { max-width: 95%; max-height: 70vh; border: 1px solid #222; }
-        #view-title { font-size: 0.9rem; color: #fff; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px; }
-        .close-viewer { position: absolute; top: 25px; right: 25px; font-size: 1.5rem; cursor: pointer; color: #fff; }
+
+        .viewer-content {
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .viewer-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .viewer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .viewer-img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .close-viewer {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
 
         @media (max-width: 600px) {
-            .vault-header h1 { font-size: 1.5rem; }
             .file-grid { grid-template-columns: 1fr; }
+            .vault-stats { flex-direction: column; }
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="brand">
-            <img src="logo.png" alt="DJ">
-            <span>DarkJurassic</span>
-        </a>
-        <div class="menu-toggle" onclick="toggleMenu()"><i class="fa fa-bars"></i></div>
-        <ul class="nav-links" id="nav-menu">
-            <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-            <li><a href="forum.html"><i class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-eye"></i> Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-users"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
-            <li class="active"><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
-        </ul>
+    <nav class="top-nav">
+        <div class="nav-left">
+            <a href="index.html" class="nav-btn"><i class="fa fa-arrow-left"></i></a>
+            <img src="logo.png" alt="Logo" class="logo-img">
+        </div>
+        <div class="nav-right">
+            <span id="player-xp-header" style="color: var(--red); font-weight: bold; font-size: 0.9rem;"></span>
+        </div>
     </nav>
-    <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
 
     <div class="container">
-        <div class="vault-header">
-            <h1>Classified Vault</h1>
-            <p>InGen Internal Assets & Blueprints</p>
+        <div class="header-section">
+            <h1>Classified Archives</h1>
+            <p>Toegang tot InGen-bestanden is strikt beperkt op basis van Clearance Level (XP).</p>
         </div>
 
-        <div class="file-grid" id="file-container">
+        <div class="vault-stats">
+            <div class="stat-box">
+                <div class="stat-label">Security Clearance</div>
+                <div class="stat-value" id="user-xp-display">0 XP</div>
             </div>
+            <div class="stat-box">
+                <div class="stat-label">Archive Status</div>
+                <div class="stat-value" style="color: #2ecc71;">ENCRYPTED</div>
+            </div>
+        </div>
+
+        <div class="file-grid" id="file-grid">
+            <!-- Bestanden worden hier geladen -->
+        </div>
     </div>
 
-    <div id="viewer" onclick="this.style.display='none'">
-        <span class="close-viewer"><i class="fa fa-times"></i></span>
-        <img id="view-img" src="">
-        <h2 id="view-title"></h2>
-        <p style="color: var(--red); font-size: 0.6rem; font-weight: 900; margin-top: 10px; letter-spacing: 2px;">ENCRYPTED DATA // CLICK TO EXIT</p>
+    <!-- Viewer Modal -->
+    <div class="viewer-modal" id="viewer-modal">
+        <div class="viewer-content">
+            <div class="viewer-header">
+                <h2 id="view-title" style="margin:0; font-size: 1.2rem; color: var(--red);">DATA_FILE</h2>
+                <button class="close-viewer" onclick="closeViewer()">&times;</button>
+            </div>
+            <div class="viewer-body">
+                <img id="view-img" src="" class="viewer-img">
+                <div id="view-desc" style="line-height: 1.6; color: #aaa;"></div>
+            </div>
+        </div>
     </div>
 
     <script>
-        function toggleMenu() {
-            document.getElementById('nav-menu').classList.toggle('active');
-            document.getElementById('nav-overlay').classList.toggle('active');
-        }
-
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -194,51 +286,96 @@
             messagingSenderId: "144100722100",
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
+        
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
         const auth = firebase.auth();
+        const db = firebase.database();
 
-        const inGenFiles = [
-            { name: "Indominus_Blueprint.pdf", type: "Genetics", xp: 0, img: "https://images.squarespace-cdn.com/content/v1/51b3dc8ee4b051b96ceb10de/1433253591461-F2JUXG7O6N2C62C6X8Y4/Indominus_Rex_Blueprint.jpg" },
-            { name: "CryoCan_Schematic.log", type: "Security", xp: 500, img: "https://jurassicoutpost.com/wp-content/uploads/2016/05/Cryocan_Schematic.jpg" },
-            { name: "Nedry_Backdoor.sys", type: "Hacking", xp: 1500, img: "https://i.redd.it/9n6u8h6u4v311.jpg" },
-            { name: "Lockwood_Diary_v2.dna", type: "Classified", xp: 5000, img: "https://static.wikia.nocookie.net/jurassicpark/images/a/a2/Lockwood_Diary.png" }
+        const CLASSIFIED_DATA = [
+            {
+                id: 1,
+                name: "Project Regeneration",
+                type: "Genetics_Report",
+                desc: "De vroege logs van Dr. Wu betreffende de stabiele sequenties van de Tyrannosaurus Rex. Bevat details over de noodzakelijke amfibische DNA-substituties.",
+                img: "https://images.unsplash.com/photo-1510218830377-1e934a709460?auto=format&fit=crop&q=80&w=800",
+                req: 0
+            },
+            {
+                id: 2,
+                name: "Site B Inventory",
+                type: "Logistics_Sheet",
+                desc: "Een lijst van alle actieve assets op Isla Sorna voor de evacuatie van 1997. Waarschuwing: Ongeautoriseerde toegang wordt geregistreerd.",
+                img: "https://images.unsplash.com/photo-1525385133512-2f3bdd039054?auto=format&fit=crop&q=80&w=800",
+                req: 100
+            },
+            {
+                id: 3,
+                name: "Hybrid Protocols",
+                type: "Top_Secret",
+                desc: "Conceptuele schetsen en gedragsanalyses voor de 'Indominus' klasse. Vernietig na het lezen.",
+                img: "https://images.unsplash.com/photo-1506466010722-395aa2bef877?auto=format&fit=crop&q=80&w=800",
+                req: 500
+            },
+            {
+                id: 4,
+                name: "Chaos Theory Logs",
+                type: "Theory_Paper",
+                desc: "Interne memo's van Dr. Ian Malcolm over het onvermijdelijke falen van het containment systeem op Isla Nublar.",
+                img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800",
+                req: 1000
+            }
         ];
 
         auth.onAuthStateChanged(user => {
-            if (user) {
-                const username = user.email.split('@')[0];
+            if(user) {
                 document.body.style.opacity = "1";
-                
+                const username = user.email.split('@')[0].replace(/\./g, '_');
                 db.ref('users/' + username).on('value', snap => {
-                    const userData = snap.val() || {};
-                    renderVault(userData.xp || 0);
+                    const xp = snap.val()?.xp || 0;
+                    updateUI(xp);
                 });
-            } else { window.location.href = "login.html"; }
+            } else {
+                window.location.href = "login.html";
+            }
         });
 
-        function renderVault(userXP) {
-            const container = document.getElementById('file-container');
-            container.innerHTML = inGenFiles.map(file => {
-                const isLocked = userXP < file.xp;
+        function updateUI(userXP) {
+            document.getElementById('user-xp-display').innerText = userXP + " XP";
+            document.getElementById('player-xp-header').innerText = userXP + " XP";
+            
+            const grid = document.getElementById('file-grid');
+            grid.innerHTML = CLASSIFIED_DATA.map(file => {
+                const isLocked = userXP < file.req;
                 return `
-                    <div class="file-card ${isLocked ? 'locked' : ''}" onclick="openFile('${file.img}', '${file.name}', ${isLocked})">
-                        <div class="file-icon"><i class="fa ${isLocked ? 'fa-lock' : 'fa-file-contract'}"></i></div>
-                        <div class="file-info">
-                            <h3>${file.name}</h3>
-                            <span>${file.type}</span>
-                        </div>
-                        ${isLocked ? `<div class="xp-required">CLEARANCE LEVEL: ${file.xp} XP</div>` : ''}
+                    <div class="file-card ${isLocked ? 'locked' : ''}" onclick="viewFile(${JSON.stringify(file).replace(/"/g, '&quot;')}, ${isLocked})">
+                        ${isLocked ? `<div class="lock-overlay"><i class="fa fa-lock"></i> ${file.req} XP</div>` : ''}
+                        <div class="file-icon"><i class="fa ${isLocked ? 'fa-file-zipper' : 'fa-file-lines'}"></i></div>
+                        <div class="file-title">${file.name}</div>
+                        <div class="file-type">${file.type}</div>
                     </div>
                 `;
             }).join('');
         }
 
-        function openFile(img, title, locked) {
-            if (locked) return;
-            document.getElementById('view-img').src = img;
-            document.getElementById('view-title').innerText = title;
-            document.getElementById('viewer').style.display = 'flex';
+        function viewFile(file, isLocked) {
+            if(isLocked) return;
+            document.getElementById('view-title').innerText = `DATA_STREAM: ${file.name}`;
+            document.getElementById('view-img').src = file.img;
+            document.getElementById('view-desc').innerHTML = `
+                <p><strong>DESCRIPTION:</strong> ${file.desc}</p>
+                <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+                <p style="font-size:0.8rem; font-family:monospace;">INGEN_SECURITY_PROTOCOL: CLEARANCE_GRANTED<br>ENCRYPTION: 256-BIT_AES</p>
+            `;
+            document.getElementById('viewer-modal').style.display = 'flex';
+        }
+
+        function closeViewer() {
+            document.getElementById('viewer-modal').style.display = 'none';
+        }
+
+        // Sluit modal op klik buiten content
+        window.onclick = (e) => {
+            if(e.target.id === 'viewer-modal') closeViewer();
         }
     </script>
 </body>

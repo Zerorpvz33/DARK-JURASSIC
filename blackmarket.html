@@ -2,9 +2,8 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | Black Market Terminal</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dark Jurassic | Black Market</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -14,155 +13,257 @@
     <style>
         :root {
             --red: #e63946;
+            --red-glow: rgba(230, 57, 70, 0.4);
             --dark-bg: #030303;
-            --panel-bg: #0d0d0d;
+            --panel-bg: rgba(10, 10, 10, 0.95);
             --border: rgba(255, 255, 255, 0.08);
-            --accent-glow: rgba(230, 57, 70, 0.15);
+            --nav-height: 70px;
         }
 
         body { 
-            background-color: var(--dark-bg); color: #e0e0e0; 
-            font-family: 'Inter', sans-serif; margin: 0; 
-            opacity: 0; transition: opacity 0.5s ease;
+            background-color: var(--dark-bg); 
+            color: #e0e0e0; 
+            margin: 0; 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            min-height: 100vh;
+            opacity: 0;
+            transition: opacity 0.8s ease;
         }
 
-        /* --- NAVIGATION & MOBILE DRAWER --- */
-        .navbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 25px; height: 70px; background: rgba(0,0,0,0.95);
-            border-bottom: 1px solid var(--border); position: fixed;
-            top: 0; width: 100%; box-sizing: border-box; z-index: 9999;
-            backdrop-filter: blur(10px);
-        }
-        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand img { height: 28px; }
-        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 1rem; }
-
-        .menu-toggle { display: none; color: white; font-size: 1.5rem; cursor: pointer; z-index: 10001; }
-
-        .nav-links { display: flex; gap: 15px; list-style: none; margin: 0; padding: 0; }
-        .nav-links a { 
-            color: #888; text-decoration: none; font-size: 0.7rem; 
-            font-weight: 700; text-transform: uppercase; transition: 0.3s;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
-
-        @media (max-width: 1150px) {
-            .menu-toggle { display: block; }
-            .nav-links {
-                position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
-                background: #0a0a0a; flex-direction: column; padding: 100px 30px;
-                transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-                border-left: 1px solid var(--red); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            }
-            .nav-links.active { right: 0; }
-            .nav-links a { font-size: 0.9rem; padding: 15px 0; border-bottom: 1px solid #111; width: 100%; }
+        /* --- NAVIGATION --- */
+        .top-nav {
+            height: var(--nav-height);
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        .nav-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 9998; backdrop-filter: blur(3px);
+        .nav-left { display: flex; align-items: center; gap: 20px; }
+        .logo-img { height: 40px; filter: drop-shadow(0 0 5px var(--red)); }
+        
+        .nav-btn {
+            color: #888;
+            text-decoration: none;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: 0.3s;
         }
-        .nav-overlay.active { display: block; }
 
-        /* --- MARKET HEADER --- */
-        .container { max-width: 1200px; margin: 100px auto 50px; padding: 0 20px; }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
 
-        .market-status {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 40px; background: var(--panel-bg); padding: 20px;
-            border: 1px solid var(--border); border-left: 4px solid var(--red);
+        /* --- CONTENT --- */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
         }
-        .xp-display { display: flex; align-items: center; gap: 15px; }
-        .xp-display i { color: var(--red); font-size: 1.5rem; }
-        .xp-amount { font-size: 1.5rem; font-weight: 900; letter-spacing: 1px; }
 
-        /* --- MARKET GRID --- */
-        .market-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
+        .header-section {
+            border-left: 3px solid var(--red);
+            padding-left: 20px;
+            margin-bottom: 40px;
+        }
+
+        .header-section h1 {
+            font-size: 2rem;
+            margin: 0;
+            letter-spacing: 2px;
+            color: var(--red);
+            text-transform: uppercase;
+        }
+
+        .header-section p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .market-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .xp-display {
+            text-align: right;
+        }
+
+        .xp-label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .xp-value { font-size: 1.5rem; font-weight: bold; color: var(--red); }
+
+        /* --- ROLE CARDS --- */
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
         }
 
         .role-card {
-            background: var(--panel-bg); border: 1px solid var(--border);
-            padding: 25px; border-radius: 4px; display: flex; flex-direction: column;
-            transition: 0.3s; position: relative; overflow: hidden;
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
         }
-        .role-card:hover { border-color: var(--red); transform: translateY(-3px); }
 
-        .role-tag {
-            font-size: 0.6rem; font-weight: 900; text-transform: uppercase;
-            letter-spacing: 1px; margin-bottom: 10px; color: var(--red);
+        .role-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--red);
+            opacity: 0.3;
         }
-        .role-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; color: #fff; }
-        .role-desc { font-size: 0.8rem; color: #666; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; }
+
+        .role-card:hover {
+            border-color: var(--red);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(230, 57, 70, 0.1);
+        }
+
+        .role-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .role-desc {
+            color: #888;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .role-price {
+            font-family: monospace;
+            color: var(--red);
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
         .buy-btn {
-            background: transparent; border: 1px solid #333; color: #fff;
-            padding: 12px; border-radius: 2px; font-size: 0.7rem; font-weight: 800;
-            text-transform: uppercase; cursor: pointer; transition: 0.3s;
+            background: transparent;
+            border: 1px solid var(--red);
+            color: var(--red);
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
         }
-        .buy-btn:hover:not(:disabled) { background: var(--red); border-color: var(--red); }
-        .buy-btn:disabled { opacity: 0.2; cursor: not-allowed; }
 
-        .owned-status { color: var(--red); font-size: 0.7rem; font-weight: 900; text-align: center; padding: 12px; }
+        .buy-btn:hover:not(:disabled) {
+            background: var(--red);
+            color: white;
+            box-shadow: 0 0 15px var(--red-glow);
+        }
 
-        /* --- MOBILE --- */
+        .buy-btn:disabled {
+            border-color: #333;
+            color: #333;
+            cursor: not-allowed;
+        }
+
+        .owned-tag {
+            background: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: 1px solid rgba(46, 204, 113, 0.2);
+        }
+
+        /* --- NOTIFICATION --- */
+        #notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--panel-bg);
+            border: 1px solid var(--red);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: none;
+            z-index: 2000;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
         @media (max-width: 600px) {
-            .market-status { flex-direction: column; text-align: center; gap: 15px; }
-            .xp-display { flex-direction: column; gap: 5px; }
+            .market-info { flex-direction: column; text-align: center; gap: 15px; }
+            .xp-display { text-align: center; }
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="brand">
-            <img src="logo.png" alt="DJ">
-            <span>DarkJurassic</span>
-        </a>
-        <div class="menu-toggle" onclick="toggleMenu()"><i class="fa fa-bars"></i></div>
-        <ul class="nav-links" id="nav-menu">
-            <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-            <li><a href="forum.html"><i class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-eye"></i> Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-users"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-            <li class="active"><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
-        </ul>
+    <nav class="top-nav">
+        <div class="nav-left">
+            <a href="index.html" class="nav-btn"><i class="fa fa-arrow-left"></i></a>
+            <img src="logo.png" alt="Logo" class="logo-img">
+        </div>
+        <div class="nav-right">
+            <span id="player-xp-header" style="color: var(--red); font-weight: bold; font-size: 0.9rem;"></span>
+        </div>
     </nav>
-    <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
 
     <div class="container">
-        <div class="market-status">
+        <div class="header-section">
+            <h1>The Black Market</h1>
+            <p>Verhandel je XP voor nieuwe privileges en identiteiten binnen de archieven.</p>
+        </div>
+
+        <div class="market-info">
             <div>
-                <h2 style="margin:0; font-weight:900; text-transform:uppercase; letter-spacing:2px;">Black Market</h2>
-                <p style="margin:5px 0 0; color:#444; font-size:0.7rem; font-family:monospace;">STATION_ID: NODE_09 // SECURE_ACCESS</p>
+                <div style="color: #666; font-size: 0.8rem;">MARKET_STATUS</div>
+                <div style="color: #2ecc71; font-weight: bold; font-size: 1.1rem;"><i class="fa fa-circle-check"></i> LIVE_DEALS</div>
             </div>
             <div class="xp-display">
-                <i class="fa fa-dna"></i>
-                <div>
-                    <div style="font-size:0.6rem; color:var(--red); font-weight:900;">AVAILABLE CREDITS</div>
-                    <div class="xp-amount" id="user-xp">0</div>
-                </div>
+                <div class="xp-label">Available Assets</div>
+                <div class="xp-value" id="user-xp-display">0 XP</div>
             </div>
         </div>
 
-        <div class="market-grid" id="roles-container">
-            </div>
+        <div class="roles-grid" id="roles-grid">
+            <!-- Rollen worden hier geladen -->
+        </div>
     </div>
 
-    <script>
-        function toggleMenu() {
-            document.getElementById('nav-menu').classList.toggle('active');
-            document.getElementById('nav-overlay').classList.toggle('active');
-        }
+    <div id="notification"></div>
 
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -172,15 +273,17 @@
             messagingSenderId: "144100722100",
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
+        
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
         const auth = firebase.auth();
+        const db = firebase.database();
 
         let currentXP = 0;
+        let currentRole = "USER";
         let username = "";
 
-        const availableRoles = [
-{ id: "r1", name: "Mercenary", color: "mercenary", price: 250, desc: "A entry-level role for those who work for the highest bidder." },
+        const ROLES = [
+             { id: "r1", name: "Mercenary", color: "mercenary", price: 250, desc: "A entry-level role for those who work for the highest bidder." },
     { id: "r2", name: "Gatekeeper", color: "mercenary", price: 275, desc: "You watch the perimeter of the digital exclusion zone." },
     { id: "r3", name: "Scavenger", color: "mercenary", price: 300, desc: "Picking up the scraps InGen left behind in Site B." },
     { id: "r4", name: "Drifter", color: "mercenary", price: 325, desc: "No loyalty, just looking for the next big score." },
@@ -336,48 +439,67 @@
         ];
 
         auth.onAuthStateChanged(user => {
-            if (user) {
-                username = user.email.split('@')[0];
+            if(user) {
                 document.body.style.opacity = "1";
-                
+                username = user.email.split('@')[0].replace(/\./g, '_');
                 db.ref('users/' + username).on('value', snap => {
                     const data = snap.val() || {};
                     currentXP = data.xp || 0;
-                    const currentRole = data.role || "";
-                    document.getElementById('user-xp').innerText = currentXP.toLocaleString();
-                    renderMarket(currentRole);
+                    currentRole = data.role || "USER";
+                    updateUI();
                 });
-            } else { window.location.href = "login.html"; }
+            } else {
+                window.location.href = "login.html";
+            }
         });
 
-        function renderMarket(userRole) {
-            const container = document.getElementById('roles-container');
-            container.innerHTML = availableRoles.map(role => {
-                const isOwned = userRole === role.name;
+        function updateUI() {
+            document.getElementById('user-xp-display').innerText = currentXP + " XP";
+            document.getElementById('player-xp-header').innerText = currentXP + " XP";
+            
+            const grid = document.getElementById('roles-grid');
+            grid.innerHTML = ROLES.map(role => {
+                const isOwned = currentRole === role.name;
                 const canAfford = currentXP >= role.price;
+                
                 return `
-                <div class="role-card">
-                    <div class="role-tag">LEVEL_GRANT // ${role.price} XP</div>
-                    <div class="role-name">${role.name}</div>
-                    <p class="role-desc">${role.desc}</p>
-                    ${isOwned ? 
-                        `<div class="owned-status"><i class="fa fa-check"></i> CURRENT_ROLE</div>` : 
-                        `<button class="buy-btn" onclick="purchaseRole('${role.name}', ${role.price})" ${!canAfford ? 'disabled' : ''}>
-                            Buy Credentials
-                        </button>`
-                    }
-                </div>
+                    <div class="role-card">
+                        <div>
+                            <div class="role-name">${role.name}</div>
+                            <p class="role-desc">${role.desc}</p>
+                        </div>
+                        <div>
+                            <div class="role-price">
+                                <i class="fa fa-microchip"></i> ${role.price} XP
+                            </div>
+                            ${isOwned ? 
+                                `<div class="owned-tag"><i class="fa fa-check-circle"></i> ACTIEVE_STATUS</div>` : 
+                                `<button class="buy-btn" onclick="purchaseRole('${role.name}', ${role.price})" ${!canAfford ? 'disabled' : ''}>
+                                    ${canAfford ? 'AUTHORISEER_AANKOOP' : 'ONVOLDOENDE_XP'}
+                                </button>`
+                            }
+                        </div>
+                    </div>
                 `;
             }).join('');
         }
 
         function purchaseRole(roleName, price) {
-            if (confirm(`AUTHORIZE XP TRANSFER: ${price} XP for '${roleName}'?`)) {
+            if (confirm(`Bevestig XP-overdracht: ${price} XP voor de rang '${roleName}'?`)) {
                 db.ref('users/' + username).update({
                     xp: currentXP - price,
                     role: roleName
+                }).then(() => {
+                    showNotification(`Succes: Je bent nu een ${roleName}!`);
                 });
             }
+        }
+
+        function showNotification(msg) {
+            const n = document.getElementById('notification');
+            n.innerText = msg;
+            n.style.display = 'block';
+            setTimeout(() => { n.style.display = 'none'; }, 3000);
         }
     </script>
 </body>

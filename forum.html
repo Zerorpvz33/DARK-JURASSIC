@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | Intelligence Board</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dark Jurassic | Intel Feed</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -13,196 +12,277 @@
 
     <style>
         :root {
-            --red: #e63946;
-            --dark-bg: #030303;
-            --panel: #0d0d0d;
-            --border: rgba(255, 255, 255, 0.08);
-            --red-glow: rgba(230, 57, 70, 0.3);
+            --primary: #e63946;
+            --primary-glow: rgba(230, 57, 70, 0.4);
+            --bg-dark: #050505;
+            --card-bg: #0d0d0d;
+            --border: #1a1a1a;
+            --accent: #5dade2;
+            --text-main: #eeeeee;
+            --text-dim: #888888;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body { 
-            background-color: var(--dark-bg); color: #e0e0e0; 
-            font-family: 'Inter', sans-serif; margin: 0; opacity: 0; 
-            transition: opacity 1s ease; overflow-x: hidden;
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            opacity: 0; 
+            transition: opacity 0.5s ease-in;
+            overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        /* --- NAVBAR & MOBILE DRAWER --- */
-        .navbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 25px; height: 70px; background: rgba(0,0,0,0.95);
-            border-bottom: 1px solid var(--border); position: fixed;
-            top: 0; width: 100%; box-sizing: border-box; z-index: 9999;
+        /* --- Scanline Effect --- */
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 9999;
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* --- Navigatie (Zelfde als Index) --- */
+        header {
+            background: rgba(0,0,0,0.95);
+            border-bottom: 2px solid var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
             backdrop-filter: blur(10px);
         }
-        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand img { height: 28px; }
-        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 1rem; }
 
-        .menu-toggle { display: none; color: white; font-size: 1.5rem; cursor: pointer; z-index: 10001; }
-
-        .nav-links { display: flex; gap: 15px; list-style: none; margin: 0; padding: 0; }
-        .nav-links a { 
-            color: #888; text-decoration: none; font-size: 0.7rem; 
-            font-weight: 700; text-transform: uppercase; transition: 0.3s;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
-
-        @media (max-width: 1150px) {
-            .menu-toggle { display: block; }
-            .nav-links {
-                position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
-                background: #0a0a0a; flex-direction: column; padding: 100px 30px;
-                transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-                border-left: 1px solid var(--red); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            }
-            .nav-links.active { right: 0; }
-            .nav-links a { font-size: 0.9rem; padding: 15px 0; border-bottom: 1px solid #111; width: 100%; }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-        .nav-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 9998; backdrop-filter: blur(3px);
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-weight: bold; 
+            color: var(--primary); 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
         }
-        .nav-overlay.active { display: block; }
-
-        /* --- FORUM CONTENT --- */
-        .container { max-width: 1000px; margin: 100px auto 50px; padding: 0 20px; }
         
-        .forum-header { 
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 30px; background: var(--panel); padding: 25px;
-            border-radius: 4px; border: 1px solid var(--border);
-        }
-        .forum-header h1 { font-size: 1.5rem; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+        .logo img { height: 40px; width: auto; filter: drop-shadow(0 0 5px var(--primary)); }
 
-        .btn-new { 
-            background: var(--red); color: white; border: none; padding: 12px 20px; 
-            border-radius: 2px; font-weight: 800; font-size: 0.7rem; cursor: pointer;
-            text-transform: uppercase; transition: 0.3s;
+        .nav-links { 
+            display: flex; 
+            gap: 10px; 
+            list-style: none; 
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 5px 0;
+            scrollbar-width: none;
         }
-        .btn-new:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--red-glow); }
-
-        /* --- THREAD CARDS --- */
-        .thread-card { 
-            background: var(--panel); border: 1px solid var(--border); border-radius: 4px; 
-            padding: 20px; margin-bottom: 10px; display: grid; grid-template-columns: 50px 1fr auto; 
-            gap: 20px; align-items: center; cursor: pointer; transition: 0.2s;
-        }
-        .thread-card:hover { border-color: var(--red); background: #111; }
         
-        .user-avatar { 
-            width: 45px; height: 45px; background: #000; border: 1px solid var(--red);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-weight: 900; color: var(--red);
+        .nav-links::-webkit-scrollbar { display: none; }
+
+        .nav-links li a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: 0.3s;
+            min-width: 65px;
+            padding: 5px;
+            border-radius: 4px;
         }
 
-        .thread-info h3 { margin: 0 0 5px; font-size: 1rem; color: #fff; }
-        .thread-meta { font-size: 0.65rem; color: #555; text-transform: uppercase; font-weight: 700; }
-        .thread-meta span { color: var(--red); }
-
-        /* --- THREAD VIEW --- */
-        .thread-view { display: none; }
-        .post-main { 
-            background: #000; border: 1px solid var(--border); border-radius: 4px; 
-            padding: 30px; margin-bottom: 30px; border-top: 3px solid var(--red);
+        .nav-links li a i { font-size: 1.2rem; margin-bottom: 4px; }
+        .nav-links li a:hover, .nav-links li a.active { 
+            color: var(--primary); 
+            background: rgba(230, 57, 70, 0.1);
         }
-        .post-content { line-height: 1.6; color: #aaa; font-family: monospace; }
 
-        .comment { 
-            background: var(--panel); padding: 15px; border-radius: 4px; 
-            margin-bottom: 10px; border-left: 2px solid #222;
+        /* --- Forum Layout --- */
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
         }
-        .comment-header { font-size: 0.65rem; font-weight: 900; color: var(--red); text-transform: uppercase; margin-bottom: 5px; }
 
-        .reply-box { 
-            position: sticky; bottom: 20px; background: #111; 
-            padding: 10px; border-radius: 4px; border: 1px solid var(--red);
-            display: flex; gap: 10px;
+        .forum-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--primary);
+            padding-left: 20px;
         }
-        .reply-box input { flex: 1; background: transparent; border: none; color: white; padding: 10px; outline: none; }
 
-        /* --- MODAL --- */
-        .modal { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); z-index: 10002; align-items: center; justify-content: center;
+        .forum-header h1 { font-size: 1.8rem; text-transform: uppercase; letter-spacing: 3px; }
+
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            transition: 0.3s;
         }
-        .modal-content { background: #0a0a0a; padding: 30px; width: 90%; max-width: 500px; border: 1px solid var(--red); }
-        .modal-content input, .modal-content textarea { 
-            width: 100%; background: #000; border: 1px solid #222; color: white; 
-            padding: 12px; margin-bottom: 15px; border-radius: 2px; box-sizing: border-box;
+
+        .btn-action:hover { box-shadow: 0 0 15px var(--primary-glow); transform: scale(1.05); }
+
+        /* --- Thread Cards --- */
+        .thread-list { display: flex; flex-direction: column; gap: 15px; }
+
+        .thread-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .thread-card:hover { border-color: var(--primary); background: #111; }
+        
+        .thread-meta { font-size: 0.7rem; color: var(--accent); font-family: monospace; margin-bottom: 5px; }
+        .thread-title { font-size: 1.1rem; color: white; margin-bottom: 8px; font-weight: 600; }
+        .thread-preview { font-size: 0.85rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* --- Single Thread View --- */
+        #single-thread-view { display: none; }
+        
+        .thread-full { background: var(--card-bg); border: 1px solid var(--primary); padding: 30px; border-radius: 8px; margin-bottom: 30px; }
+        .thread-body { margin: 20px 0; font-size: 1rem; color: var(--text-main); white-space: pre-wrap; }
+
+        .comment-section { margin-top: 40px; }
+        .comment { background: #080808; border: 1px solid #111; padding: 15px; border-radius: 6px; margin-bottom: 10px; border-left: 2px solid var(--accent); }
+        .comment-user { font-weight: bold; font-size: 0.8rem; color: var(--accent); margin-bottom: 5px; }
+        .comment-text { font-size: 0.9rem; }
+
+        .input-group { margin-top: 20px; display: flex; gap: 10px; }
+        textarea, input[type="text"] {
+            width: 100%;
+            background: #000;
+            border: 1px solid #222;
+            color: white;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        textarea:focus { border-color: var(--primary); outline: none; }
+
+        /* --- Modal --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--primary);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 8px;
         }
 
         @media (max-width: 768px) {
-            .thread-card { grid-template-columns: 1fr auto; }
-            .user-avatar { display: none; }
-            .forum-header { flex-direction: column; gap: 15px; text-align: center; }
+            .nav-links li a span { display: none; }
+            .nav-links li a { min-width: 45px; }
+            .forum-header h1 { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="brand">
-            <img src="logo.png" alt="DJ">
-            <span>DarkJurassic</span>
-        </a>
-        <div class="menu-toggle" onclick="toggleMenu()"><i class="fa fa-bars"></i></div>
-        <ul class="nav-links" id="nav-menu">
-            <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-            <li class="active"><a href="forum.html"><i class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-eye"></i> Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-users"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
-        </ul>
-    </nav>
-    <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
+    <header>
+        <nav class="navbar">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Logo">
+                <span>Dark Jurassic</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i><span>Home</span></a></li>
+                <li><a href="forum.html" class="active"><i class="fa fa-comments"></i><span>Intel</span></a></li>
+                <li><a href="sightings.html"><i class="fa fa-eye"></i><span>Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i><span>Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i><span>Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span>DMs</span></a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i><span>Cards</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i><span>Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span>Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i><span>System</span></a></li>
+            </ul>
+        </nav>
+    </header>
 
     <div class="container">
+        <!-- Lijstweergave -->
         <div id="forum-list-view">
             <div class="forum-header">
-                <h1>Intel Board</h1>
-                <button class="btn-new" onclick="openModal()">+ New Transmission</button>
+                <div>
+                    <h1>Intel Feed</h1>
+                    <p style="color:var(--text-dim); font-size:0.8rem;">Gecodeerde communicatie tussen agenten.</p>
+                </div>
+                <button class="btn-action" onclick="openModal()"><i class="fa fa-plus"></i> Nieuw Intel</button>
             </div>
-            <div id="thread-list"></div>
+            <div id="thread-list" class="thread-list">
+                <p style="text-align:center; color:#444;">Bezig met ontsleutelen van berichten...</p>
+            </div>
         </div>
 
-        <div id="single-thread-view" class="thread-view">
-            <button onclick="showListView()" class="btn-new" style="background:#222; margin-bottom:20px;">
-                <i class="fa fa-arrow-left"></i> Back to Terminal
+        <!-- Detailweergave -->
+        <div id="single-thread-view">
+            <button class="btn-action" style="background:#222; margin-bottom:20px;" onclick="showListView()">
+                <i class="fa fa-arrow-left"></i> Terug naar Feed
             </button>
-            <div id="thread-content-area"></div>
-            <div id="comments-box"></div>
-            <div class="reply-box">
-                <input type="text" id="comment-input" placeholder="Secure reply...">
-                <button onclick="postComment()" style="background:none; border:none; color:var(--red); cursor:pointer;"><i class="fa fa-paper-plane"></i></button>
+            <div id="thread-content"></div>
+            
+            <div class="comment-section">
+                <h3 style="margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">Reacties</h3>
+                <div id="comments-list"></div>
+                
+                <div class="input-group">
+                    <textarea id="comment-input" placeholder="Voeg uw analyse toe..." rows="2"></textarea>
+                    <button class="btn-action" onclick="postComment()"><i class="fa fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Modal voor nieuwe thread -->
     <div id="threadModal" class="modal">
         <div class="modal-content">
-            <h2 style="margin-top:0; font-size:1rem; color:var(--red);">NEW INTEL ENTRY</h2>
-            <input type="text" id="newTitle" placeholder="Subject">
-            <textarea id="newBody" rows="5" placeholder="Report details..."></textarea>
-            <button onclick="saveThread()" class="btn-new" style="width:100%;">Broadcast</button>
-            <button onclick="closeModal()" style="background:none; border:none; color:#555; width:100%; margin-top:10px; cursor:pointer;">Abort</button>
+            <h2 style="color:var(--primary); margin-bottom:20px; text-transform:uppercase;">Nieuwe Intel Broadcast</h2>
+            <input type="text" id="newTitle" placeholder="Onderwerp (bv. Sightings in Sector 7)" style="margin-bottom:15px;">
+            <textarea id="newBody" placeholder="Beschrijf de situatie tot in detail..." rows="6"></textarea>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                <button class="btn-action" style="background:#333;" onclick="closeModal()">Annuleren</button>
+                <button class="btn-action" onclick="saveThread()">Verzenden</button>
+            </div>
         </div>
     </div>
 
     <script>
-        function toggleMenu() {
-            const menu = document.getElementById('nav-menu');
-            const overlay = document.getElementById('nav-overlay');
-            menu.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -212,35 +292,39 @@
             messagingSenderId: "144100722100",
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
+        
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
         const auth = firebase.auth();
+        const db = firebase.database();
 
-        let currentThreadId = null;
         let currentUser = "";
+        let currentThreadId = null;
 
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged((user) => {
             if (user) {
-                currentUser = user.email.split('@')[0];
                 document.body.style.opacity = "1";
+                currentUser = user.email.split('@')[0];
                 loadThreads();
-            } else { window.location.href = "login.html"; }
+            } else {
+                window.location.href = "login.html";
+            }
         });
 
         function loadThreads() {
             db.ref('forum_threads').on('value', snap => {
                 const list = document.getElementById('thread-list');
                 list.innerHTML = "";
+                let threads = [];
                 snap.forEach(child => {
-                    const t = child.val();
+                    threads.push({ id: child.key, ...child.val() });
+                });
+                
+                threads.reverse().forEach(t => {
                     list.innerHTML += `
-                        <div class="thread-card" onclick="viewThread('${child.key}')">
-                            <div class="user-avatar">${t.author.charAt(0).toUpperCase()}</div>
-                            <div class="thread-info">
-                                <h3>${t.title}</h3>
-                                <div class="thread-meta">Agent: <span>@${t.author}</span></div>
-                            </div>
-                            <i class="fa fa-chevron-right" style="color:#222"></i>
+                        <div class="thread-card" onclick="viewThread('${t.id}')">
+                            <div class="thread-meta">AGENT_${t.author.toUpperCase()} | ${new Date(t.timestamp).toLocaleDateString()}</div>
+                            <div class="thread-title">${t.title}</div>
+                            <div class="thread-preview">${t.body}</div>
                         </div>
                     `;
                 });
@@ -249,31 +333,34 @@
 
         function viewThread(id) {
             currentThreadId = id;
-            document.getElementById('forum-list-view').style.display = 'none';
-            document.getElementById('single-thread-view').style.display = 'block';
             db.ref('forum_threads/' + id).once('value', snap => {
                 const t = snap.val();
-                document.getElementById('thread-content-area').innerHTML = `
-                    <div class="post-main">
-                        <div class="thread-meta">Subject: <span style="color:#fff">${t.title}</span></div>
-                        <div class="thread-meta" style="margin-bottom:20px;">Source: @${t.author}</div>
-                        <div class="post-content">${t.body}</div>
+                const content = document.getElementById('thread-content');
+                content.innerHTML = `
+                    <div class="thread-full">
+                        <div class="thread-meta">GEAUTORISEERD DOOR: AGENT_${t.author.toUpperCase()}</div>
+                        <h2 style="font-size:1.8rem; margin:10px 0;">${t.title}</h2>
+                        <div class="thread-body">${t.body}</div>
+                        <div style="font-size:0.7rem; color:#444;">VERZONDEN OP: ${new Date(t.timestamp).toLocaleString()}</div>
                     </div>
                 `;
+                
+                document.getElementById('forum-list-view').style.display = 'none';
+                document.getElementById('single-thread-view').style.display = 'block';
+                loadComments(id);
             });
-            loadComments(id);
         }
 
         function loadComments(id) {
             db.ref('forum_comments/' + id).on('value', snap => {
-                const box = document.getElementById('comments-box');
-                box.innerHTML = "";
+                const list = document.getElementById('comments-list');
+                list.innerHTML = "";
                 snap.forEach(child => {
                     const c = child.val();
-                    box.innerHTML += `
+                    list.innerHTML += `
                         <div class="comment">
-                            <div class="comment-header">@${c.user}</div>
-                            <div style="font-size:0.9rem">${c.text}</div>
+                            <div class="comment-user">AGENT_${c.user.toUpperCase()}</div>
+                            <div class="comment-text">${c.text}</div>
                         </div>
                     `;
                 });
@@ -282,9 +369,11 @@
 
         function postComment() {
             const input = document.getElementById('comment-input');
-            if (input.value.trim()) {
+            if (input.value.trim() && currentThreadId) {
                 db.ref('forum_comments/' + currentThreadId).push().set({
-                    user: currentUser, text: input.value, timestamp: Date.now()
+                    user: currentUser,
+                    text: input.value,
+                    timestamp: Date.now()
                 });
                 input.value = "";
             }
@@ -295,15 +384,21 @@
             const body = document.getElementById('newBody').value;
             if (title && body) {
                 db.ref('forum_threads').push().set({
-                    title: title, body: body, author: currentUser, timestamp: Date.now()
+                    title: title,
+                    body: body,
+                    author: currentUser,
+                    timestamp: Date.now()
                 });
                 closeModal();
+                document.getElementById('newTitle').value = "";
+                document.getElementById('newBody').value = "";
             }
         }
 
         function showListView() {
             document.getElementById('forum-list-view').style.display = 'block';
             document.getElementById('single-thread-view').style.display = 'none';
+            currentThreadId = null;
         }
 
         function openModal() { document.getElementById('threadModal').style.display = 'flex'; }

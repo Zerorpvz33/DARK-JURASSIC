@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | Global Asset Tracker</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dark Jurassic | Live Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -15,179 +14,272 @@
 
     <style>
         :root {
-            --red: #e63946;
-            --red-low: rgba(230, 57, 70, 0.2);
-            --dark: #050505;
-            --panel: #0d0d0d;
-            --border: rgba(255, 255, 255, 0.08);
+            --primary: #e63946;
+            --primary-glow: rgba(230, 57, 70, 0.4);
+            --bg-dark: #050505;
+            --card-bg: #0d0d0d;
+            --border: #1a1a1a;
+            --accent: #5dade2;
+            --text-main: #eeeeee;
+            --text-dim: #888888;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body { 
-            background: var(--dark); color: #fff; font-family: 'Inter', sans-serif; 
-            margin: 0; opacity: 0; transition: opacity 1s; overflow-x: hidden;
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            opacity: 0; 
+            transition: opacity 0.5s ease-in;
+            overflow-x: hidden;
         }
-        
-        /* --- NAVIGATION & DRAWER --- */
-        .navbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 25px; height: 70px; background: rgba(0,0,0,0.95);
-            border-bottom: 1px solid var(--border); position: fixed;
-            top: 0; width: 100%; box-sizing: border-box; z-index: 9999;
+
+        /* --- Scanline Effect --- */
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 9999;
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* --- Navigatie --- */
+        header {
+            background: rgba(0,0,0,0.95);
+            border-bottom: 2px solid var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
             backdrop-filter: blur(10px);
         }
-        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand img { height: 28px; }
-        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 1rem; }
 
-        .menu-toggle { display: none; color: white; font-size: 1.5rem; cursor: pointer; z-index: 10001; }
-
-        .nav-links { display: flex; gap: 15px; list-style: none; margin: 0; padding: 0; }
-        .nav-links a { 
-            color: #888; text-decoration: none; font-size: 0.7rem; 
-            font-weight: 700; text-transform: uppercase; transition: 0.3s;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
-
-        @media (max-width: 1150px) {
-            .menu-toggle { display: block; }
-            .nav-links {
-                position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
-                background: #0a0a0a; flex-direction: column; padding: 100px 30px;
-                transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-                border-left: 1px solid var(--red); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            }
-            .nav-links.active { right: 0; }
-            .nav-links a { font-size: 0.9rem; padding: 15px 0; border-bottom: 1px solid #111; width: 100%; }
-            .nav-links a i { color: var(--red); width: 25px; }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-        .nav-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 9998; backdrop-filter: blur(3px);
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-weight: bold; 
+            color: var(--primary); 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
         }
-        .nav-overlay.active { display: block; }
+        
+        .logo img { height: 40px; width: auto; filter: drop-shadow(0 0 5px var(--primary)); }
 
-        /* --- TRACKER LAYOUT --- */
-        .container { max-width: 1400px; margin: 90px auto 30px; padding: 0 20px; }
-
-        .tracker-grid { 
-            display: grid; grid-template-columns: 1fr 350px; 
-            gap: 20px; height: calc(100vh - 140px); min-height: 600px;
+        .nav-links { 
+            display: flex; 
+            gap: 10px; 
+            list-style: none; 
+            overflow-x: auto;
+            scrollbar-width: none;
         }
+        
+        .nav-links::-webkit-scrollbar { display: none; }
 
-        .map-wrapper {
-            position: relative; border-radius: 4px; overflow: hidden;
-            border: 1px solid var(--border); background: #000;
-        }
-        #map { height: 100%; width: 100%; z-index: 1; }
-
-        .sidebar { display: flex; flex-direction: column; gap: 20px; height: 100%; }
-
-        .status-panel {
-            background: var(--panel); border: 1px solid var(--border); 
-            border-radius: 4px; padding: 20px; flex-grow: 1; 
-            display: flex; flex-direction: column; overflow: hidden;
-        }
-
-        .feed-container { flex-grow: 1; overflow-y: auto; }
-        .sighting-card {
-            background: rgba(255,255,255,0.02); border-left: 2px solid var(--red);
-            padding: 12px; margin-bottom: 8px; font-size: 0.8rem;
-        }
-
-        /* --- MOBILE TWEAKS --- */
-        @media (max-width: 1100px) {
-            .tracker-grid { grid-template-columns: 1fr; height: auto; }
-            #map { height: 400px; }
-            .sidebar { height: auto; }
-            .status-panel { height: 400px; }
+        .nav-links li a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: 0.3s;
+            min-width: 65px;
+            padding: 5px;
+            border-radius: 4px;
         }
 
-        /* Modal & UI Elements */
-        .form-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 10002; display: none;
-            align-items: center; justify-content: center; backdrop-filter: blur(5px);
-        }
-        .report-window {
-            background: var(--panel); border: 1px solid var(--red); width: 90%;
-            max-width: 400px; padding: 30px; border-radius: 4px;
-        }
-        .report-window input {
-            width: 100%; background: #000; border: 1px solid #222; color: #fff;
-            padding: 12px; margin-bottom: 10px; border-radius: 2px; box-sizing: border-box;
-        }
-        .btn-red { 
-            width: 100%; background: var(--red); color: #fff; border: none; padding: 15px;
-            font-weight: 900; text-transform: uppercase; cursor: pointer;
+        .nav-links li a i { font-size: 1.2rem; margin-bottom: 4px; }
+        .nav-links li a:hover, .nav-links li a.active { 
+            color: var(--primary); 
+            background: rgba(230, 57, 70, 0.1);
         }
 
-        /* Map Dark Mode Filter */
-        .leaflet-tile-container { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+        /* --- Tracker Layout --- */
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+            height: calc(100vh - 120px);
+        }
+
+        #map {
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            z-index: 1;
+        }
+
+        /* Leaflet Dark Theme Overrides */
+        .leaflet-container { background: #000 !important; }
+        .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+        .leaflet-popup-content-wrapper { background: #0d0d0d; color: white; border: 1px solid var(--primary); }
+        .leaflet-popup-tip { background: var(--primary); }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .widget {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .widget-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .sighting-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sighting-item {
+            background: #050505;
+            border: 1px solid #1a1a1a;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            position: relative;
+        }
+
+        .status-tag {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            font-weight: bold;
+            float: right;
+        }
+
+        .active-tag { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .expired-tag { background: rgba(255, 255, 255, 0.05); color: #444; }
+
+        /* Form Controls */
+        input, select {
+            width: 100%;
+            background: #000;
+            border: 1px solid #222;
+            color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .btn-report {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-report:hover {
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 900px) {
+            .main-container { grid-template-columns: 1fr; height: auto; }
+            #map { height: 350px; }
+        }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="brand">
-            <img src="logo.png" alt="DJ">
-            <span>DarkJurassic</span>
-        </a>
-        <div class="menu-toggle" onclick="toggleMenu()"><i class="fa fa-bars"></i></div>
-        <ul class="nav-links" id="nav-menu">
-            <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-            <li><a href="forum.html"><i class="fa fa-comments"></i> Intel</a></li>
-            <li class="active"><a href="sightings.html"><i class="fa fa-eye"></i> Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-users"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
-        </ul>
-    </nav>
+    <header>
+        <nav class="navbar">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Logo">
+                <span>Dark Jurassic</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i><span>Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span>Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-eye"></i><span>Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i><span>Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-users"></i><span>Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span>DMs</span></a></li>
+                <li><a href="cards.html"><i class="fa fa-th"></i><span>Cards</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-skull"></i><span>Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span>Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-user"></i><span>System</span></a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
+    <div class="main-container">
+        <!-- Kaart Sectie -->
+        <div id="map"></div>
 
-    <div class="container">
-        <div class="tracker-grid">
-            <div class="map-wrapper">
-                <div id="map"></div>
-            </div>
-
-            <div class="sidebar">
-                <div class="status-panel">
-                    <div style="font-size:0.7rem; font-weight:900; color:var(--red); margin-bottom:15px; text-transform:uppercase;">Live Feed</div>
-                    <div id="activity-feed" class="feed-container"></div>
+        <!-- Sidebar Sectie -->
+        <div class="sidebar">
+            <!-- Nieuwe Waarneming -->
+            <div class="widget">
+                <div class="widget-title">
+                    <span>Meld Incident</span>
+                    <i class="fa fa-plus-circle"></i>
                 </div>
-                <button class="btn-red" onclick="alert('Tap on the map to mark a location')">
-                    <i class="fa fa-crosshairs"></i> New Sighting
-                </button>
+                <input type="text" id="sighting-name" placeholder="Naam Species (bv. Blue)">
+                <input type="text" id="sighting-loc" placeholder="Locatie (Stad/Regio)">
+                <input type="text" id="sighting-img" placeholder="Bewijslast (Afbeelding URL)">
+                <p style="font-size: 0.65rem; color: var(--text-dim); margin-bottom: 10px;">
+                    <i class="fa fa-info-circle"></i> Coördinaten worden automatisch bepaald.
+                </p>
+                <button class="btn-report" onclick="reportSighting()">Verstuur Rapport</button>
             </div>
-        </div>
-    </div>
 
-    <div id="report-modal" class="form-overlay">
-        <div class="report-window">
-            <h2 style="font-size:1rem; text-transform:uppercase; margin-top:0;">Asset Detected</h2>
-            <p id="latlng-display" style="font-family:monospace; color:var(--red); font-size:0.7rem;"></p>
-            <input type="text" id="dino-name" placeholder="Species Name">
-            <input type="text" id="dino-img" placeholder="Image URL">
-            <button class="btn-red" onclick="sendSighting()">Log Data</button>
-            <button onclick="hideForm()" style="background:none; border:none; color:#444; width:100%; margin-top:10px; cursor:pointer;">Cancel</button>
+            <!-- Feed -->
+            <div class="widget">
+                <div class="widget-title">
+                    <span>Live Incident Feed</span>
+                    <i class="fa fa-broadcast-tower"></i>
+                </div>
+                <div id="sighting-list" class="sighting-feed">
+                    <p style="text-align:center; color:#333;">Scanning satelliet data...</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        function toggleMenu() {
-            const menu = document.getElementById('nav-menu');
-            const overlay = document.getElementById('nav-overlay');
-            menu.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -197,63 +289,109 @@
             messagingSenderId: "144100722100",
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
+        
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
-        let map, selectedLat, selectedLng, markers = [];
+        let map, userPos = [52.3676, 4.9041]; // Default Amsterdam
+        let markers = [];
+        let currentUser = "";
 
-        auth.onAuthStateChanged(user => {
-            if(user) {
+        auth.onAuthStateChanged((user) => {
+            if (user) {
                 document.body.style.opacity = "1";
-                initTracker();
-            } else { window.location.href = "login.html"; }
+                currentUser = user.email.split('@')[0];
+                initMap();
+                loadSightings();
+            } else {
+                window.location.href = "login.html";
+            }
         });
 
-        function initTracker() {
-            map = L.map('map', { zoomControl: false }).setView([52.1326, 5.2913], 6);
+        function initMap() {
+            map = L.map('map').setView(userPos, 7);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            map.on('click', e => {
-                selectedLat = e.latlng.lat;
-                selectedLng = e.latlng.lng;
-                showForm();
-            });
-            loadData();
-        }
 
-        function showForm() {
-            document.getElementById('report-modal').style.display = 'flex';
-            document.getElementById('latlng-display').innerText = `POS: ${selectedLat.toFixed(4)}, ${selectedLng.toFixed(4)}`;
-        }
-        function hideForm() { document.getElementById('report-modal').style.display = 'none'; }
-
-        function sendSighting() {
-            const name = document.getElementById('dino-name').value;
-            const img = document.getElementById('dino-img').value;
-            if (name && selectedLat) {
-                db.ref('global_species').push().set({
-                    name: name, lat: selectedLat, lng: selectedLng,
-                    reportedBy: auth.currentUser.email.split('@')[0],
-                    image: img || "https://via.placeholder.com/150",
-                    timestamp: Date.now()
-                }).then(() => {
-                    hideForm();
-                    document.getElementById('dino-name').value = "";
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    userPos = [pos.coords.latitude, pos.coords.longitude];
+                    map.setView(userPos, 10);
                 });
             }
         }
 
-        function loadData() {
-            db.ref('global_species').on('value', snap => {
-                const feed = document.getElementById('activity-feed');
-                feed.innerHTML = "";
+        function reportSighting() {
+            const name = document.getElementById('sighting-name').value;
+            const loc = document.getElementById('sighting-loc').value;
+            const img = document.getElementById('sighting-img').value;
+
+            if (!name || !loc) return alert("Naam en locatie zijn verplicht.");
+
+            // Gebruik huidige positie of random offset van default voor demo
+            const lat = userPos[0] + (Math.random() - 0.5) * 0.1;
+            const lng = userPos[1] + (Math.random() - 0.5) * 0.1;
+
+            db.ref('sightings').push().set({
+                name: name,
+                location: loc,
+                image: img || "https://via.placeholder.com/150/111111/e63946?text=NO+IMAGE",
+                lat: lat,
+                lng: lng,
+                reportedBy: currentUser,
+                timestamp: Date.now()
+            }).then(() => {
+                document.getElementById('sighting-name').value = "";
+                document.getElementById('sighting-loc').value = "";
+                document.getElementById('sighting-img').value = "";
+            });
+        }
+
+        function loadSightings() {
+            const expirationTime = 12 * 60 * 60 * 1000; // 12 uur
+            
+            db.ref('sightings').on('value', snap => {
+                const list = document.getElementById('sighting-list');
+                list.innerHTML = "";
+                
+                // Verwijder oude markers
                 markers.forEach(m => map.removeLayer(m));
+                markers = [];
+
+                let items = [];
                 snap.forEach(child => {
-                    const data = child.val();
-                    feed.innerHTML = `<div class="sighting-card"><b>${data.name}</b><br><small>Agent @${data.reportedBy}</small></div>` + feed.innerHTML;
-                    const m = L.circleMarker([data.lat, data.lng], { color: '#e63946', radius: 8 }).addTo(map)
-                        .bindPopup(`<b>${data.name}</b><br><img src="${data.image}" style="width:100px;">`);
-                    markers.push(m);
+                    items.push({ id: child.key, ...child.val() });
+                });
+
+                items.reverse().forEach(data => {
+                    const now = Date.now();
+                    const active = (now - data.timestamp) < expirationTime;
+                    
+                    // Feed Item
+                    const item = document.createElement('div');
+                    item.className = 'sighting-item';
+                    item.innerHTML = `
+                        <span class="status-tag ${active ? 'active-tag' : 'expired-tag'}">
+                            ${active ? 'Actief' : 'Verlopen'}
+                        </span>
+                        <strong style="color:var(--primary)">${data.name}</strong><br>
+                        <span style="font-size:0.7rem; color:var(--text-dim)">${data.location}</span><br>
+                        <span style="font-size:0.6rem; color:#444;">AGENT_${data.reportedBy.toUpperCase()}</span>
+                    `;
+                    list.appendChild(item);
+
+                    // Map Marker
+                    if (active) {
+                        const marker = L.marker([data.lat, data.lng]).addTo(map)
+                            .bindPopup(`
+                                <div style="text-align:center; color:white;">
+                                    <strong style="color:var(--primary)">${data.name}</strong><br>
+                                    <img src="${data.image}" style="width:120px; margin:5px 0; border:1px solid #333;"><br>
+                                    <small>Gezien in ${data.location}</small>
+                                </div>
+                            `);
+                        markers.push(marker);
+                    }
                 });
             });
         }

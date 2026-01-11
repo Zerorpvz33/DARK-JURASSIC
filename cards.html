@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dark Jurassic | Dino Stones Terminal</title>
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -17,259 +16,428 @@
             --blue: #00d4ff;
             --gold: #f1c40f;
             --dark-bg: #030303;
-            --panel: #0d0d0d;
+            --panel: rgba(15, 15, 15, 0.95);
             --border: rgba(255, 255, 255, 0.08);
+            --nav-height: 70px;
         }
 
         body { 
-            background: var(--dark-bg); color: #e0e0e0; margin: 0; 
-            font-family: 'Inter', sans-serif; overflow-x: hidden;
+            background: var(--dark-bg); 
+            color: #e0e0e0; 
+            margin: 0; 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
         }
 
-        /* --- NAVIGATION & MOBILE DRAWER --- */
-        .navbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 25px; height: 70px; background: rgba(0,0,0,0.95);
-            border-bottom: 1px solid var(--border); position: fixed;
-            top: 0; width: 100%; box-sizing: border-box; z-index: 9999;
-            backdrop-filter: blur(10px);
-        }
-        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand img { height: 28px; }
-        .brand span { color: white; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 1rem; }
-
-        .menu-toggle { display: none; color: white; font-size: 1.5rem; cursor: pointer; z-index: 10001; }
-
-        .nav-links { display: flex; gap: 15px; list-style: none; margin: 0; padding: 0; }
-        .nav-links a { 
-            color: #888; text-decoration: none; font-size: 0.7rem; 
-            font-weight: 700; text-transform: uppercase; transition: 0.3s;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .nav-links a:hover, .nav-links li.active a { color: var(--red); }
-
-        @media (max-width: 1150px) {
-            .menu-toggle { display: block; }
-            .nav-links {
-                position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
-                background: #0a0a0a; flex-direction: column; padding: 100px 30px;
-                transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-                border-left: 1px solid var(--red); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            }
-            .nav-links.active { right: 0; }
-            .nav-links a { font-size: 0.9rem; padding: 15px 0; border-bottom: 1px solid #111; width: 100%; }
+        /* --- NAVIGATION --- */
+        .top-nav {
+            height: var(--nav-height);
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        .nav-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 9998; backdrop-filter: blur(3px);
+        .nav-left { display: flex; align-items: center; gap: 20px; }
+        .logo-img { height: 40px; filter: drop-shadow(0 0 5px var(--red)); }
+        
+        .nav-btn {
+            color: #888;
+            text-decoration: none;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: 0.3s;
+            border: 1px solid transparent;
         }
-        .nav-overlay.active { display: block; }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border-color: var(--border);
+        }
 
         /* --- GAME LAYOUT --- */
-        .game-wrapper {
-            display: flex; flex-direction: column; align-items: center;
-            padding: 20px; min-height: calc(100vh - 70px); margin-top: 70px;
-            background: radial-gradient(circle at center, #110505 0%, #030303 100%);
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            background: radial-gradient(circle at center, #150505 0%, #030303 100%);
         }
 
-        #turn-indicator { 
-            font-size: 1rem; font-weight: 900; margin-bottom: 15px; 
-            text-transform: uppercase; letter-spacing: 3px;
+        .status-header {
+            text-align: center;
+            margin-bottom: 30px;
         }
 
-        .hand { display: flex; gap: 8px; padding: 10px; justify-content: center; min-height: 110px; }
-        .hand-label { font-size: 0.6rem; color: #444; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; margin: 5px 0; }
+        .status-header h1 {
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: var(--red);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
 
-        /* --- BOARD --- */
-        .grid {
-            display: grid; grid-template-columns: repeat(3, 90px);
-            grid-template-rows: repeat(3, 120px); gap: 8px;
-            padding: 15px; background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border); border-radius: 4px;
+        #turn-indicator {
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+        }
+
+        /* --- BOARD DESIGN --- */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 110px);
+            grid-template-rows: repeat(3, 110px);
+            gap: 12px;
+            background: rgba(255,255,255,0.02);
+            padding: 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
         }
 
         .slot {
-            background: #000; border: 1px solid #1a1a1a; border-radius: 3px;
-            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
 
-        /* --- CARD VISUALS --- */
+        /* --- CARD DESIGN --- */
         .card {
-            width: 85px; height: 115px; border-radius: 3px;
-            position: relative; cursor: pointer; transition: 0.2s;
-            background: #111; border: 1px solid #333;
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            user-select: none;
+            overflow: hidden;
+            border: 2px solid transparent;
         }
-        .card.player { border-color: var(--blue); }
-        .card.enemy { border-color: var(--red); }
-        .card.active-selection { transform: translateY(-10px); border-color: var(--gold); box-shadow: 0 0 15px var(--gold); }
 
-        .stat { 
-            position: absolute; width: 20px; height: 20px; 
-            background: #000; border: 1px solid #333;
-            border-radius: 2px; display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 0.7rem;
+        .card.player { 
+            background: linear-gradient(135deg, #004e92, #000428); 
+            border-color: var(--blue);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
         }
-        .card.player .stat { color: var(--blue); border-color: var(--blue); }
-        .card.enemy .stat { color: var(--red); border-color: var(--red); }
 
-        .stat.top { top: 2px; left: 50%; transform: translateX(-50%); }
-        .stat.right { right: 2px; top: 50%; transform: translateY(-50%); }
-        .stat.bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
-        .stat.left { left: 2px; top: 50%; transform: translateY(-50%); }
+        .card.enemy { 
+            background: linear-gradient(135deg, #800000, #200000); 
+            border-color: var(--red);
+            box-shadow: 0 5px 15px rgba(230, 57, 70, 0.3);
+        }
 
-        @media (min-width: 768px) {
-            .game-wrapper { flex-direction: row; justify-content: center; gap: 40px; }
-            .hand { flex-direction: column; }
-            .grid { grid-template-columns: repeat(3, 120px); grid-template-rows: repeat(3, 160px); }
-            .card { width: 110px; height: 150px; }
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        .card i { font-size: 1.8rem; margin-bottom: 5px; }
+        
+        /* Card Stats Positioning */
+        .stat {
+            position: absolute;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+        }
+        .stat-t { top: 4px; left: 50%; transform: translateX(-50%); }
+        .stat-r { right: 4px; top: 50%; transform: translateY(-50%); }
+        .stat-b { bottom: 4px; left: 50%; transform: translateX(-50%); }
+        .stat-l { left: 4px; top: 50%; transform: translateY(-50%); }
+
+        /* Hands */
+        .hand {
+            display: flex;
+            gap: 10px;
+            margin: 25px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            border: 1px solid var(--border);
+        }
+
+        #player-hand .card:hover {
+            transform: translateY(-10px) scale(1.05);
+            z-index: 10;
+        }
+
+        .card.dragging { opacity: 0.5; }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--red);
+            color: var(--red);
+            padding: 10px 25px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-action:hover {
+            background: var(--red);
+            color: white;
+            box-shadow: 0 0 15px var(--red);
+        }
+
+        @media (max-width: 600px) {
+            .board { grid-template-columns: repeat(3, 90px); grid-template-rows: repeat(3, 90px); }
+            .card { width: 80px; height: 80px; }
+            .stat { font-size: 0.6rem; }
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="index.html" class="brand">
-            <img src="logo.png" alt="DJ">
-            <span>DarkJurassic</span>
-        </a>
-        <div class="menu-toggle" onclick="toggleMenu()"><i class="fa fa-bars"></i></div>
-        <ul class="nav-links" id="nav-menu">
-            <li><a href="index.html"><i class="fa fa-home"></i> Home</a></li>
-            <li><a href="forum.html"><i class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-eye"></i> Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-users"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li class="active"><a href="cards.html"><i class="fa fa-th"></i> Cards</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-skull"></i> Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-user"></i> System</a></li>
-        </ul>
+    <nav class="top-nav">
+        <div class="nav-left">
+            <a href="index.html" class="nav-btn"><i class="fa fa-arrow-left"></i></a>
+            <img src="logo.png" alt="Logo" class="logo-img">
+        </div>
+        <div class="nav-right">
+            <span id="player-xp-display" style="color: var(--gold); font-size: 0.8rem; font-weight: bold;"></span>
+        </div>
     </nav>
-    <div class="nav-overlay" id="nav-overlay" onclick="toggleMenu()"></div>
 
-    <div class="game-wrapper">
-        <div>
-            <div class="hand-label">InGen Opponent</div>
-            <div id="enemy-hand" class="hand"></div>
+    <div class="game-container">
+        <div class="status-header">
+            <h1>Tactical Combat Protocol</h1>
+            <div id="turn-indicator">INITIALISEREN...</div>
         </div>
 
-        <div>
-            <div id="turn-indicator">INITIALIZING...</div>
-            <div class="grid" id="game-board">
-                <div class="slot" onclick="placeOnBoard(0)"></div>
-                <div class="slot" onclick="placeOnBoard(1)"></div>
-                <div class="slot" onclick="placeOnBoard(2)"></div>
-                <div class="slot" onclick="placeOnBoard(3)"></div>
-                <div class="slot" onclick="placeOnBoard(4)"></div>
-                <div class="slot" onclick="placeOnBoard(5)"></div>
-                <div class="slot" onclick="placeOnBoard(6)"></div>
-                <div class="slot" onclick="placeOnBoard(7)"></div>
-                <div class="slot" onclick="placeOnBoard(8)"></div>
-            </div>
+        <!-- Enemy Hand -->
+        <div class="hand" id="enemy-hand"></div>
+
+        <!-- Combat Board -->
+        <div class="board" id="board">
+            <div class="slot" data-index="0"></div>
+            <div class="slot" data-index="1"></div>
+            <div class="slot" data-index="2"></div>
+            <div class="slot" data-index="3"></div>
+            <div class="slot" data-index="4"></div>
+            <div class="slot" data-index="5"></div>
+            <div class="slot" data-index="6"></div>
+            <div class="slot" data-index="7"></div>
+            <div class="slot" data-index="8"></div>
         </div>
 
-        <div>
-            <div class="hand-label">Your Arsenal</div>
-            <div id="player-hand" class="hand"></div>
+        <!-- Player Hand -->
+        <div class="hand" id="player-hand"></div>
+
+        <div class="controls">
+            <button class="btn-action" onclick="initGame()">Terminal Reset</button>
         </div>
     </div>
 
     <script>
-        function toggleMenu() {
-            document.getElementById('nav-menu').classList.toggle('active');
-            document.getElementById('nav-overlay').classList.toggle('active');
-        }
-
-        const cardLibrary = [
-            { name: "T-Rex", stats: [9, 7, 8, 7] },
-            { name: "Raptor", stats: [4, 9, 2, 9] },
-            { name: "Ankylo", stats: [3, 5, 9, 5] },
-            { name: "Spino", stats: [9, 9, 7, 6] },
-            { name: "Indom", stats: [9, 9, 9, 9] }
-        ];
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
 
         let boardState = Array(9).fill(null);
-        let selectedCard = null;
         let isPlayerTurn = true;
         let movesMade = 0;
+        let selectedCard = null;
 
-        function initGame() {
-            document.getElementById('player-hand').innerHTML = "";
-            document.getElementById('enemy-hand').innerHTML = "";
-            for(let i=0; i<5; i++) {
-                document.getElementById('player-hand').appendChild(renderCard(cardLibrary[Math.floor(Math.random()*5)], 'player', i));
-                document.getElementById('enemy-hand').appendChild(renderCard(cardLibrary[Math.floor(Math.random()*5)], 'enemy', i));
+        const DINO_TYPES = [
+            { icon: 'fa-dragon', name: 'Rex' },
+            { icon: 'fa-hand-back-fist', name: 'Raptor' },
+            { icon: 'fa-shield', name: 'Trike' },
+            { icon: 'fa-bolt', name: 'Ptero' }
+        ];
+
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                initGame();
+                db.ref('users/' + user.email.split('@')[0].replace(/\./g, '_')).on('value', s => {
+                    document.getElementById('player-xp-display').innerText = (s.val()?.xp || 0) + " XP";
+                });
+            } else {
+                window.location.href = "login.html";
             }
-            updateTurnStatus();
-        }
+        });
 
-        function renderCard(data, owner, id) {
+        function createCard(owner) {
+            const type = DINO_TYPES[Math.floor(Math.random() * DINO_TYPES.length)];
+            const stats = {
+                t: Math.floor(Math.random() * 8) + 1,
+                r: Math.floor(Math.random() * 8) + 1,
+                b: Math.floor(Math.random() * 8) + 1,
+                l: Math.floor(Math.random() * 8) + 1
+            };
+            
             const card = document.createElement('div');
             card.className = `card ${owner}`;
-            card.id = `${owner}-card-${id}`;
-            card.dataset.stats = JSON.stringify(data.stats);
-            card.onclick = () => { if(owner === 'player' && isPlayerTurn) {
-                document.querySelectorAll('.card').forEach(c => c.classList.remove('active-selection'));
-                card.classList.add('active-selection');
-                selectedCard = { id, stats: data.stats };
-            }};
-            card.innerHTML = `<div class="stat top">${data.stats[0]}</div><div class="stat right">${data.stats[1]}</div><div class="stat bottom">${data.stats[2]}</div><div class="stat left">${data.stats[3]}</div>`;
+            card.dataset.stats = JSON.stringify(stats);
+            card.dataset.owner = owner;
+            
+            card.innerHTML = `
+                <div class="card-inner">
+                    <i class="fa ${type.icon}"></i>
+                    <div class="stat stat-t">${stats.t}</div>
+                    <div class="stat stat-r">${stats.r}</div>
+                    <div class="stat stat-b">${stats.b}</div>
+                    <div class="stat stat-l">${stats.l}</div>
+                </div>
+            `;
+
+            if(owner === 'player') {
+                card.onclick = () => {
+                    if(!isPlayerTurn) return;
+                    document.querySelectorAll('#player-hand .card').forEach(c => c.style.borderColor = 'transparent');
+                    card.style.borderColor = 'var(--blue)';
+                    selectedCard = card;
+                };
+            }
+
             return card;
         }
 
-        function placeOnBoard(slot) {
-            if(!selectedCard || boardState[slot]) return;
-            const el = document.getElementById(`player-card-${selectedCard.id}`);
-            document.querySelectorAll('.slot')[slot].appendChild(el);
-            boardState[slot] = { owner: 'player', stats: selectedCard.stats };
-            el.classList.remove('active-selection');
-            el.onclick = null;
-            battle(slot);
-            movesMade++;
-            isPlayerTurn = false;
+        function initGame() {
+            boardState = Array(9).fill(null);
+            movesMade = 0;
+            isPlayerTurn = true;
+            document.getElementById('player-hand').innerHTML = "";
+            document.getElementById('enemy-hand').innerHTML = "";
+            document.querySelectorAll('.slot').forEach(s => s.innerHTML = "");
+
+            for(let i=0; i<5; i++) {
+                document.getElementById('player-hand').appendChild(createCard('player'));
+                document.getElementById('enemy-hand').appendChild(createCard('enemy'));
+            }
+
+            document.querySelectorAll('.slot').forEach(slot => {
+                slot.onclick = () => {
+                    const idx = slot.dataset.index;
+                    if(isPlayerTurn && selectedCard && !boardState[idx]) {
+                        placeCard(idx, selectedCard, 'player');
+                        selectedCard = null;
+                        isPlayerTurn = false;
+                        updateTurnStatus();
+                        setTimeout(enemyAI, 1000);
+                    }
+                };
+            });
+
             updateTurnStatus();
-            setTimeout(enemyAI, 1000);
+        }
+
+        function placeCard(idx, cardEl, owner) {
+            const slot = document.querySelectorAll('.slot')[idx];
+            slot.appendChild(cardEl);
+            boardState[idx] = { 
+                owner: owner, 
+                stats: JSON.parse(cardEl.dataset.stats) 
+            };
+            battle(idx);
+            movesMade++;
+            checkGameOver();
         }
 
         function battle(idx) {
+            idx = parseInt(idx);
             const cur = boardState[idx];
-            const targets = [{p:idx-3, s:0, os:2},{p:idx+1, s:1, os:3, r:true},{p:idx+3, s:2, os:0},{p:idx-1, s:3, os:1, r:true}];
+            const targets = [
+                { p: idx - 3, s: 't', os: 'b' }, // Top
+                { p: idx + 3, s: 'b', os: 't' }, // Bottom
+                { p: idx - 1, s: 'l', os: 'r', r: true }, // Left
+                { p: idx + 1, s: 'r', os: 'l', r: true }  // Right
+            ];
+
             targets.forEach(t => {
-                if(t.p >=0 && t.p <9 && boardState[t.p]) {
-                    if(t.r && Math.floor(t.p/3) !== Math.floor(idx/3)) return;
+                if(t.p >= 0 && t.p < 9 && boardState[t.p]) {
+                    if(t.r && Math.floor(t.p/3) !== Math.floor(idx/3)) return; // Rij check
                     const other = boardState[t.p];
                     if(other.owner !== cur.owner && cur.stats[t.s] > other.stats[t.os]) {
                         other.owner = cur.owner;
-                        document.querySelectorAll('.slot')[t.p].querySelector('.card').className = `card ${cur.owner}`;
+                        const otherCard = document.querySelectorAll('.slot')[t.p].querySelector('.card');
+                        otherCard.className = `card ${cur.owner}`;
                     }
                 }
             });
         }
 
         function enemyAI() {
-            const empty = boardState.map((s,i) => s === null ? i : null).filter(s => s !== null);
+            if (movesMade >= 9) return;
+            const empty = boardState.map((s, i) => s === null ? i : null).filter(s => s !== null);
             const eCards = document.querySelectorAll('#enemy-hand .card');
+            
             if(empty.length > 0 && eCards.length > 0) {
-                const slot = empty[Math.floor(Math.random()*empty.length)];
-                const el = eCards[0];
-                document.querySelectorAll('.slot')[slot].appendChild(el);
-                boardState[slot] = { owner: 'enemy', stats: JSON.parse(el.dataset.stats) };
-                battle(slot);
-                movesMade++;
+                const randomSlot = empty[Math.floor(Math.random() * empty.length)];
+                placeCard(randomSlot, eCards[0], 'enemy');
             }
+            
             isPlayerTurn = true;
             updateTurnStatus();
         }
 
         function updateTurnStatus() {
             const i = document.getElementById('turn-indicator');
-            i.innerText = isPlayerTurn ? "YOUR TURN" : "INGEN TURN";
+            i.innerText = isPlayerTurn ? "JOUW BEURT" : "INGEN ANALYSE...";
             i.style.color = isPlayerTurn ? "var(--blue)" : "var(--red)";
         }
 
-        initGame();
+        function checkGameOver() {
+            if (movesMade === 9) {
+                let pCount = 0;
+                boardState.forEach(s => { if(s.owner === 'player') pCount++; });
+                
+                const win = pCount > 4;
+                const i = document.getElementById('turn-indicator');
+                i.innerText = win ? `OVERWINNING (${pCount}-4)` : `NEDERLAAG (${pCount}-5)`;
+                i.style.color = win ? "var(--gold)" : "var(--red)";
+
+                if(win) {
+                    const username = auth.currentUser.email.split('@')[0].replace(/\./g, '_');
+                    db.ref('users/' + username + '/xp').transaction(current => (current || 0) + 25);
+                }
+            }
+        }
     </script>
 </body>
 </html>
