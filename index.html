@@ -412,7 +412,7 @@
                 if(snap.exists()) {
                     snap.forEach(child => {
                         const s = child.val();
-                        summary.innerHTML = `Laatste waarneming: <strong style="color:var(--primary)">${s.name}</strong> in ${s.location}.`;
+                        summary.innerHTML = `last sighting: <strong style="color:var(--primary)">${s.name}</strong> at ${s.location}.`;
                     });
                 } else {
                     summary.innerText = "No active threats on the radar.";
