@@ -253,7 +253,7 @@
                     })
                     .catch(err => {
                         console.error("Geocoding error:", err);
-                        document.getElementById('dino-loc').value = "Locatie geselecteerd";
+                        document.getElementById('dino-loc').value = "Location selected";
                     });
             });
         }
@@ -266,7 +266,7 @@
             const img = document.getElementById('dino-img').value || "https://via.placeholder.com/150/000000/FFFFFF?text=NO_IMAGE";
 
             if (!name || !loc || !lat || !lng) {
-                alert("Vul alle gegevens in! Klik op de kaart voor coördinaten.");
+                alert("Please fill in all fields! Click on the map for coordinates.");
                 return;
             }
 
@@ -288,7 +288,7 @@
                     map.removeLayer(clickMarker);
                     clickMarker = null;
                 }
-                alert("Rapport succesvol verzonden!");
+                alert("Report successfully submitted!");
             });
         }
 
@@ -315,7 +315,7 @@
                     item.className = 'sighting-item';
                     item.innerHTML = `
                         <span class="status-tag ${active ? 'active-tag' : 'expired-tag'}">
-                            ${active ? 'Actief' : 'Verlopen'}
+                            ${active ? 'Active' : 'Expired'}
                         </span><br>
                         <strong style="color:var(--primary)">${data.name}</strong><br>
                         <span style="font-size:0.7rem; color:var(--text-dim)">${data.location}</span><br>
