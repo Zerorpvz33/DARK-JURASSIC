@@ -1,12 +1,16 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | Intel Feed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dark Jurassic | Intel Feed (Encrypted)</title>
     <link rel="icon" type="image/png" href="logo.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- External Styles & Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -16,274 +20,555 @@
             --primary: #e63946;
             --primary-glow: rgba(230, 57, 70, 0.4);
             --bg-dark: #050505;
+            --bg-panel: #0a0a0a;
             --card-bg: #0d0d0d;
-            --border: #1a1a1a;
-            --accent: #5dade2;
-            --text-main: #eeeeee;
+            --border: rgba(255, 255, 255, 0.1);
+            --accent-blue: #00d4ff;
+            --text-main: #e0e0e0;
             --text-dim: #888888;
+            --nav-height: 70px;
+            --sidebar-width: 280px;
+            --glitch-speed: 0.3s;
         }
 
+        /* --- Global Reset --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body { 
-            background-color: var(--bg-dark); 
-            color: var(--text-main); 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            opacity: 0; 
-            transition: opacity 0.5s ease-in;
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'JetBrains+Mono', monospace;
             overflow-x: hidden;
             line-height: 1.6;
         }
 
-        /* --- Scanline Effect --- */
-        body::after {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 9999;
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none;
+        /* --- Glitch Effects --- */
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+            text-transform: uppercase;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+        }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
+        }
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -2px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
+            animation: glitch-anim2 1s infinite linear alternate-reverse;
         }
 
-        /* --- Navigatie (Zelfde als Index) --- */
+        @keyframes glitch-anim {
+            0% { clip: rect(31px, 9999px, 94px, 0); }
+            20% { clip: rect(62px, 9999px, 42px, 0); }
+            /* Add more steps for extra glitchiness */
+            100% { clip: rect(89px, 9999px, 98px, 0); }
+        }
+
+        /* --- Layout Structure --- */
         header {
-            background: rgba(0,0,0,0.95);
-            border-bottom: 2px solid var(--primary);
-            position: sticky;
-            top: 0;
+            height: var(--nav-height);
+            background: rgba(10, 10, 10, 0.95);
+            border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0; width: 100%;
             z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
             backdrop-filter: blur(10px);
         }
 
         .navbar {
             display: flex;
+            width: 100%;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 20px;
             max-width: 1400px;
             margin: 0 auto;
         }
 
-        .logo { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            font-weight: bold; 
-            color: var(--primary); 
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             text-decoration: none;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.2rem;
         }
-        
-        .logo img { height: 40px; width: auto; filter: drop-shadow(0 0 5px var(--primary)); }
 
-        .nav-links { 
-            display: flex; 
-            gap: 10px; 
-            list-style: none; 
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 5px 0;
-            scrollbar-width: none;
+        .logo img {
+            height: 40px;
+            filter: drop-shadow(0 0 5px var(--primary-glow));
         }
-        
-        .nav-links::-webkit-scrollbar { display: none; }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 20px;
+        }
 
         .nav-links li a {
             color: var(--text-dim);
             text-decoration: none;
-            font-size: 0.75rem;
+            font-size: 0.9rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             transition: 0.3s;
-            min-width: 65px;
-            padding: 5px;
+        }
+
+        .nav-links li a:hover, .nav-links li a.active {
+            color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .nav-text { font-size: 0.65rem; margin-top: 4px; text-transform: uppercase; }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 12px;
+            cursor: pointer;
             border-radius: 4px;
         }
 
-        .nav-links li a i { font-size: 1.2rem; margin-bottom: 4px; }
-        .nav-links li a:hover, .nav-links li a.active { 
-            color: var(--primary); 
-            background: rgba(230, 57, 70, 0.1);
+        /* --- Mobile Sidebar --- */
+        .mobile-sidebar {
+            position: fixed;
+            top: 0; left: -100%;
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--primary);
+            z-index: 2000;
+            transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            padding-top: 20px;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8);
         }
 
-        /* --- Forum Layout --- */
-        .container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
+        .mobile-sidebar.open { left: 0; }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #222;
+            margin-bottom: 20px;
         }
 
-        .forum-header {
+        .sidebar-links { list-style: none; }
+        .sidebar-links li a {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: 0.2s;
+            border-left: 4px solid transparent;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .sidebar-links li a:hover {
+            background: rgba(230, 57, 70, 0.05);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        /* --- Main Content --- */
+        main {
+            margin-top: calc(var(--nav-height) + 20px);
+            padding: 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .agent-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            margin-top: 15px;
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            background: #00ff00;
+            border-radius: 50%;
+            margin-right: 10px;
+            box-shadow: 0 0 5px #00ff00;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* --- Forum List View --- */
+        .forum-actions {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            border-left: 4px solid var(--primary);
-            padding-left: 20px;
+            margin-bottom: 25px;
         }
 
-        .forum-header h1 { font-size: 1.8rem; text-transform: uppercase; letter-spacing: 3px; }
-
-        .btn-action {
+        .btn-broadcast {
             background: var(--primary);
-            color: white;
+            color: #fff;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
+            padding: 12px 24px;
+            font-family: 'Orbitron', sans-serif;
             font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.8rem;
+            cursor: pointer;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
             transition: 0.3s;
         }
 
-        .btn-action:hover { box-shadow: 0 0 15px var(--primary-glow); transform: scale(1.05); }
+        .btn-broadcast:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
 
-        /* --- Thread Cards --- */
-        .thread-list { display: flex; flex-direction: column; gap: 15px; }
+        .search-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 10px 15px;
+            color: #fff;
+            font-family: inherit;
+            border-radius: 4px;
+            width: 300px;
+        }
+
+        .threads-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
         .thread-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             padding: 20px;
-            border-radius: 8px;
             cursor: pointer;
             transition: 0.3s;
             position: relative;
+            overflow: hidden;
         }
 
-        .thread-card:hover { border-color: var(--primary); background: #111; }
-        
-        .thread-meta { font-size: 0.7rem; color: var(--accent); font-family: monospace; margin-bottom: 5px; }
-        .thread-title { font-size: 1.1rem; color: white; margin-bottom: 8px; font-weight: 600; }
-        .thread-preview { font-size: 0.85rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .thread-card:hover {
+            border-color: var(--primary);
+            background: #111;
+        }
+
+        .thread-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .thread-title {
+            color: var(--primary);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+        }
+
+        .thread-meta {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .thread-preview {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
 
         /* --- Single Thread View --- */
-        #single-thread-view { display: none; }
-        
-        .thread-full { background: var(--card-bg); border: 1px solid var(--primary); padding: 30px; border-radius: 8px; margin-bottom: 30px; }
-        .thread-body { margin: 20px 0; font-size: 1rem; color: var(--text-main); white-space: pre-wrap; }
+        #single-thread-view {
+            display: none;
+            animation: fadeIn 0.4s;
+        }
 
-        .comment-section { margin-top: 40px; }
-        .comment { background: #080808; border: 1px solid #111; padding: 15px; border-radius: 6px; margin-bottom: 10px; border-left: 2px solid var(--accent); }
-        .comment-user { font-weight: bold; font-size: 0.8rem; color: var(--accent); margin-bottom: 5px; }
-        .comment-text { font-size: 0.9rem; }
+        .back-nav {
+            margin-bottom: 20px;
+            cursor: pointer;
+            color: var(--accent-blue);
+            font-size: 0.9rem;
+        }
 
-        .input-group { margin-top: 20px; display: flex; gap: 10px; }
-        textarea, input[type="text"] {
-            width: 100%;
+        .active-thread-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .full-thread-body {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid var(--primary);
+            white-space: pre-wrap;
+        }
+
+        .comments-section {
+            margin-top: 40px;
+        }
+
+        .comment-item {
+            border-bottom: 1px solid #1a1a1a;
+            padding: 15px 0;
+        }
+
+        .comment-meta {
+            font-size: 0.75rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .comment-text {
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .comment-input-area {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .comment-input-area input {
+            flex-grow: 1;
             background: #000;
-            border: 1px solid #222;
-            color: white;
+            border: 1px solid var(--border);
             padding: 12px;
-            border-radius: 4px;
+            color: #fff;
             font-family: inherit;
         }
-        textarea:focus { border-color: var(--primary); outline: none; }
+
+        .btn-comment {
+            background: var(--accent-blue);
+            color: #000;
+            border: none;
+            padding: 0 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
         /* --- Modal --- */
-        .modal {
-            display: none;
+        .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 3000;
+            display: none;
             justify-content: center;
             align-items: center;
-            padding: 20px;
-        }
-        .modal-content {
-            background: var(--card-bg);
-            border: 1px solid var(--primary);
-            width: 100%;
-            max-width: 600px;
-            padding: 30px;
-            border-radius: 8px;
         }
 
-        @media (max-width: 768px) {
-            .nav-links li a span { display: none; }
-            .nav-links li a { min-width: 45px; }
-            .forum-header h1 { font-size: 1.2rem; }
+        .modal-content {
+            background: var(--bg-panel);
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid var(--primary);
+            padding: 30px;
+            box-shadow: 0 0 50px rgba(230, 57, 70, 0.2);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+        }
+
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 15px;
+            color: #fff;
+            margin-bottom: 15px;
+            font-family: inherit;
+        }
+
+        .modal-content textarea { height: 150px; resize: none; }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .btn-cancel { background: transparent; color: #888; border: none; cursor: pointer; }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Media Queries --- */
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
+            .menu-toggle { display: block; }
+            .search-box { width: 180px; }
+        }
+
+        @media (max-width: 600px) {
+            .forum-actions { flex-direction: column; gap: 15px; align-items: stretch; }
+            .search-box { width: 100%; }
+            .active-thread-container { padding: 15px; }
+            .logo span { display: none; }
         }
     </style>
 </head>
 <body>
 
+    <!-- Mobile Navigation Sidebar -->
+    <aside class="mobile-sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <img src="logo.png" alt="Logo">
+                <span>SYSTEM MENU</span>
+            </div>
+        </div>
+        <ul class="sidebar-links">
+            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
+            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
+            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
+            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
+            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
+            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+        </ul>
+    </aside>
+
     <header>
         <nav class="navbar">
             <a href="index.html" class="logo">
-                <img src="logo.png" alt="Logo">
-                <span>Dark Jurassic</span>
+                <img src="logo.png" alt="Dark Jurassic Logo">
+                <span>DARK JURASSIC</span>
             </a>
+
             <ul class="nav-links">
-                <li><a href="index.html"><i class="fa fa-home"></i><span>Home</span></a></li>
-                <li><a href="forum.html" class="active"><i class="fa fa-comments"></i><span>Intel</span></a></li>
-                <li><a href="sightings.html"><i class="fa fa-eye"></i><span>Tracker</span></a></li>
-                <li><a href="dinosaurs.html"><i class="fa fa-dragon"></i><span>Species</span></a></li>
-                <li><a href="users.html"><i class="fa fa-users"></i><span>Agents</span></a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i><span>DMs</span></a></li>
-                <li><a href="cards.html"><i class="fa fa-th"></i><span>Cards</span></a></li>
-                <li><a href="blackmarket.html"><i class="fa fa-skull"></i><span>Market</span></a></li>
-                <li><a href="vault.html"><i class="fa fa-lock"></i><span>Vault</span></a></li>
-                <li><a href="profile.html"><i class="fa fa-user"></i><span>System</span></a></li>
+            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
+            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
+            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
+            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
+            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
+            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
             </ul>
+
+            <button class="menu-toggle" onclick="toggleSidebar()">
+                <i class="fa fa-bars"></i>
+            </button>
         </nav>
     </header>
 
-    <div class="container">
-        <!-- Lijstweergave -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1 class="glitch-text" data-text="ENCRYPTED INTEL FEED">ENCRYPTED INTEL FEED</h1>
+            <div class="agent-badge">
+                <div class="status-dot"></div>
+                <span id="agent-display">SYNCING_SESSION...</span>
+            </div>
+        </section>
+
+        <!-- List View -->
         <div id="forum-list-view">
-            <div class="forum-header">
-                <div>
-                    <h1>Intel Feed</h1>
-                    <p style="color:var(--text-dim); font-size:0.8rem;">Encrypted communication between agents</p>
-                </div>
-                <button class="btn-action" onclick="openModal()"><i class="fa fa-plus"></i> New Thread</button>
+            <div class="forum-actions">
+                <button class="btn-broadcast" onclick="openModal()">
+                    <i class="fa fa-bullhorn"></i> BROADCAST INTEL
+                </button>
+                <input type="text" class="search-box" id="threadSearch" placeholder="Search intel logs..." oninput="filterThreads()">
             </div>
-            <div id="thread-list" class="thread-list">
-                <p style="text-align:center; color:#444;">Bezig met ontsleutelen van berichten...</p>
+
+            <div class="threads-container" id="threads-list">
+                <!-- Threads populated via Firebase -->
+                <div class="thread-card">
+                    <p style="text-align:center; color: var(--text-dim);">Scanning local server for intel packets...</p>
+                </div>
             </div>
         </div>
 
-        <!-- Detailweergave -->
+        <!-- Single Thread View -->
         <div id="single-thread-view">
-            <button class="btn-action" style="background:#222; margin-bottom:20px;" onclick="showListView()">
-                <i class="fa fa-arrow-left"></i> Terug naar Feed
-            </button>
-            <div id="thread-content"></div>
+            <div class="back-nav" onclick="closeThread()">
+                <i class="fa fa-arrow-left"></i> RETURN TO TERMINAL
+            </div>
             
-            <div class="comment-section">
-                <h3 style="margin-bottom:15px; border-bottom:1px solid #222; padding-bottom:10px;">Reacties</h3>
-                <div id="comments-list"></div>
-                
-                <div class="input-group">
-                    <textarea id="comment-input" placeholder="Voeg uw analyse toe..." rows="2"></textarea>
-                    <button class="btn-action" onclick="postComment()"><i class="fa fa-paper-plane"></i></button>
+            <div id="active-thread-content" class="active-thread-container">
+                <!-- Populated via JS -->
+            </div>
+
+            <div class="comments-section">
+                <h3 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 20px;">INCOMING COMMUNICATIONS</h3>
+                <div id="comments-list">
+                    <!-- Comments populated via Firebase -->
+                </div>
+
+                <div class="comment-input-area">
+                    <input type="text" id="comment-input" placeholder="Enter encrypted response...">
+                    <button class="btn-comment" onclick="submitComment()">REPLY</button>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <!-- Modal voor nieuwe thread -->
-    <div id="threadModal" class="modal">
+    <!-- New Thread Modal -->
+    <div class="modal-overlay" id="threadModal">
         <div class="modal-content">
-            <h2 style="color:var(--primary); margin-bottom:20px; text-transform:uppercase;">New Intel Broadcast</h2>
-            <input type="text" id="newTitle" placeholder="Subject (e.g. Sightings in Sector 7)" style="margin-bottom:15px;">
-            <textarea id="newBody" placeholder="Describe the situation in detail..." rows="6"></textarea>
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-                <button class="btn-action" style="background:#333;" onclick="closeModal()">Cancel</button>
-                <button class="btn-action" onclick="saveThread()">Submit</button>
+            <h2>NEW INTEL BROADCAST</h2>
+            <input type="text" id="newTitle" placeholder="INTEL_SUBJECT">
+            <textarea id="newBody" placeholder="INTEL_BODY (Encrypted)"></textarea>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">CANCEL</button>
+                <button class="btn-broadcast" onclick="broadcastIntel()">TRANSMIT</button>
             </div>
         </div>
     </div>
 
     <script>
+        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -293,117 +578,153 @@
             messagingSenderId: "144100722100",
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
-        
-        firebase.initializeApp(firebaseConfig);
+
+        const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
-        let currentUser = "";
-        let currentThreadId = null;
+        let currentAgent = "Guest_Agent";
+        let activeThreadId = null;
+        let allThreads = [];
 
-        auth.onAuthStateChanged((user) => {
+        // Auth Listener
+        auth.onAuthStateChanged(user => {
             if (user) {
-                document.body.style.opacity = "1";
-                currentUser = user.email.split('@')[0];
-                loadThreads();
+                currentAgent = user.email.split('@')[0].toUpperCase();
+                document.getElementById('agent-display').innerText = `AGENT_VERIFIED: ${currentAgent}`;
             } else {
-                window.location.href = "login.html";
+                document.getElementById('agent-display').innerText = `UNAUTHORIZED_ACCESS (READ_ONLY)`;
             }
         });
 
-        function loadThreads() {
-            db.ref('forum_threads').on('value', snap => {
-                const list = document.getElementById('thread-list');
-                list.innerHTML = "";
-                let threads = [];
-                snap.forEach(child => {
-                    threads.push({ id: child.key, ...child.val() });
-                });
-                
-                threads.reverse().forEach(t => {
-                    list.innerHTML += `
-                        <div class="thread-card" onclick="viewThread('${t.id}')">
-                            <div class="thread-meta">AGENT_${t.author.toUpperCase()} | ${new Date(t.timestamp).toLocaleDateString()}</div>
-                            <div class="thread-title">${t.title}</div>
-                            <div class="thread-preview">${t.body}</div>
-                        </div>
-                    `;
-                });
+        // Initialize Forum Data
+        function initForum() {
+            db.ref('forum_threads').on('value', snapshot => {
+                const data = snapshot.val();
+                allThreads = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        allThreads.push({ id: key, ...data[key] });
+                    });
+                    allThreads.sort((a, b) => b.timestamp - a.timestamp);
+                }
+                displayThreads(allThreads);
             });
         }
 
-        function viewThread(id) {
-            currentThreadId = id;
-            db.ref('forum_threads/' + id).once('value', snap => {
-                const t = snap.val();
-                const content = document.getElementById('thread-content');
-                content.innerHTML = `
-                    <div class="thread-full">
-                        <div class="thread-meta">GEAUTORISEERD DOOR: AGENT_${t.author.toUpperCase()}</div>
-                        <h2 style="font-size:1.8rem; margin:10px 0;">${t.title}</h2>
-                        <div class="thread-body">${t.body}</div>
-                        <div style="font-size:0.7rem; color:#444;">VERZONDEN OP: ${new Date(t.timestamp).toLocaleString()}</div>
+        function displayThreads(threads) {
+            const list = document.getElementById('threads-list');
+            if (threads.length === 0) {
+                list.innerHTML = `<div class="thread-card"><p style="text-align:center; color: var(--text-dim);">NO INTEL DETECTED IN SECTOR.</p></div>`;
+                return;
+            }
+
+            list.innerHTML = threads.map(t => `
+                <div class="thread-card" onclick="viewThread('${t.id}')">
+                    <div class="thread-header">
+                        <span class="thread-title">${t.title}</span>
+                        <span class="thread-meta">${new Date(t.timestamp).toLocaleDateString()}</span>
                     </div>
-                `;
-                
-                document.getElementById('forum-list-view').style.display = 'none';
-                document.getElementById('single-thread-view').style.display = 'block';
-                loadComments(id);
-            });
+                    <div class="thread-preview">${t.body}</div>
+                    <div class="thread-meta" style="margin-top:10px;">AUTHOR: @${t.author || 'UNKNOWN'}</div>
+                </div>
+            `).join('');
+        }
+
+        function filterThreads() {
+            const query = document.getElementById('threadSearch').value.toLowerCase();
+            const filtered = allThreads.filter(t => 
+                t.title.toLowerCase().includes(query) || 
+                t.body.toLowerCase().includes(query)
+            );
+            displayThreads(filtered);
+        }
+
+        // Thread Viewing
+        function viewThread(id) {
+            activeThreadId = id;
+            const thread = allThreads.find(t => t.id === id);
+            
+            document.getElementById('forum-list-view').style.display = 'none';
+            document.getElementById('single-thread-view').style.display = 'block';
+
+            document.getElementById('active-thread-content').innerHTML = `
+                <h1 style="font-family:'Orbitron'; color: var(--primary); margin-bottom: 10px;">${thread.title}</h1>
+                <div class="thread-meta">TRANSMITTED BY: @${thread.author} | TIMESTAMP: ${new Date(thread.timestamp).toLocaleString()}</div>
+                <div class="full-thread-body">${thread.body}</div>
+            `;
+
+            loadComments(id);
         }
 
         function loadComments(id) {
-            db.ref('forum_comments/' + id).on('value', snap => {
+            db.ref('forum_comments/' + id).on('value', snapshot => {
+                const comments = snapshot.val();
                 const list = document.getElementById('comments-list');
                 list.innerHTML = "";
-                snap.forEach(child => {
-                    const c = child.val();
-                    list.innerHTML += `
-                        <div class="comment">
-                            <div class="comment-user">AGENT_${c.user.toUpperCase()}</div>
+                if (comments) {
+                    Object.values(comments).forEach(c => {
+                        const div = document.createElement('div');
+                        div.className = 'comment-item';
+                        div.innerHTML = `
+                            <div class="comment-meta">@${c.user} - ${new Date(c.timestamp).toLocaleTimeString()}</div>
                             <div class="comment-text">${c.text}</div>
-                        </div>
-                    `;
-                });
+                        `;
+                        list.appendChild(div);
+                    });
+                } else {
+                    list.innerHTML = "<p style='color:var(--text-dim); font-size:0.8rem;'>NO SECURE RESPONSES YET.</p>";
+                }
             });
         }
 
-        function postComment() {
+        function submitComment() {
             const input = document.getElementById('comment-input');
-            if (input.value.trim() && currentThreadId) {
-                db.ref('forum_comments/' + currentThreadId).push().set({
-                    user: currentUser,
-                    text: input.value,
-                    timestamp: Date.now()
+            const text = input.value.trim();
+            if (text && activeThreadId) {
+                db.ref('forum_comments/' + activeThreadId).push().set({
+                    user: currentAgent,
+                    text: text,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
                 input.value = "";
             }
         }
 
-        function saveThread() {
-            const title = document.getElementById('newTitle').value;
-            const body = document.getElementById('newBody').value;
+        function broadcastIntel() {
+            const title = document.getElementById('newTitle').value.trim();
+            const body = document.getElementById('newBody').value.trim();
+            
             if (title && body) {
                 db.ref('forum_threads').push().set({
                     title: title,
                     body: body,
-                    author: currentUser,
-                    timestamp: Date.now()
+                    author: currentAgent,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                }).then(() => {
+                    closeModal();
+                    document.getElementById('newTitle').value = "";
+                    document.getElementById('newBody').value = "";
                 });
-                closeModal();
-                document.getElementById('newTitle').value = "";
-                document.getElementById('newBody').value = "";
             }
         }
 
-        function showListView() {
+        function closeThread() {
             document.getElementById('forum-list-view').style.display = 'block';
             document.getElementById('single-thread-view').style.display = 'none';
-            currentThreadId = null;
+            activeThreadId = null;
+        }
+
+        // Utils
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
         }
 
         function openModal() { document.getElementById('threadModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('threadModal').style.display = 'none'; }
+
+        // Start
+        window.onload = initForum;
     </script>
 </body>
 </html>

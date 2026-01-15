@@ -2,269 +2,495 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dark Jurassic | Black Market</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dark Jurassic | Black Market Terminal</title>
     <link rel="icon" type="image/png" href="logo.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- External Assets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs (Compat Mode) -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
         :root {
-            --red: #e63946;
-            --red-glow: rgba(230, 57, 70, 0.4);
-            --dark-bg: #030303;
-            --panel-bg: rgba(10, 10, 10, 0.95);
-            --border: rgba(255, 255, 255, 0.08);
+            --primary: #e63946;
+            --primary-glow: rgba(230, 57, 70, 0.5);
+            --secondary: #00d4ff;
+            --secondary-glow: rgba(0, 212, 255, 0.4);
+            --bg-dark: #050505;
+            --bg-panel: rgba(10, 10, 10, 0.95);
+            --bg-card: #0d0d0d;
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #e0e0e0;
+            --text-dim: #888888;
+            --sidebar-width: 280px;
             --nav-height: 70px;
+            --glitch-speed: 3s;
         }
 
-        body { 
-            background-color: var(--dark-bg); 
-            color: #e0e0e0; 
-            margin: 0; 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            min-height: 100vh;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-        }
-
-        /* --- NAVIGATION --- */
-        .top-nav {
-            height: var(--nav-height);
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 25px;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .nav-left { display: flex; align-items: center; gap: 20px; }
-        .logo-img { height: 40px; filter: drop-shadow(0 0 5px var(--red)); }
-        
-        .nav-btn {
-            color: #888;
-            text-decoration: none;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: 0.3s;
-        }
-
-        .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
-
-        /* --- CONTENT --- */
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        .header-section {
-            border-left: 3px solid var(--red);
-            padding-left: 20px;
-            margin-bottom: 40px;
-        }
-
-        .header-section h1 {
-            font-size: 2rem;
+        /* --- Base Styles --- */
+        * {
             margin: 0;
-            letter-spacing: 2px;
-            color: var(--red);
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'JetBrains+Mono', monospace;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        /* --- Glitch Header Effect --- */
+        .glitch-text {
+            position: relative;
+            font-family: 'Orbitron', sans-serif;
             text-transform: uppercase;
+            letter-spacing: 4px;
         }
 
-        .header-section p {
-            color: #666;
-            font-size: 0.9rem;
-            margin-top: 5px;
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
         }
 
-        .market-info {
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -2px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(31px, 9999px, 94px, 0); }
+            20% { clip: rect(62px, 9999px, 42px, 0); }
+            /* ... more steps for complexity ... */
+            100% { clip: rect(10px, 9999px, 85px, 0); }
+        }
+
+        /* --- Navbar --- */
+        header {
+            height: var(--nav-height);
+            background: rgba(0,0,0,0.8);
+            border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0; width: 100%;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .navbar {
+            max-width: 1400px;
+            margin: 0 auto;
+            height: 100%;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            background: var(--panel-bg);
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.2rem;
+        }
+
+        .logo img { height: 40px; }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            list-style: none;
+        }
+
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
+        }
+
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-links a i { font-size: 1.1rem; }
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary);
+            background: rgba(230, 57, 70, 0.1);
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: none;
+        }
+
+        @media (max-width: 1024px) {
+            .menu-toggle { display: block; }
+        }
+
+        /* --- Mobile Sidebar --- */
+        .mobile-sidebar {
+            position: fixed;
+            top: 0; left: -100%;
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--primary);
+            z-index: 2000;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-top: 20px;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.8);
+        }
+
+        .mobile-sidebar.open { left: 0; }
+
+        .sidebar-header {
+            padding: 0 25px 25px;
+            border-bottom: 1px solid #222;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-links { list-style: none; }
+        .sidebar-links li a {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: 0.2s;
+            border-left: 4px solid transparent;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-links li a:hover, .sidebar-links li a.active {
+            background: rgba(230, 57, 70, 0.05);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1999;
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+
+        /* --- Main Content --- */
+        main {
+            margin-top: var(--nav-height);
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 40px 20px;
+            background: radial-gradient(circle at center, rgba(230, 57, 70, 0.05) 0%, transparent 70%);
             border: 1px solid var(--border);
-            padding: 20px 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
+            border-radius: 8px;
         }
 
-        .xp-display {
-            text-align: right;
+        .hero h1 { font-size: 2.5rem; margin-bottom: 10px; }
+
+        .agent-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            padding: 8px 20px;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-dim);
         }
 
-        .xp-label { font-size: 0.65rem; color: #555; text-transform: uppercase; letter-spacing: 1px; }
-        .xp-value { font-size: 1.5rem; font-weight: bold; color: var(--red); }
+        .status-dot {
+            width: 8px; height: 8px;
+            background: #00ff00;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff00;
+            animation: pulse 2s infinite;
+        }
 
-        /* --- ROLE CARDS --- */
-        .roles-grid {
+        @keyframes pulse {
+            0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; }
+        }
+
+        /* --- Market Sections --- */
+        .market-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 25px;
+            margin-top: 30px;
         }
 
-        .role-card {
-            background: var(--panel-bg);
+        .market-card {
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: 0.3s;
+            padding: 25px;
+            border-radius: 12px;
             position: relative;
             overflow: hidden;
+            transition: 0.3s;
         }
 
-        .role-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
-            background: var(--red);
-            opacity: 0.3;
-        }
-
-        .role-card:hover {
-            border-color: var(--red);
+        .market-card:hover {
+            border-color: var(--primary);
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(230, 57, 70, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .role-name {
-            font-size: 1.4rem;
+        .card-tag {
+            position: absolute;
+            top: 15px; right: -30px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 0.6rem;
+            padding: 5px 40px;
+            transform: rotate(45deg);
             font-weight: bold;
-            margin-bottom: 10px;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
             color: #fff;
         }
 
-        .role-desc {
-            color: #888;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            margin-bottom: 25px;
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            min-height: 45px;
         }
 
-        .role-price {
-            font-family: monospace;
-            color: var(--red);
-            font-weight: bold;
-            margin-bottom: 15px;
+        .card-price {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            border-top: 1px solid #222;
+            padding-top: 15px;
+        }
+
+        .xp-val {
+            color: var(--secondary);
+            font-weight: bold;
+            font-size: 1.1rem;
         }
 
         .buy-btn {
             background: transparent;
-            border: 1px solid var(--red);
-            color: var(--red);
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 18px;
+            border-radius: 4px;
             cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
             transition: 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.8rem;
         }
 
         .buy-btn:hover:not(:disabled) {
-            background: var(--red);
-            color: white;
-            box-shadow: 0 0 15px var(--red-glow);
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 15px var(--primary-glow);
         }
 
         .buy-btn:disabled {
             border-color: #333;
-            color: #333;
+            color: #555;
             cursor: not-allowed;
         }
 
-        .owned-tag {
-            background: rgba(46, 204, 113, 0.1);
-            color: #2ecc71;
-            padding: 10px;
-            border-radius: 8px;
+        /* --- Document Upload System --- */
+        .upload-section {
+            margin-top: 60px;
+            background: #0a0a0a;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px;
             text-align: center;
-            font-size: 0.8rem;
-            font-weight: bold;
-            border: 1px solid rgba(46, 204, 113, 0.2);
         }
 
-        /* --- NOTIFICATION --- */
+        .upload-header { margin-bottom: 30px; }
+        .upload-header h2 { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: var(--secondary); }
+
+        .drop-zone {
+            border: 2px dashed #333;
+            padding: 40px;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .drop-zone:hover { border-color: var(--secondary); background: rgba(0, 212, 255, 0.05); }
+        .drop-zone i { font-size: 3rem; color: #444; margin-bottom: 15px; }
+
+        #file-input { display: none; }
+
+        .upload-status {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        /* --- Notifications --- */
         #notification {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: var(--panel-bg);
-            border: 1px solid var(--red);
+            background: var(--bg-panel);
+            border-left: 4px solid var(--primary);
             padding: 15px 25px;
-            border-radius: 10px;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             display: none;
-            z-index: 2000;
-            animation: slideUp 0.3s ease;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            font-size: 0.9rem;
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
+        /* --- Responsive Adjustments --- */
         @media (max-width: 600px) {
-            .market-info { flex-direction: column; text-align: center; gap: 15px; }
-            .xp-display { text-align: center; }
+            .hero h1 { font-size: 1.8rem; }
+            .market-grid { grid-template-columns: 1fr; }
+            .upload-section { padding: 20px; }
         }
+
     </style>
 </head>
 <body>
 
-    <nav class="top-nav">
-        <div class="nav-left">
-            <a href="index.html" class="nav-btn"><i class="fa fa-arrow-left"></i></a>
-            <img src="logo.png" alt="Logo" class="logo-img">
-        </div>
-        <div class="nav-right">
-            <span id="player-xp-header" style="color: var(--red); font-weight: bold; font-size: 0.9rem;"></span>
-        </div>
-    </nav>
+    <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
 
-    <div class="container">
-        <div class="header-section">
-            <h1>The Black Market</h1>
-            <p>Trade your XP for new privileges and identities within the archives.</p>
+    <!-- Mobile Navigation Sidebar -->
+    <aside class="mobile-sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Logo">
+                <span>TERMINAL</span>
+            </a>
         </div>
+        <ul class="sidebar-links">
+            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
+            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
+            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
+            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
+            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
+            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+        </ul>
+    </aside>
 
-    <div class="market-info">
-            <div>
-        <div style="color: #666; font-size: 0.8rem;">MARKET_STATUS</div>
-        <div style="color: #2ecc71; font-weight: bold; font-size: 1.1rem;"><i class="fa fa-circle-check"></i> LIVE_DEALS</div>
+    <header>
+        <nav class="navbar">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Dark Jurassic Logo">
+                <span>DARK JURASSIC</span>
+            </a>
+
+            <ul class="nav-links">
+            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
+            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
+            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
+            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
+            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
+            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+            </ul>
+
+            <button class="menu-toggle" onclick="toggleSidebar()">
+                <i class="fa fa-bars"></i>
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1 class="glitch-text" data-text="BLACK MARKET V4.0">BLACK MARKET V4.0</h1>
+            <div class="agent-badge">
+                <div class="status-dot"></div>
+                <span id="agent-display">AUTHENTICATING AGENT...</span>
             </div>
-            <div class="xp-display">
-                <div class="xp-label">Available Assets</div>
-                <div class="xp-value" id="user-xp-display">0 XP</div>
-            </div>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-dim);">Your Balance: <span id="balance-display" class="xp-val">0</span> XP</p>
+        </section>
+
+        <!-- Dynamic Market Items -->
+        <div class="market-grid" id="market-items">
+            <!-- Items injected by JS -->
         </div>
 
-        <div class="roles-grid" id="roles-grid">
-            <!-- Rollen worden hier geladen -->
-        </div>
-    </div>
+        <!-- Document Upload System -->
+        <section class="upload-section">
+            <div class="upload-header">
+                <h2>CLASSIFIED UPLOADS</h2>
+                <p style="color: var(--text-dim); font-size: 0.8rem;">Contribute intel documents to earn bonus XP.</p>
+            </div>
+            <div class="drop-zone" onclick="document.getElementById('file-input').click()">
+                <i class="fa fa-cloud-upload-alt"></i>
+                <p>Click or drag intel file (PDF/JPG/DOCX)</p>
+                <input type="file" id="file-input" onchange="handleFileUpload(event)">
+            </div>
+            <div class="upload-status" id="upload-status">System ready for data ingestion...</div>
+        </section>
+    </main>
 
     <div id="notification"></div>
 
     <script>
+        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -274,225 +500,268 @@
             messagingSenderId: "144100722100",
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
-        
-        firebase.initializeApp(firebaseConfig);
+
+        const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
+        let currentUser = null;
         let currentXP = 0;
-        let currentRole = "USER";
         let username = "";
 
-        const ROLES = [
-    { id: "n1", name: "Darius Bowman", color: "informant", price: 1200, desc: "The ultimate dino-nerd and leader of the Nublar Six." },
-    { id: "n2", name: "Brooklynn", color: "hacker", price: 1200, desc: "Unboxing Jurassic World. Nothing remains a secret for your followers." },
-    { id: "n3", name: "Kenji Kon", color: "mercenary", price: 1100, desc: "The son of the big boss, but with a heart of gold." },
-    { id: "n4", name: "Yaz Fadoula", color: "mercenary", price: 1100, desc: "Top athlete. No one runs faster from a raptor than you." },
-    { id: "n5", name: "Sammy Gutierrez", color: "informant", price: 1000, desc: "Reluctant spy, doing anything to save her family ranch." },
-    { id: "n6", name: "Ben Pincus", color: "mercenary", price: 1300, desc: "From scaredy-cat to jungle survivor with Bumpy by your side." },
-    { id: "p1", name: "Dr. Alan Grant", color: "informant", price: 15000, desc: "Paleontologist who prefers working with fossils over people." },
-    { id: "p2", name: "Dr. Ellie Sattler", color: "informant", price: 14000, desc: "Paleobotanist. You see the details that others miss." },
-    { id: "p3", name: "Dr. Ian Malcolm", color: "informant", price: 16000, desc: "Chaos expert. You already predicted the fall of the park." },
-    { id: "p4", name: "John Hammond", color: "traitor", price: 20000, desc: "The man with the dream and the amber-topped cane." },
-    { id: "p5", name: "Robert Muldoon", color: "mercenary", price: 5000, desc: "Game warden. You have respect for your prey." },
-    { id: "p6", name: "Dennis Nedry", color: "hacker", price: 500, desc: "You turned off the fences for a suitcase full of cash." },
-    { id: "p7", name: "Ray Arnold", color: "hacker", price: 2000, desc: "Chief engineer. 'Hold onto your butts!'" },
-    { id: "p8", name: "Donald Gennaro", color: "traitor", price: 400, desc: "The lawyer who only saw dollars, until the T-Rex arrived." },
-    { id: "p9", name: "Lex Murphy", color: "hacker", price: 3000, desc: "Hacker before it was cool. 'It's a UNIX system!'" },
-    { id: "p10", name: "Tim Murphy", color: "informant", price: 2500, desc: "Dino-fanatic who survived 10,000 volts." },
-    { id: "p11", name: "Roland Tembo", color: "mercenary", price: 4500, desc: "Big game hunter looking for a worthy adversary." },
-    { id: "p12", name: "Nick Van Owen", color: "informant", price: 1500, desc: "Documentary filmmaker and saboteur of InGen's plans." },
-    { id: "p13", name: "Dr. Sarah Harding", color: "informant", price: 4000, desc: "Behavioral paleontologist who got too close to the predators." },
-    { id: "p14", name: "Eddie Carr", color: "mercenary", price: 2200, desc: "The tech expert who sacrificed himself for his team." },
-    { id: "p15", name: "Kelly Curtis", color: "mercenary", price: 800, desc: "Gymnastics is a deadly weapon against raptors." },
-    { id: "p16", name: "Paul Kirby", color: "mercenary", price: 600, desc: "The father who did everything to find his son." },
-    { id: "p17", name: "Amanda Kirby", color: "mercenary", price: 500, desc: "Screaming on Isla Sorna is not without its dangers." },
-    { id: "p18", name: "Billy Brennan", color: "informant", price: 1800, desc: "Alan Grant's assistant with a weakness for raptor eggs." },
-    { id: "p19", name: "Udesky", color: "mercenary", price: 700, desc: "The pilot who got stuck in the raptors' trap." },
-    { id: "w1", name: "Owen Grady", color: "mercenary", price: 18000, desc: "Raptor trainer and the Alpha of the Blue-pack." },
-    { id: "w2", name: "Claire Dearing", color: "informant", price: 12000, desc: "From cold businesswoman to fierce dino-activist." },
-    { id: "w3", name: "Simon Masrani", color: "traitor", price: 6000, desc: "The owner who thought he could tame nature." },
-    { id: "w4", name: "Vic Hoskins", color: "traitor", price: 3500, desc: "You saw weapons of war in the eyes of a raptor." },
-    { id: "w5", name: "Lowery Cruthers", color: "hacker", price: 1500, desc: "The control room hero with a vintage heart." },
-    { id: "w6", name: "Barry Sembène", color: "mercenary", price: 4000, desc: "Owen's right-hand man in the raptor arena." },
-    { id: "w7", name: "Dr. Henry Wu", color: "traitor", price: 9000, desc: "The man who made monsters in the name of science." },
-    { id: "w8", name: "Eli Mills", color: "traitor", price: 4500, desc: "The man who betrayed Lockwood for pure profit." },
-    { id: "w9", name: "Franklin Webb", color: "hacker", price: 1200, desc: "System administrator who prefers staying safely indoors." },
-    { id: "w10", name: "Zia Rodriguez", color: "informant", price: 1400, desc: "Paleo-veterinarian for the Dinosaur Protection Group." },
-    { id: "w11", name: "Maisie Lockwood", color: "informant", price: 7000, desc: "The girl who shared the world with the dinosaurs." },
-    { id: "w12", name: "Ken Wheatley", color: "mercenary", price: 2500, desc: "Tooth collector without a moral compass." },
-    { id: "w13", name: "Sir Benjamin Lockwood", color: "informant", price: 3000, desc: "The man who kept Hammond's dream alive." },
-    { id: "w14", name: "Kayla Watts", color: "mercenary", price: 5500, desc: "Smuggler pilot who chose the right side in Dominion." },
-    { id: "w15", name: "Ramsay Cole", color: "informant", price: 4000, desc: "The whistleblower within the Biosyn system." },
-    { id: "w16", name: "Lewis Dodgson", color: "traitor", price: 8000, desc: "The CEO of Biosyn. 'We've got Nedry here!'" },
-    { id: "w17", name: "Rainn Delacourt", color: "mercenary", price: 3200, desc: "Dino-smuggler with the scars to prove it." },
-    { id: "w18", name: "Soyona Santos", color: "traitor", price: 5000, desc: "She controls the Atrociraptors with a laser pointer." },
-    { id: "f1", name: "Mr. DNA", color: "informant", price: 10000, desc: "The animated guide through your own genetic code." },
-    { id: "f2", name: "InGen Harbor Master", color: "mercenary", price: 300, desc: "You saw the SS Venture pull into the harbor." },
-    { id: "f3", name: "San Diego Pedestrian", color: "mercenary", price: 100, desc: "You ran from a T-Rex in the suburbs." },
-    { id: "f4", name: "Isla Nublar Tour Guide", color: "informant", price: 500, desc: "The voice from the car explaining the attractions." },
-    { id: "f5", name: "ACU Sniper", color: "mercenary", price: 1500, desc: "You were assigned to take down the Indominus." },
-    { id: "f6", name: "Gyrosphere Operator", color: "mercenary", price: 600, desc: "Helping guests drive toward their own demise." },
-    { id: "f7", name: "Mainland Police Officer", color: "mercenary", price: 200, desc: "Directing traffic for a crossing Parasaurolophus." },
-    { id: "f8", name: "Biosyn Technician", color: "hacker", price: 1100, desc: "Working on Dodgson's locust plague." },
-    { id: "f9", name: "Lockwood Estate Guard", color: "mercenary", price: 800, desc: "Guardian of the most expensive auction in the world." },
-    { id: "f10", name: "Site B Cook", color: "mercenary", price: 300, desc: "Someone has to feed the hunters on Isla Sorna." },
-    { id: "r101", name: "Dino-Tracker", color: "mercenary", price: 2650, desc: "Specialized in finding escaped assets in urban environments." },
-    { id: "r102", name: "BioSyn Intern", color: "informant", price: 2700, desc: "You see the emails the executives think are deleted." },
-    { id: "r103", name: "Malta Market Guard", color: "mercenary", price: 2750, desc: "Protecting the underground trade of prehistoric life." },
-    { id: "r104", name: "Node Crasher", color: "hacker", price: 2800, desc: "Overloading the thermal sensors to mask movement." },
-    { id: "r105", name: "Genetic Courier", color: "informant", price: 2850, desc: "Carrying stabilized vials across international borders." },
-    { id: "r106", name: "Fringe Scientist", color: "informant", price: 2900, desc: "Experimenting with growth hormones InGen deemed 'unethical'." },
-    { id: "r107", name: "Security Breacher", color: "hacker", price: 2950, desc: "If there's a keypad, you're already inside." },
-    { id: "r108", name: "Rogue Ranger", color: "mercenary", price: 3050, desc: "Ex-ACU member who went into business for themselves." },
-    { id: "r109", name: "Encrypted Signal", color: "hacker", price: 3150, desc: "You exist only as a ghost in the wireless spectrum." },
-    { id: "r110", name: "Marrow Thief", color: "informant", price: 3250, desc: "Extracting DNA from fossils before they reach the museum." },
-    { id: "r111", name: "Compound Ghost", color: "traitor", price: 3350, desc: "You know the blind spots of every camera in the facility." },
-    { id: "r112", name: "Data Scrubber", color: "hacker", price: 3450, desc: "Erasing the digital footprints of illegal cloning operations." },
-    { id: "r113", name: "Asset Spotter", color: "informant", price: 3550, desc: "Scouting the wilderness for high-value wild specimens." },
-    { id: "r114", name: "Firewall Architect", color: "hacker", price: 3650, desc: "Building the defenses you later teach others to break." },
-    { id: "r115", name: "Extraction Specialist", color: "mercenary", price: 3750, desc: "Getting the team out when the T-Rex shows up." },
-    { id: "r116", name: "Bio-Encryptor", color: "hacker", price: 3850, desc: "Hiding data within the non-coding regions of DNA." },
-    { id: "r117", name: "Sorna Scavenger", color: "mercenary", price: 3950, desc: "Finding lost tech in the ruins of the old labs." },
-    { id: "r118", name: "Internal Affairs", color: "informant", price: 4050, desc: "Spying on the employees for the corporate board." },
-    { id: "r119", name: "Logic Bomb", color: "hacker", price: 4150, desc: "A timed virus waiting to cripple the park's power grid." },
-    { id: "r120", name: "Asset Appraiser", color: "informant", price: 4250, desc: "Determining the black market value of a hatchling." },
-    { id: "r121", name: "Tunnel Rat", color: "mercenary", price: 4350, desc: "Navigating the maintenance tunnels under the park." },
-    { id: "r122", name: "Neural Hijacker", color: "hacker", price: 4450, desc: "Taking control of the asset tracking implants." },
-    { id: "r123", name: "Corporate Spy", color: "traitor", price: 4550, desc: "On the payroll of a rival genetics firm." },
-    { id: "r124", name: "Wild Life Negotiator", color: "informant", price: 4650, desc: "The middleman between poachers and buyers." },
-    { id: "r125", name: "Packet Sniffer", color: "hacker", price: 4750, desc: "Listening to the private calls of the Park Manager." },
-    { id: "r126", name: "Tactical Diver", color: "mercenary", price: 4850, desc: "Retrieving samples from the bottom of the Mosasaur lagoon." },
-    { id: "r127", name: "Code Mortician", color: "hacker", price: 4950, desc: "Reviving old software from the 1993 incident." },
-    { id: "r128", name: "Asset Shepherd", color: "mercenary", price: 5050, desc: "Herding herbivores away from the carnivore zones." },
-    { id: "r129", name: "Deep Web Dealer", color: "informant", price: 5150, desc: "Trading classified blueprints for untraceable credits." },
-    { id: "r130", name: "System Shadow", color: "hacker", price: 5250, desc: "Moving through the network without leaving a single log." },
-    { id: "r131", name: "Apex Predator", color: "mercenary", price: 6000, desc: "The best of the best. You hunt what hunts others." },
-    { id: "r132", name: "Mainframe Architect", color: "hacker", price: 6200, desc: "You designed the infrastructure you're now dismantling." },
-    { id: "r133", name: "Embrio Broker", color: "informant", price: 6400, desc: "The go-to person for viable prehistoric genetic material." },
-    { id: "r134", name: "Security Consultant", color: "traitor", price: 6600, desc: "Paid to find holes in the perimeter, then exploit them." },
-    { id: "r135", name: "Signal Ghost", color: "hacker", price: 6800, desc: "Transmitting from coordinates that don't exist." },
-    { id: "r136", name: "Biological Anomaly", color: "informant", price: 7000, desc: "Your DNA has been 'enhanced' by InGen experiments." },
-    { id: "r137", name: "Urban Hunter", color: "mercenary", price: 7200, desc: "Tracking predators through the streets of London or NY." },
-    { id: "r138", name: "Cypher Master", color: "hacker", price: 7400, desc: "Decoding the most complex genetic sequences ever written." },
-    { id: "r139", name: "Shadow Recruiter", color: "informant", price: 7600, desc: "Finding the next generation of resistance fighters." },
-    { id: "r140", name: "Black Market Mogul", color: "traitor", price: 7800, desc: "You don't just sell dinos; you own the marketplace." },
-    { id: "r141", name: "Satellite Saboteur", color: "hacker", price: 8200, desc: "Blinding InGen's orbital surveillance." },
-    { id: "r142", name: "Asset Pacifier", color: "mercenary", price: 8400, desc: "Expert in non-lethal (but very painful) dino control." },
-    { id: "r143", name: "Data Architect", color: "hacker", price: 8600, desc: "Reshaping the flow of information across the islands." },
-    { id: "r144", name: "Bio-Saboteur", color: "traitor", price: 8800, desc: "Introducing flaws into the cloning process." },
-    { id: "r145", name: "Net Oracle", color: "hacker", price: 9200, desc: "Predicting system failures before they happen." },
-    { id: "r146", name: "Covert Operator", color: "mercenary", price: 9400, desc: "Operating with zero footprint and maximum impact." },
-    { id: "r147", name: "Information Overlord", color: "informant", price: 9600, desc: "Knowing every secret of every major player in the game." },
-    { id: "r148", name: "Digital Mercenary", color: "hacker", price: 9800, desc: "Hacking for hire. No job too dirty." },
-    { id: "r149", name: "The Janitor", color: "mercenary", price: 10500, desc: "You clean up the bodies, both human and saurian." },
-    { id: "r150", name: "Root Infiltrator", color: "hacker", price: 11000, desc: "Deep within the core systems, rewriting reality." },
-    { id: "r151", name: "Asset Whisperer", color: "informant", price: 11500, desc: "You don't just track them; you understand them." },
-    { id: "r152", name: "Cyber Wraith", color: "hacker", price: 12000, desc: "A digital ghost haunting the BioSyn servers." },
-    { id: "r153", name: "The Handler", color: "mercenary", price: 12500, desc: "Managing a team of high-risk operatives." },
-    { id: "r154", name: "Genome Hacker", color: "hacker", price: 13500, desc: "Editing life as if it were just lines of code." },
-    { id: "r155", name: "The Broker", color: "informant", price: 14500, desc: "The bridge between the corporate and the criminal." },
-    { id: "r156", name: "Vanguard Leader", color: "mercenary", price: 15500, desc: "Leading the charge into the heart of the restricted zones." },
-    { id: "r157", name: "System Sovereign", color: "hacker", price: 16500, desc: "Total control over the digital domain." },
-    { id: "r158", name: "High Traitor", color: "traitor", price: 17500, desc: "You didn't just leave; you tried to take it all down." },
-    { id: "r159", name: "The Visionary", color: "informant", price: 18500, desc: "Seeing the world that comes after the extinction." },
-    { id: "r160", name: "Master of Shadows", color: "hacker", price: 19500, desc: "The ultimate power behind the screen." },
-    { id: "r161", name: "Nebula Runner", color: "hacker", price: 21000, desc: "Navigating the most complex data clouds in existence." },
-    { id: "r162", name: "Project Overlord", color: "traitor", price: 22000, desc: "The one who oversaw the most secret projects." },
-    { id: "r163", name: "Ancient Sentinel", color: "mercenary", price: 23000, desc: "Protecting the oldest secrets of the Earth." },
-    { id: "r164", name: "Digital Alpha", color: "hacker", price: 24000, desc: "The leader of the digital pack." },
-    { id: "r165", name: "Bio-Emperor", color: "informant", price: 25000, desc: "Ruling over a genetic empire." },
-    { id: "r166", name: "The Architect of Chaos", color: "traitor", price: 26000, desc: "Designing the fall of the old world order." },
-    { id: "r167", name: "Void King", color: "hacker", price: 27000, desc: "Master of the digital nothingness." },
-    { id: "r168", name: "Primal Legend", color: "mercenary", price: 28000, desc: "A name feared by both man and beast." },
-    { id: "r169", name: "The Nexus", color: "hacker", price: 29000, desc: "The point where all information converges." },
-    { id: "r170", name: "Harbinger of Doom", color: "traitor", price: 30000, desc: "Bringing about the end of the corporate era." },
-    { id: "r171", name: "The Source", color: "informant", price: 32000, desc: "The ultimate origin of all information." },
-    { id: "r172", name: "Code Destroyer", color: "hacker", price: 34000, desc: "Unmaking the digital world piece by piece." },
-    { id: "r173", name: "Asset God", color: "mercenary", price: 36000, desc: "Complete dominion over the prehistoric world." },
-    { id: "r174", name: "The Weaver", color: "hacker", price: 38000, desc: "Weaving the future of digital existence." },
-    { id: "r175", name: "Sovereign of Sorna", color: "mercenary", price: 40000, desc: "The true ruler of Site B." },
-    { id: "r176", name: "Genetic Oracle", color: "informant", price: 42000, desc: "Predicting the evolution of life itself." },
-    { id: "r177", name: "The Ghost Admin", color: "hacker", price: 44000, desc: "An administrator who exists only in the code." },
-    { id: "r178", name: "Lord of the Mesozoic", color: "mercenary", price: 46000, desc: "A title granted only to the most powerful." },
-    { id: "r179", name: "The Binary God", color: "hacker", price: 48000, desc: "Worshiped by those who live in the machine." },
-    { id: "r180", name: "Apex Traitor Prime", color: "traitor", price: 50000, desc: "The ultimate betrayal of the human race." },
-    { id: "r181", name: "Eternal Watcher", color: "informant", price: 55000, desc: "Watching the world burn and then being reborn." },
-    { id: "r182", name: "The Singularity", color: "hacker", price: 60000, desc: "The moment the machine becomes alive." },
-    { id: "r183", name: "Primal God", color: "mercenary", price: 65000, desc: "The god of the ancient world in the modern day." },
-    { id: "r184", name: "The End of All Things", color: "traitor", price: 70000, desc: "The final role for the ultimate agent of change." },
-    { id: "r185", name: "The Absolute", color: "hacker", price: 75000, desc: "Nothing exists beyond your control." },
-    { id: "r186", name: "The First One", color: "informant", price: 80000, desc: "You were here before the beginning." },
-    { id: "r187", name: "The Alpha and Omega", color: "mercenary", price: 85000, desc: "The beginning and the end of the hunt." },
-    { id: "r188", name: "Digital Eternity", color: "hacker", price: 90000, desc: "Living forever in the digital realm." },
-    { id: "r189", name: "The Spirit of Nublar", color: "informant", price: 95000, desc: "The essence of the island lives within you." },
-    { id: "r190", name: "Chaos Incarnate", color: "traitor", price: 100000, desc: "Life finds a way, and you are that way." },
-    { id: "r191", name: "The Overseer", color: "informant", price: 110000, desc: "Watching over the entire experiment." },
-    { id: "r192", name: "System Heart", color: "hacker", price: 120000, desc: "The core of the digital world." },
-    { id: "r193", name: "The Great Hunter", color: "mercenary", price: 130000, desc: "A legend whispered by the survivors." },
-    { id: "r194", name: "Shadow of Hammond", color: "informant", price: 140000, desc: "The legacy of the creator lives through you." },
-    { id: "r195", name: "The Glitch in the DNA", color: "traitor", price: 150000, desc: "The error that changed everything." },
-    { id: "r196", name: "Master of the Park", color: "mercenary", price: 175000, desc: "Every asset, every guest, every life is yours." },
-    { id: "r197", name: "The Digital Creator", color: "hacker", price: 200000, desc: "You built the world they live in." },
-    { id: "r198", name: "The Ancient One", color: "informant", price: 250000, desc: "The oldest wisdom in the newest world." },
-    { id: "r199", name: "The Final Truth", color: "traitor", price: 500000, desc: "The end of the story, the beginning of the truth." },
-    { id: "r200", name: "The Ultimate Asset", color: "mercenary", price: 1000000, desc: "You are the peak of evolution." }
+        // Market Data
+        const marketItems = [
+{ id: "n1", title: "Darius Bowman", color: "informant", price: 1200, desc: "The ultimate dino-nerd and leader of the Nublar Six." },
+{ id: "n2", title: "Brooklynn", color: "hacker", price: 1200, desc: "Unboxing Jurassic World. Nothing remains a secret for your followers." },
+{ id: "n3", title: "Kenji Kon", color: "mercenary", price: 1100, desc: "The son of the big boss, but with a heart of gold." },
+{ id: "n4", title: "Yaz Fadoula", color: "mercenary", price: 1100, desc: "Top athlete. No one runs faster from a raptor than you." },
+{ id: "n5", title: "Sammy Gutierrez", color: "informant", price: 1000, desc: "Reluctant spy, doing anything to save her family ranch." },
+{ id: "n6", title: "Ben Pincus", color: "mercenary", price: 1300, desc: "From scaredy-cat to jungle survivor with Bumpy by your side." },
+{ id: "p1", title: "Dr. Alan Grant", color: "informant", price: 15000, desc: "Paleontologist who prefers working with fossils over people." },
+{ id: "p2", title: "Dr. Ellie Sattler", color: "informant", price: 14000, desc: "Paleobotanist. You see the details that others miss." },
+{ id: "p3", title: "Dr. Ian Malcolm", color: "informant", price: 16000, desc: "Chaos expert. You already predicted the fall of the park." },
+{ id: "p4", title: "John Hammond", color: "traitor", price: 20000, desc: "The man with the dream and the amber-topped cane." },
+{ id: "p5", title: "Robert Muldoon", color: "mercenary", price: 5000, desc: "Game warden. You have respect for your prey." },
+{ id: "p6", title: "Dennis Nedry", color: "hacker", price: 500, desc: "You turned off the fences for a suitcase full of cash." },
+{ id: "p7", title: "Ray Arnold", color: "hacker", price: 2000, desc: "Chief engineer. 'Hold onto your butts!'" },
+{ id: "p8", title: "Donald Gennaro", color: "traitor", price: 400, desc: "The lawyer who only saw dollars, until the T-Rex arrived." },
+{ id: "p9", title: "Lex Murphy", color: "hacker", price: 3000, desc: "Hacker before it was cool. 'It's a UNIX system!'" },
+{ id: "p10", title: "Tim Murphy", color: "informant", price: 2500, desc: "Dino-fanatic who survived 10,000 volts." },
+{ id: "p11", title: "Roland Tembo", color: "mercenary", price: 4500, desc: "Big game hunter looking for a worthy adversary." },
+{ id: "p12", title: "Nick Van Owen", color: "informant", price: 1500, desc: "Documentary filmmaker and saboteur of InGen's plans." },
+{ id: "p13", title: "Dr. Sarah Harding", color: "informant", price: 4000, desc: "Behavioral paleontologist who got too close to the predators." },
+{ id: "p14", title: "Eddie Carr", color: "mercenary", price: 2200, desc: "The tech expert who sacrificed himself for his team." },
+{ id: "p15", title: "Kelly Curtis", color: "mercenary", price: 800, desc: "Gymnastics is a deadly weapon against raptors." },
+{ id: "p16", title: "Paul Kirby", color: "mercenary", price: 600, desc: "The father who did everything to find his son." },
+{ id: "p17", title: "Amanda Kirby", color: "mercenary", price: 500, desc: "Screaming on Isla Sorna is not without its dangers." },
+{ id: "p18", title: "Billy Brennan", color: "informant", price: 1800, desc: "Alan Grant's assistant with a weakness for raptor eggs." },
+{ id: "p19", title: "Udesky", color: "mercenary", price: 700, desc: "The pilot who got stuck in the raptors' trap." },
+{ id: "w1", title: "Owen Grady", color: "mercenary", price: 18000, desc: "Raptor trainer and the Alpha of the Blue-pack." },
+{ id: "w2", title: "Claire Dearing", color: "informant", price: 12000, desc: "From cold businesswoman to fierce dino-activist." },
+{ id: "w3", title: "Simon Masrani", color: "traitor", price: 6000, desc: "The owner who thought he could tame nature." },
+{ id: "w4", title: "Vic Hoskins", color: "traitor", price: 3500, desc: "You saw weapons of war in the eyes of a raptor." },
+{ id: "w5", title: "Lowery Cruthers", color: "hacker", price: 1500, desc: "The control room hero with a vintage heart." },
+{ id: "w6", title: "Barry Sembène", color: "mercenary", price: 4000, desc: "Owen's right-hand man in the raptor arena." },
+{ id: "w7", title: "Dr. Henry Wu", color: "traitor", price: 9000, desc: "The man who made monsters in the name of science." },
+{ id: "w8", title: "Eli Mills", color: "traitor", price: 4500, desc: "The man who betrayed Lockwood for pure profit." },
+{ id: "w9", title: "Franklin Webb", color: "hacker", price: 1200, desc: "System administrator who prefers staying safely indoors." },
+{ id: "w10", title: "Zia Rodriguez", color: "informant", price: 1400, desc: "Paleo-veterinarian for the Dinosaur Protection Group." },
+{ id: "w11", title: "Maisie Lockwood", color: "informant", price: 7000, desc: "The girl who shared the world with the dinosaurs." },
+{ id: "w12", title: "Ken Wheatley", color: "mercenary", price: 2500, desc: "Tooth collector without a moral compass." },
+{ id: "w13", title: "Sir Benjamin Lockwood", color: "informant", price: 3000, desc: "The man who kept Hammond's dream alive." },
+{ id: "w14", title: "Kayla Watts", color: "mercenary", price: 5500, desc: "Smuggler pilot who chose the right side in Dominion." },
+{ id: "w15", title: "Ramsay Cole", color: "informant", price: 4000, desc: "The whistleblower within the Biosyn system." },
+{ id: "w16", title: "Lewis Dodgson", color: "traitor", price: 8000, desc: "The CEO of Biosyn. 'We've got Nedry here!'" },
+{ id: "w17", title: "Rainn Delacourt", color: "mercenary", price: 3200, desc: "Dino-smuggler with the scars to prove it." },
+{ id: "w18", title: "Soyona Santos", color: "traitor", price: 5000, desc: "She controls the Atrociraptors with a laser pointer." },
+{ id: "f1", title: "Mr. DNA", color: "informant", price: 10000, desc: "The animated guide through your own genetic code." },
+{ id: "f2", title: "InGen Harbor Master", color: "mercenary", price: 300, desc: "You saw the SS Venture pull into the harbor." },
+{ id: "f3", title: "San Diego Pedestrian", color: "mercenary", price: 100, desc: "You ran from a T-Rex in the suburbs." },
+{ id: "f4", title: "Isla Nublar Tour Guide", color: "informant", price: 500, desc: "The voice from the car explaining the attractions." },
+{ id: "f5", title: "ACU Sniper", color: "mercenary", price: 1500, desc: "You were assigned to take down the Indominus." },
+{ id: "f6", title: "Gyrosphere Operator", color: "mercenary", price: 600, desc: "Helping guests drive toward their own demise." },
+{ id: "f7", title: "Mainland Police Officer", color: "mercenary", price: 200, desc: "Directing traffic for a crossing Parasaurolophus." },
+{ id: "f8", title: "Biosyn Technician", color: "hacker", price: 1100, desc: "Working on Dodgson's locust plague." },
+{ id: "f9", title: "Lockwood Estate Guard", color: "mercenary", price: 800, desc: "Guardian of the most expensive auction in the world." },
+{ id: "f10", title: "Site B Cook", color: "mercenary", price: 300, desc: "Someone has to feed the hunters on Isla Sorna." },
+{ id: "r101", title: "Dino-Tracker", color: "mercenary", price: 2650, desc: "Specialized in finding escaped assets in urban environments." },
+{ id: "r102", title: "BioSyn Intern", color: "informant", price: 2700, desc: "You see the emails the executives think are deleted." },
+{ id: "r103", title: "Malta Market Guard", color: "mercenary", price: 2750, desc: "Protecting the underground trade of prehistoric life." },
+{ id: "r104", title: "Node Crasher", color: "hacker", price: 2800, desc: "Overloading the thermal sensors to mask movement." },
+{ id: "r105", title: "Genetic Courier", color: "informant", price: 2850, desc: "Carrying stabilized vials across international borders." },
+{ id: "r106", title: "Fringe Scientist", color: "informant", price: 2900, desc: "Experimenting with growth hormones InGen deemed 'unethical'." },
+{ id: "r107", title: "Security Breacher", color: "hacker", price: 2950, desc: "If there's a keypad, you're already inside." },
+{ id: "r108", title: "Rogue Ranger", color: "mercenary", price: 3050, desc: "Ex-ACU member who went into business for themselves." },
+{ id: "r109", title: "Encrypted Signal", color: "hacker", price: 3150, desc: "You exist only as a ghost in the wireless spectrum." },
+{ id: "r110", title: "Marrow Thief", color: "informant", price: 3250, desc: "Extracting DNA from fossils before they reach the museum." },
+{ id: "r111", title: "Compound Ghost", color: "traitor", price: 3350, desc: "You know the blind spots of every camera in the facility." },
+{ id: "r112", title: "Data Scrubber", color: "hacker", price: 3450, desc: "Erasing the digital footprints of illegal cloning operations." },
+{ id: "r113", title: "Asset Spotter", color: "informant", price: 3550, desc: "Scouting the wilderness for high-value wild specimens." },
+{ id: "r114", title: "Firewall Architect", color: "hacker", price: 3650, desc: "Building the defenses you later teach others to break." },
+{ id: "r115", title: "Extraction Specialist", color: "mercenary", price: 3750, desc: "Getting the team out when the T-Rex shows up." },
+{ id: "r116", title: "Bio-Encryptor", color: "hacker", price: 3850, desc: "Hiding data within the non-coding regions of DNA." },
+{ id: "r117", title: "Sorna Scavenger", color: "mercenary", price: 3950, desc: "Finding lost tech in the ruins of the old labs." },
+{ id: "r118", title: "Internal Affairs", color: "informant", price: 4050, desc: "Spying on the employees for the corporate board." },
+{ id: "r119", title: "Logic Bomb", color: "hacker", price: 4150, desc: "A timed virus waiting to cripple the park's power grid." },
+{ id: "r120", title: "Asset Appraiser", color: "informant", price: 4250, desc: "Determining the black market value of a hatchling." },
+{ id: "r121", title: "Tunnel Rat", color: "mercenary", price: 4350, desc: "Navigating the maintenance tunnels under the park." },
+{ id: "r122", title: "Neural Hijacker", color: "hacker", price: 4450, desc: "Taking control of the asset tracking implants." },
+{ id: "r123", title: "Corporate Spy", color: "traitor", price: 4550, desc: "On the payroll of a rival genetics firm." },
+{ id: "r124", title: "Wild Life Negotiator", color: "informant", price: 4650, desc: "The middleman between poachers and buyers." },
+{ id: "r125", title: "Packet Sniffer", color: "hacker", price: 4750, desc: "Listening to the private calls of the Park Manager." },
+{ id: "r126", title: "Tactical Diver", color: "mercenary", price: 4850, desc: "Retrieving samples from the bottom of the Mosasaur lagoon." },
+{ id: "r127", title: "Code Mortician", color: "hacker", price: 4950, desc: "Reviving old software from the 1993 incident." },
+{ id: "r128", title: "Asset Shepherd", color: "mercenary", price: 5050, desc: "Herding herbivores away from the carnivore zones." },
+{ id: "r129", title: "Deep Web Dealer", color: "informant", price: 5150, desc: "Trading classified blueprints for untraceable credits." },
+{ id: "r130", title: "System Shadow", color: "hacker", price: 5250, desc: "Moving through the network without leaving a single log." },
+{ id: "r131", title: "Apex Predator", color: "mercenary", price: 6000, desc: "The best of the best. You hunt what hunts others." },
+{ id: "r132", title: "Mainframe Architect", color: "hacker", price: 6200, desc: "You designed the infrastructure you're now dismantling." },
+{ id: "r133", title: "Embrio Broker", color: "informant", price: 6400, desc: "The go-to person for viable prehistoric genetic material." },
+{ id: "r134", title: "Security Consultant", color: "traitor", price: 6600, desc: "Paid to find holes in the perimeter, then exploit them." },
+{ id: "r135", title: "Signal Ghost", color: "hacker", price: 6800, desc: "Transmitting from coordinates that don't exist." },
+{ id: "r136", title: "Biological Anomaly", color: "informant", price: 7000, desc: "Your DNA has been 'enhanced' by InGen experiments." },
+{ id: "r137", title: "Urban Hunter", color: "mercenary", price: 7200, desc: "Tracking predators through the streets of London or NY." },
+{ id: "r138", title: "Cypher Master", color: "hacker", price: 7400, desc: "Decoding the most complex genetic sequences ever written." },
+{ id: "r139", title: "Shadow Recruiter", color: "informant", price: 7600, desc: "Finding the next generation of resistance fighters." },
+{ id: "r140", title: "Black Market Mogul", color: "traitor", price: 7800, desc: "You don't just sell dinos; you own the marketplace." },
+{ id: "r141", title: "Satellite Saboteur", color: "hacker", price: 8200, desc: "Blinding InGen's orbital surveillance." },
+{ id: "r142", title: "Asset Pacifier", color: "mercenary", price: 8400, desc: "Expert in non-lethal (but very painful) dino control." },
+{ id: "r143", title: "Data Architect", color: "hacker", price: 8600, desc: "Reshaping the flow of information across the islands." },
+{ id: "r144", title: "Bio-Saboteur", color: "traitor", price: 8800, desc: "Introducing flaws into the cloning process." },
+{ id: "r145", title: "Net Oracle", color: "hacker", price: 9200, desc: "Predicting system failures before they happen." },
+{ id: "r146", title: "Covert Operator", color: "mercenary", price: 9400, desc: "Operating with zero footprint and maximum impact." },
+{ id: "r147", title: "Information Overlord", color: "informant", price: 9600, desc: "Knowing every secret of every major player in the game." },
+{ id: "r148", title: "Digital Mercenary", color: "hacker", price: 9800, desc: "Hacking for hire. No job too dirty." },
+{ id: "r149", title: "The Janitor", color: "mercenary", price: 10500, desc: "You clean up the bodies, both human and saurian." },
+{ id: "r150", title: "Root Infiltrator", color: "hacker", price: 11000, desc: "Deep within the core systems, rewriting reality." },
+{ id: "r151", title: "Asset Whisperer", color: "informant", price: 11500, desc: "You don't just track them; you understand them." },
+{ id: "r152", title: "Cyber Wraith", color: "hacker", price: 12000, desc: "A digital ghost haunting the BioSyn servers." },
+{ id: "r153", title: "The Handler", color: "mercenary", price: 12500, desc: "Managing a team of high-risk operatives." },
+{ id: "r154", title: "Genome Hacker", color: "hacker", price: 13500, desc: "Editing life as if it were just lines of code." },
+{ id: "r155", title: "The Broker", color: "informant", price: 14500, desc: "The bridge between the corporate and the criminal." },
+{ id: "r156", title: "Vanguard Leader", color: "mercenary", price: 15500, desc: "Leading the charge into the heart of the restricted zones." },
+{ id: "r157", title: "System Sovereign", color: "hacker", price: 16500, desc: "Total control over the digital domain." },
+{ id: "r158", title: "High Traitor", color: "traitor", price: 17500, desc: "You didn't just leave; you tried to take it all down." },
+{ id: "r159", title: "The Visionary", color: "informant", price: 18500, desc: "Seeing the world that comes after the extinction." },
+{ id: "r160", title: "Master of Shadows", color: "hacker", price: 19500, desc: "The ultimate power behind the screen." },
+{ id: "r161", title: "Nebula Runner", color: "hacker", price: 21000, desc: "Navigating the most complex data clouds in existence." },
+{ id: "r162", title: "Project Overlord", color: "traitor", price: 22000, desc: "The one who oversaw the most secret projects." },
+{ id: "r163", title: "Ancient Sentinel", color: "mercenary", price: 23000, desc: "Protecting the oldest secrets of the Earth." },
+{ id: "r164", title: "Digital Alpha", color: "hacker", price: 24000, desc: "The leader of the digital pack." },
+{ id: "r165", title: "Bio-Emperor", color: "informant", price: 25000, desc: "Ruling over a genetic empire." },
+{ id: "r166", title: "The Architect of Chaos", color: "traitor", price: 26000, desc: "Designing the fall of the old world order." },
+{ id: "r167", title: "Void King", color: "hacker", price: 27000, desc: "Master of the digital nothingness." },
+{ id: "r168", title: "Primal Legend", color: "mercenary", price: 28000, desc: "A name feared by both man and beast." },
+{ id: "r169", title: "The Nexus", color: "hacker", price: 29000, desc: "The point where all information converges." },
+{ id: "r170", title: "Harbinger of Doom", color: "traitor", price: 30000, desc: "Bringing about the end of the corporate era." },
+{ id: "r171", title: "The Source", color: "informant", price: 32000, desc: "The ultimate origin of all information." },
+{ id: "r172", title: "Code Destroyer", color: "hacker", price: 34000, desc: "Unmaking the digital world piece by piece." },
+{ id: "r173", title: "Asset God", color: "mercenary", price: 36000, desc: "Complete dominion over the prehistoric world." },
+{ id: "r174", title: "The Weaver", color: "hacker", price: 38000, desc: "Weaving the future of digital existence." },
+{ id: "r175", title: "Sovereign of Sorna", color: "mercenary", price: 40000, desc: "The true ruler of Site B." },
+{ id: "r176", title: "Genetic Oracle", color: "informant", price: 42000, desc: "Predicting the evolution of life itself." },
+{ id: "r177", title: "The Ghost Admin", color: "hacker", price: 44000, desc: "An administrator who exists only in the code." },
+{ id: "r178", title: "Lord of the Mesozoic", color: "mercenary", price: 46000, desc: "A title granted only to the most powerful." },
+{ id: "r179", title: "The Binary God", color: "hacker", price: 48000, desc: "Worshiped by those who live in the machine." },
+{ id: "r180", title: "Apex Traitor Prime", color: "traitor", price: 50000, desc: "The ultimate betrayal of the human race." },
+{ id: "r181", title: "Eternal Watcher", color: "informant", price: 55000, desc: "Watching the world burn and then being reborn." },
+{ id: "r182", title: "The Singularity", color: "hacker", price: 60000, desc: "The moment the machine becomes alive." },
+{ id: "r183", title: "Primal God", color: "mercenary", price: 65000, desc: "The god of the ancient world in the modern day." },
+{ id: "r184", title: "The End of All Things", color: "traitor", price: 70000, desc: "The final role for the ultimate agent of change." },
+{ id: "r185", title: "The Absolute", color: "hacker", price: 75000, desc: "Nothing exists beyond your control." },
+{ id: "r186", title: "The First One", color: "informant", price: 80000, desc: "You were here before the beginning." },
+{ id: "r187", title: "The Alpha and Omega", color: "mercenary", price: 85000, desc: "The beginning and the end of the hunt." },
+{ id: "r188", title: "Digital Eternity", color: "hacker", price: 90000, desc: "Living forever in the digital realm." },
+{ id: "r189", title: "The Spirit of Nublar", color: "informant", price: 95000, desc: "The essence of the island lives within you." },
+{ id: "r190", title: "Chaos Incarnate", color: "traitor", price: 100000, desc: "Life finds a way, and you are that way." },
+{ id: "r191", title: "The Overseer", color: "informant", price: 110000, desc: "Watching over the entire experiment." },
+{ id: "r192", title: "System Heart", color: "hacker", price: 120000, desc: "The core of the digital world." },
+{ id: "r193", title: "The Great Hunter", color: "mercenary", price: 130000, desc: "A legend whispered by the survivors." },
+{ id: "r194", title: "Shadow of Hammond", color: "informant", price: 140000, desc: "The legacy of the creator lives through you." },
+{ id: "r195", title: "The Glitch in the DNA", color: "traitor", price: 150000, desc: "The error that changed everything." },
+{ id: "r196", title: "Master of the Park", color: "mercenary", price: 175000, desc: "Every asset, every guest, every life is yours." },
+{ id: "r197", title: "The Digital Creator", color: "hacker", price: 200000, desc: "You built the world they live in." },
+{ id: "r198", title: "The Ancient One", color: "informant", price: 250000, desc: "The oldest wisdom in the newest world." },
+{ id: "r199", title: "The Final Truth", color: "traitor", price: 500000, desc: "The end of the story, the beginning of the truth." },
+{ id: "r200", title: "The Ultimate Asset", color: "mercenary", price: 1000000, desc: "You are the peak of evolution." }
         ];
 
+        // --- Authentication ---
         auth.onAuthStateChanged(user => {
-            if(user) {
-                document.body.style.opacity = "1";
+            if (user) {
+                currentUser = user;
                 username = user.email.split('@')[0].replace(/\./g, '_');
-                db.ref('users/' + username).on('value', snap => {
-                    const data = snap.val() || {};
-                    currentXP = data.xp || 0;
-                    currentRole = data.role || "USER";
-                    updateUI();
+                document.getElementById('agent-display').innerText = `AGENT: ${username.toUpperCase()}`;
+                
+                // Fetch User Data
+                db.ref('users/' + username).on('value', snapshot => {
+                    const data = snapshot.val();
+                    if (data) {
+                        currentXP = data.xp || 0;
+                        document.getElementById('balance-display').innerText = currentXP;
+                        renderMarket();
+                    }
                 });
             } else {
-                window.location.href = "login.html";
+                window.location.href = 'login.html';
             }
         });
 
-        function updateUI() {
-            document.getElementById('user-xp-display').innerText = currentXP + " XP";
-            document.getElementById('player-xp-header').innerText = currentXP + " XP";
-            
-            const grid = document.getElementById('roles-grid');
-            grid.innerHTML = ROLES.map(role => {
-                const isOwned = currentRole === role.name;
-                const canAfford = currentXP >= role.price;
-                
+        // --- Render Market ---
+        function renderMarket() {
+            const container = document.getElementById('market-items');
+            container.innerHTML = marketItems.map(item => {
+                const canAfford = currentXP >= item.price;
                 return `
-                    <div class="role-card">
-                        <div>
-                            <div class="role-name">${role.name}</div>
-                            <p class="role-desc">${role.desc}</p>
-                        </div>
-                        <div>
-                            <div class="role-price">
-                                <i class="fa fa-microchip"></i> ${role.price} XP
-                            </div>
-                            ${isOwned ? 
-                                `<div class="owned-tag"><i class="fa fa-check-circle"></i> ACTIEVE_STATUS</div>` : 
-                                `<button class="buy-btn" onclick="purchaseRole('${role.name}', ${role.price})" ${!canAfford ? 'disabled' : ''}>
-                                    ${canAfford ? 'AUTHORISEER_AANKOOP' : 'ONVOLDOENDE_XP'}
-                                </button>`
-                            }
+                    <div class="market-card">
+                        ${item.price > 2000 ? '<div class="card-tag">ELITE</div>' : ''}
+                        <div class="card-icon"><i class="fa ${item.icon}"></i></div>
+                        <h3 class="card-title">${item.title}</h3>
+                        <p class="card-desc">${item.desc}</p>
+                        <div class="card-price">
+                            <span class="xp-val">${item.price} XP</span>
+                            <button class="buy-btn" onclick="purchaseItem('${item.id}', ${item.price})" ${!canAfford ? 'disabled' : ''}>
+                                ${canAfford ? 'AUTHORIZE' : 'LOW FUNDS'}
+                            </button>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        function purchaseRole(roleName, price) {
-            if (confirm(`Bevestig XP-overdracht: ${price} XP voor de rang '${roleName}'?`)) {
+        // --- Purchase Logic ---
+        function purchaseItem(itemId, price) {
+            if (currentXP < price) return;
+
+            const item = marketItems.find(i => i.id === itemId);
+            if (confirm(`INITIATE TRANSACTION: Transfer ${price} XP for ${item.title}?`)) {
+                
+                // Update Firebase
                 db.ref('users/' + username).update({
-                    xp: currentXP - price,
-                    role: roleName
+                    xp: currentXP - price
                 }).then(() => {
-                    showNotification(`Succes: Je bent nu een ${roleName}!`);
+                    // Log purchase to global activity
+                    db.ref('market_logs').push({
+                        agent: username,
+                        item: item.title,
+                        timestamp: Date.now()
+                    });
+                    showNotification(`TRANSACTION SUCCESSFUL: ${item.title} delivered to your vault.`);
+                }).catch(err => {
+                    showNotification(`TRANSACTION FAILED: ${err.message}`);
                 });
+            }
+        }
+
+        // --- File Upload Simulation ---
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('upload-status');
+            status.innerHTML = `<i class="fa fa-sync fa-spin"></i> ENCRYPTING: ${file.name}...`;
+
+            // Mocking upload delay
+            setTimeout(() => {
+                const bonus = 50;
+                db.ref('users/' + username + '/xp').set(currentXP + bonus);
+                status.innerHTML = `<span style="color: #00ff00"><i class="fa fa-check"></i> UPLOAD VERIFIED. +${bonus} XP Reward granted.</span>`;
+                showNotification("INTEL VERIFIED: Data synchronized with HQ servers.");
+            }, 3000);
+        }
+
+        // --- UI Interactions ---
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('overlay');
+            const isOpen = sb.classList.contains('open');
+            
+            if (isOpen) {
+                sb.classList.remove('open');
+                ov.style.display = 'none';
+            } else {
+                sb.classList.add('open');
+                ov.style.display = 'block';
             }
         }
 
@@ -500,8 +769,20 @@
             const n = document.getElementById('notification');
             n.innerText = msg;
             n.style.display = 'block';
-            setTimeout(() => { n.style.display = 'none'; }, 3000);
+            setTimeout(() => { n.style.display = 'none'; }, 4000);
         }
+
+        // Random Glitch Events
+        setInterval(() => {
+            const titles = document.querySelectorAll('.card-title');
+            if (titles.length > 0) {
+                const target = titles[Math.floor(Math.random() * titles.length)];
+                const original = target.innerText;
+                target.innerText = "[REDACTED]";
+                setTimeout(() => target.innerText = original, 150);
+            }
+        }, 8000);
+
     </script>
 </body>
 </html>

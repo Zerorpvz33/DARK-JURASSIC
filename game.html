@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dark Jurassic | Containment Breach</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Firebase Compat Libraries -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --red: #ff0000;
+            --red-glow: rgba(255, 0, 0, 0.4);
+            --blue: #00d4ff;
+            --dark-bg: #020202;
+            --panel: rgba(15, 15, 15, 0.98);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            background: var(--dark-bg); 
+            color: #eee; 
+            font-family: 'Courier New', Courier, monospace;
+            height: 100vh;
+            overflow: hidden;
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                              linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 3px 100%;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            grid-template-rows: 60px 1fr 200px;
+            height: 100vh;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        header {
+            grid-column: 1 / 3;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: var(--red);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: header-pulse 2s infinite;
+        }
+
+        @keyframes header-pulse {
+            0%, 100% { border-color: var(--border); }
+            50% { border-color: var(--red); box-shadow: 0 0 10px var(--red-glow); }
+        }
+
+        .facility-map {
+            grid-column: 1;
+            grid-row: 2;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .sector {
+            border: 1px solid #333;
+            background: rgba(0,0,0,0.5);
+            position: relative;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: 0.3s;
+        }
+
+        .sector.danger { border-color: var(--red); background: rgba(255,0,0,0.05); }
+        .sector.powered { border-color: var(--blue); }
+
+        .sector-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #222;
+            padding-bottom: 5px;
+        }
+
+        .risk-meter {
+            height: 10px;
+            background: #111;
+            margin-top: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .risk-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--blue);
+            transition: width 0.5s;
+        }
+
+        .danger .risk-fill { background: var(--red); }
+
+        .sidebar {
+            grid-column: 2;
+            grid-row: 2 / 4;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .power-readout {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--blue);
+            text-shadow: 0 0 10px var(--blue);
+        }
+
+        .control-btn {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: transparent;
+            border: 1px solid #444;
+            color: #888;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+
+        .control-btn.active {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .terminal {
+            grid-column: 1;
+            grid-row: 3;
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 15px;
+            font-size: 0.8rem;
+            color: #00ff41;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .timer { font-size: 1.5rem; color: #fff; }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .hidden { display: none !important; }
+
+        .breach-alert {
+            color: var(--red);
+            font-size: 3rem;
+            margin-bottom: 20px;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .btn-restart {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: transparent;
+            border: 1px solid var(--red);
+            color: var(--red);
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+        }
+
+        .btn-restart:hover { background: var(--red); color: #000; }
+    </style>
+</head>
+<body>
+
+    <!-- Start Overlay -->
+    <div id="start-overlay" class="overlay">
+        <h1 style="color: var(--red); margin-bottom: 20px;">SYSTEM_CRITICAL</h1>
+        <p style="max-width: 600px; line-height: 1.6; margin-bottom: 30px;">
+            Een zware storm heeft de stroomvoorziening aangetast. Er is nog maar 25% energie beschikbaar.<br>
+            Verdeel de stroom over de sectoren. Houd alle risico-meters onder de 100%.
+        </p>
+        <button class="btn-restart" style="border-color: var(--blue); color: var(--blue);" onclick="startGame()">INITIALISEER NOODSTROOM</button>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="fail-overlay" class="overlay hidden">
+        <div class="breach-alert">BREACH DETECTED</div>
+        <p id="fail-reason">Een sector is bezweken.</p>
+        <button class="btn-restart" onclick="location.reload()">REBOOT SYSTEM</button>
+    </div>
+
+    <!-- Win Overlay -->
+    <div id="win-overlay" class="overlay hidden">
+        <h1 style="color: var(--blue); margin-bottom: 20px;">STABILISATIE VOLTOOID</h1>
+        <p>De backup-generatoren zijn online. Je hebt een ramp voorkomen.</p>
+        <div id="xp-gain" style="font-size: 2rem; margin: 20px 0; color: #2ecc71;">+50 XP</div>
+        <button class="btn-restart" style="border-color: var(--blue); color: var(--blue);" onclick="location.href='index.html'">VERLAAT TERMINAL</button>
+    </div>
+
+    <div class="main-container">
+        <header>
+            <div><i class="fa fa-radiation-alt"></i> STATUS: CRITIEK</div>
+            <div class="timer" id="timer">02:00</div>
+            <div id="agent-id">AGENT: LOADING...</div>
+        </header>
+
+        <div class="facility-map">
+            <div class="sector" id="sector-1">
+                <div class="sector-header"><span>SECTOR_01: RAPTOR_PIT</span><span class="pwr-stat">OFF</span></div>
+                <div style="font-size: 0.7rem; color: #555;">SPECIMENS: Velociraptor</div>
+                <div class="risk-meter"><div class="risk-fill" id="risk-1"></div></div>
+            </div>
+            <div class="sector" id="sector-2">
+                <div class="sector-header"><span>SECTOR_02: T-REX_PAD</span><span class="pwr-stat">OFF</span></div>
+                <div style="font-size: 0.7rem; color: #555;">SPECIMENS: Tyrannosaurus</div>
+                <div class="risk-meter"><div class="risk-fill" id="risk-2"></div></div>
+            </div>
+            <div class="sector" id="sector-3">
+                <div class="sector-header"><span>SECTOR_03: AVIARY</span><span class="pwr-stat">OFF</span></div>
+                <div style="font-size: 0.7rem; color: #555;">SPECIMENS: Pteranodon</div>
+                <div class="risk-meter"><div class="risk-fill" id="risk-3"></div></div>
+            </div>
+            <div class="sector" id="sector-4">
+                <div class="sector-header"><span>SECTOR_04: BIO_LAB</span><span class="pwr-stat">OFF</span></div>
+                <div style="font-size: 0.7rem; color: #555;">SPECIMENS: Hybriden</div>
+                <div class="risk-meter"><div class="risk-fill" id="risk-4"></div></div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div style="font-size: 0.7rem; color: #555;">BESCHIKBARE ENERGIE</div>
+            <div class="power-readout" id="pwr-available">25%</div>
+
+            <div style="margin-top: 20px;">
+                <button class="control-btn" onclick="togglePower(1)" id="btn-1">POWER SECTOR 1</button>
+                <button class="control-btn" onclick="togglePower(2)" id="btn-2">POWER SECTOR 2</button>
+                <button class="control-btn" onclick="togglePower(3)" id="btn-3">POWER SECTOR 3</button>
+                <button class="control-btn" onclick="togglePower(4)" id="btn-4">POWER SECTOR 4</button>
+            </div>
+        </div>
+
+        <div class="terminal" id="console">> SYSTEM INITIALIZED...</div>
+    </div>
+
+    <script>
+        // Firebase Configuratie
+        const firebaseConfig = {
+            apiKey: "",
+            authDomain: "dark-jurassic.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "dark-jurassic",
+            storageBucket: "dark-jurassic.appspot.com",
+            messagingSenderId: "374224796328",
+            appId: "1:374224796328:web:75e1176b6279f323758362"
+        };
+
+        // Initialiseer Firebase veilig
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let myUsername = "";
+        let currentXP = 0;
+        let gameActive = false;
+        let timeLeft = 120;
+        let powerAvailable = 25;
+        let powerUsage = 0;
+
+        const sectors = {
+            1: { risk: 0, pwr: false, multiplier: 1.5, name: "Raptor Pit" },
+            2: { risk: 0, pwr: false, multiplier: 1.2, name: "T-Rex Paddock" },
+            3: { risk: 0, pwr: false, multiplier: 1.8, name: "Aviary" },
+            4: { risk: 0, pwr: false, multiplier: 1.0, name: "Bio Lab" }
+        };
+
+        // Auth listener
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                myUsername = user.email.split('@')[0].replace(/\./g, '_');
+                const agentEl = document.getElementById('agent-id');
+                if(agentEl) agentEl.innerText = `AGENT: ${myUsername.toUpperCase()}`;
+                
+                db.ref('users/' + myUsername + '/xp').on('value', snap => {
+                    currentXP = snap.val() || 0;
+                });
+            } else {
+                console.warn("Geen actieve sessie gevonden.");
+            }
+        });
+
+        function log(msg, color = "#00ff41") {
+            const c = document.getElementById('console');
+            if(c) {
+                c.innerHTML += `<br><span style="color:${color}">> ${msg}</span>`;
+                c.scrollTop = c.scrollHeight;
+            }
+        }
+
+        function startGame() {
+            const overlay = document.getElementById('start-overlay');
+            if(overlay) overlay.classList.add('hidden');
+            gameActive = true;
+            log("NOODSTROOM GEACTIVEERD. STABILISEER HET NETWERK.");
+            requestAnimationFrame(gameLoop);
+        }
+
+        function togglePower(id) {
+            if(!gameActive) return;
+            const s = sectors[id];
+            if(!s.pwr) {
+                if(powerUsage + 12.5 > powerAvailable) {
+                    log("FOUT: CAPACITEIT OVERSCHREDEN", "var(--red)");
+                    return;
+                }
+                s.pwr = true;
+                powerUsage += 12.5;
+                log(`${s.name.toUpperCase()} GEACTIVEERD`);
+            } else {
+                s.pwr = false;
+                powerUsage -= 12.5;
+                log(`${s.name.toUpperCase()} GEDEACTIVEERD`, "#888");
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            for(let id in sectors) {
+                const s = sectors[id];
+                const el = document.getElementById(`sector-${id}`);
+                const btn = document.getElementById(`btn-${id}`);
+                const stat = el ? el.querySelector('.pwr-stat') : null;
+                const fill = document.getElementById(`risk-${id}`);
+                
+                if(el && btn && stat && fill) {
+                    if(s.pwr) {
+                        el.classList.add('powered');
+                        btn.classList.add('active');
+                        stat.innerText = "ON";
+                    } else {
+                        el.classList.remove('powered');
+                        btn.classList.remove('active');
+                        stat.innerText = "OFF";
+                    }
+                    if(s.risk > 70) el.classList.add('danger');
+                    else el.classList.remove('danger');
+                    fill.style.width = s.risk + "%";
+                }
+            }
+            const pwrEl = document.getElementById('pwr-available');
+            if(pwrEl) pwrEl.innerText = (powerAvailable - powerUsage) + "%";
+        }
+
+        let lastTick = 0;
+        function gameLoop(timestamp) {
+            if(!gameActive) return;
+
+            if(timestamp - lastTick >= 1000) {
+                lastTick = timestamp;
+                
+                timeLeft--;
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                const timerEl = document.getElementById('timer');
+                if(timerEl) timerEl.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+                if(timeLeft <= 0) {
+                    winGame();
+                    return;
+                }
+
+                for(let id in sectors) {
+                    const s = sectors[id];
+                    if(s.pwr) s.risk = Math.max(0, s.risk - 3);
+                    else s.risk += (Math.random() * s.multiplier) + 1;
+
+                    if(s.risk >= 100) {
+                        gameOver(s.name);
+                        return;
+                    }
+                }
+                updateUI();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver(name) {
+            gameActive = false;
+            const fail = document.getElementById('fail-overlay');
+            const reason = document.getElementById('fail-reason');
+            if(fail && reason) {
+                reason.innerText = `${name.toUpperCase()} BREACH BEVESTIGD.`;
+                fail.classList.remove('hidden');
+            }
+        }
+
+        function winGame() {
+            gameActive = false;
+            if(myUsername) {
+                db.ref('users/' + myUsername).update({ xp: currentXP + 50 });
+            }
+            const win = document.getElementById('win-overlay');
+            if(win) win.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

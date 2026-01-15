@@ -2,11 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Jurassic | Species Database</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dark Jurassic | DNA Species Database</title>
     <link rel="icon" type="image/png" href="logo.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- External Assets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -14,128 +18,287 @@
     <style>
         :root {
             --primary: #e63946;
-            --primary-glow: rgba(230, 57, 70, 0.4);
+            --primary-glow: rgba(230, 57, 70, 0.5);
+            --secondary: #5dade2;
             --bg-dark: #050505;
+            --bg-panel: #0a0a0a;
             --card-bg: #0d0d0d;
-            --border: #1a1a1a;
-            --accent: #00d4ff;
-            --text-main: #f0f0f0;
-            --text-dim: #888888;
-            --herbivore: #2ecc71;
-            --carnivore: #e63946;
-            --omnivore: #f1c40f;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #e0e0e0;
+            --text-dim: #888;
+            --sidebar-width: 260px;
+            --nav-height: 70px;
+            --glitch-speed: 3s;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        /* --- Global Reset & Scrollbar --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); }
 
-        body { 
-            background-color: var(--bg-dark); 
+        body {
+            font-family: 'JetBrains+Mono', monospace;
+            background-color: var(--bg-dark);
             color: var(--text-main);
-            opacity: 0;
-            transition: opacity 0.8s ease-in-out;
+            overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        /* Scanline effect */
-        body::after {
-            content: " ";
-            display: block;
+        /* --- Background Effects --- */
+        .scanlines {
             position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 9999;
-            background-size: 100% 2px, 3px 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 3px 100%;
+            z-index: 999;
             pointer-events: none;
+            opacity: 0.3;
         }
 
-        .top-bar {
-            height: 70px;
-            background: rgba(10, 10, 10, 0.95);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
+        /* --- Navigation --- */
+        header {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            height: var(--nav-height);
+            background: rgba(5, 5, 5, 0.95);
             border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            z-index: 1000;
             backdrop-filter: blur(10px);
         }
 
-        .back-btn {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 0.9rem;
+        .navbar {
+            max-width: 1400px;
+            margin: 0 auto;
+            height: 100%;
             display: flex;
             align-items: center;
-            gap: 10px;
-            transition: 0.3s;
-        }
-        .back-btn:hover { color: var(--primary); }
-
-        .container {
-            max-width: 1200px;
-            margin: 30px auto;
+            justify-content: space-between;
             padding: 0 20px;
         }
 
-        .header-section {
-            margin-bottom: 40px;
-            border-left: 3px solid var(--primary);
-            padding-left: 20px;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            letter-spacing: 2px;
         }
 
-        .header-section h1 { font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--primary); }
-        .header-section p { color: var(--text-dim); font-size: 0.9rem; margin-top: 5px; }
+        .logo img { height: 40px; }
 
-        /* Upload Panel */
-        .upload-panel {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 40px;
+        .nav-links {
+            display: flex;
+            gap: 5px;
+            list-style: none;
         }
 
-        .upload-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .input-field {
-            background: #111;
-            border: 1px solid var(--border);
-            color: white;
-            padding: 12px;
-            border-radius: 6px;
+        .nav-links li a {
+            color: var(--text-dim);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: 0.3s;
             font-size: 0.85rem;
-            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
         }
 
-        .input-field:focus { outline: none; border-color: var(--primary); }
+        .nav-links li a i { font-size: 1.1rem; }
+        .nav-links li a.active, .nav-links li a:hover {
+            color: var(--primary);
+            background: rgba(230, 57, 70, 0.05);
+        }
 
-        .btn-upload {
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* --- Sidebar (Mobile) --- */
+        .mobile-sidebar {
+            position: fixed;
+            top: 0; left: -100%;
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--primary);
+            z-index: 2000;
+            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            padding-top: 20px;
+        }
+
+        .mobile-sidebar.open { left: 0; }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #222;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-links { list-style: none; }
+        .sidebar-links li a {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-links li a:hover, .sidebar-links li a.active {
+            background: rgba(230, 57, 70, 0.05);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1999;
+            display: none;
+        }
+
+        /* --- Main Content --- */
+        main {
+            margin-top: var(--nav-height);
+            padding: 40px 20px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .glitch-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            color: #fff;
+            position: relative;
+            text-transform: uppercase;
+        }
+
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
+        }
+
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -2px 0 var(--secondary);
+            animation: glitch-anim 2s infinite linear alternate-reverse;
+        }
+
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -2px 0 var(--primary);
+            animation: glitch-anim2 3s infinite linear alternate-reverse;
+        }
+
+        .agent-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            margin-top: 15px;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            background: #00ff00;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-container {
+            flex: 1;
+            position: relative;
+            min-width: 280px;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 15px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+        }
+
+        .search-container input {
+            width: 100%;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 12px 12px 12px 45px;
+            color: white;
+            border-radius: 8px;
+            font-family: inherit;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .search-container input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .btn-action {
             background: var(--primary);
             color: white;
             border: none;
             padding: 12px 25px;
-            border-radius: 6px;
-            cursor: pointer;
+            border-radius: 8px;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             transition: 0.3s;
-            grid-column: 1 / -1;
-            margin-top: 10px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
         }
 
-        .btn-upload:hover { box-shadow: 0 0 20px var(--primary-glow); transform: translateY(-2px); }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px var(--primary-glow);
+        }
 
-        /* Species Grid */
+        /* --- Dino Grid --- */
         .dino-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 25px;
         }
 
@@ -144,91 +307,323 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
-            transition: 0.3s;
+            transition: 0.4s;
             position: relative;
         }
 
-        .dino-card:hover { border-color: var(--primary); transform: translateY(-5px); }
+        .dino-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
 
-        .dino-img {
+        .dino-img-container {
             width: 100%;
             height: 200px;
+            position: relative;
+            overflow: hidden;
+            background: #111;
+        }
+
+        .dino-img-container img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            border-bottom: 1px solid var(--border);
+            transition: 0.5s;
+            filter: grayscale(0.5) contrast(1.2);
         }
 
-        .dino-body { padding: 20px; }
-        
+        .dino-card:hover .dino-img-container img {
+            transform: scale(1.1);
+            filter: grayscale(0);
+        }
+
         .diet-tag {
-            font-size: 0.65rem;
-            padding: 3px 8px;
+            position: absolute;
+            top: 15px; right: 15px;
+            padding: 4px 12px;
             border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
             text-transform: uppercase;
-            font-weight: 800;
-            display: inline-block;
-            margin-bottom: 10px;
+            z-index: 2;
         }
 
-        .diet-tag.herbivore { background: rgba(46, 204, 113, 0.2); color: var(--herbivore); }
-        .diet-tag.carnivore { background: rgba(230, 57, 70, 0.2); color: var(--carnivore); }
-        .diet-tag.omnivore { background: rgba(241, 196, 15, 0.2); color: var(--omnivore); }
+        .diet-carnivore { background: #e63946; color: white; }
+        .diet-herbivore { background: #2a9d8f; color: white; }
+        .diet-omnivore { background: #f4a261; color: white; }
 
-        .dino-name { font-size: 1.1rem; color: var(--primary); font-weight: 800; text-transform: uppercase; margin-bottom: 10px; }
-        .dino-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 15px; }
+        .dino-info { padding: 20px; }
+        .dino-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
 
-        .contributor-tag {
-            font-size: 0.7rem;
-            color: #444;
+        .dino-desc {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            margin-bottom: 20px;
+        }
+
+        .dino-meta {
             display: flex;
             justify-content: space-between;
-            border-top: 1px solid #1a1a1a;
-            padding-top: 10px;
-            font-family: monospace;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        /* --- Modals --- */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--bg-panel);
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 30px;
+            position: relative;
+            animation: modalFade 0.3s ease;
+        }
+
+        @keyframes modalFade {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            background: #151515;
+            border: 1px solid var(--border);
+            padding: 12px;
+            color: white;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        .form-group textarea { height: 100px; resize: none; }
+
+        /* --- Notifications --- */
+        #notification {
+            position: fixed;
+            bottom: 30px; right: 30px;
+            background: var(--bg-panel);
+            border-left: 4px solid var(--primary);
+            padding: 15px 25px;
+            color: white;
+            z-index: 5000;
+            border-radius: 4px;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-size: 0.85rem;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* --- Animations --- */
+        @keyframes glitch-anim {
+            0% { clip: rect(44px, 9999px, 56px, 0); }
+            20% { clip: rect(10px, 9999px, 30px, 0); }
+            40% { clip: rect(67px, 9999px, 80px, 0); }
+            60% { clip: rect(2px, 9999px, 15px, 0); }
+            80% { clip: rect(89px, 9999px, 95px, 0); }
+            100% { clip: rect(33px, 9999px, 45px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(12px, 9999px, 25px, 0); }
+            30% { clip: rect(45px, 9999px, 60px, 0); }
+            60% { clip: rect(5px, 9999px, 18px, 0); }
+            90% { clip: rect(80px, 9999px, 99px, 0); }
+        }
+
+        /* --- Mobile Responsive --- */
+        @media (max-width: 992px) {
+            .nav-links { display: none; }
+            .menu-toggle { display: block; }
+            .nav-text { display: none; }
         }
 
         @media (max-width: 768px) {
-            .upload-grid { grid-template-columns: 1fr; }
+            .glitch-text { font-size: 1.8rem; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .btn-action { justify-content: center; }
         }
+
     </style>
 </head>
-<body onload="document.body.style.opacity='1'">
+<body>
 
-    <nav class="top-bar">
-        <a href="index.html" class="back-btn"><i class="fa fa-arrow-left"></i> RETURN TO TERMINAL</a>
-        <div style="font-size: 0.7rem; color: var(--text-dim); letter-spacing: 2px;">SECURE_DATA_ACCESS</div>
-    </nav>
+    <div class="scanlines"></div>
 
-    <div class="container">
-        
-        <header class="header-section">
-            <h1>Intelligence Database</h1>
-            <p>Classified biological data on active field specimens.</p>
-        </header>
+    <!-- Mobile Navigation Sidebar -->
+    <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <aside class="mobile-sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Logo">
+                <span>DARK JURASSIC</span>
+            </a>
+        </div>
+        <ul class="sidebar-links">
+            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
+            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
+            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
+            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
+            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
+            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+        </ul>
+    </aside>
 
-        <!-- Data Entry Section -->
-        <section class="upload-panel">
-            <h3 style="font-size: 0.8rem; letter-spacing: 1px; color: var(--text-dim);">[+] NEW SPECIES ENTRY</h3>
-            <div class="upload-grid">
-                <input type="text" id="dino-name" class="input-field" placeholder="Species Designation (e.g. T-Rex)">
-                <select id="dino-diet" class="input-field">
-                    <option value="Carnivore">Classification: Carnivore</option>
-                    <option value="Herbivore">Classification: Herbivore</option>
-                    <option value="Omnivore">Classification: Omnivore</option>
-                </select>
-                <input type="text" id="dino-img" class="input-field" placeholder="Intel Image URL">
-                <textarea id="dino-desc" class="input-field" placeholder="Biological Observations / Threat Analysis" style="grid-column: 1 / -1; height: 80px;"></textarea>
-                <button class="btn-upload" onclick="uploadDino()"><i class="fa fa-upload"></i> Upload to Central Core</button>
+    <header>
+        <nav class="navbar">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Dark Jurassic Logo">
+                <span>DARK JURASSIC</span>
+            </a>
+
+            <ul class="nav-links">
+            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
+            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
+            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
+            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
+            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
+            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+            </ul>
+
+            <button class="menu-toggle" onclick="toggleSidebar()">
+                <i class="fa fa-bars"></i>
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1 class="glitch-text" data-text="SPECIES_DB_ACCESS">SPECIES_DB_ACCESS</h1>
+            <div class="agent-badge">
+                <div class="status-dot"></div>
+                <span id="agent-display">ENCRYPTED_USER@DJ_TERMINAL</span>
             </div>
         </section>
 
-        <!-- Species List -->
-        <div id="dino-list" class="dino-grid">
-            <!-- Data populated via JS -->
-        </div>
+        <section class="controls">
+            <div class="search-container">
+                <i class="fa fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search DNA records (Name, Diet, Class)..." oninput="filterRecords()">
+            </div>
+            <button class="btn-action" onclick="openModal()">
+                <i class="fa fa-plus-circle"></i> Index New Specimen
+            </button>
+        </section>
 
+        <div id="dinoGrid" class="dino-grid">
+            <!-- Dynamic Content Load -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                <i class="fa fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+                <p style="margin-top: 15px; color: var(--text-dim);">Connecting to Remote Genome Server...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">SPECIMEN UPLOAD</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Scientific Name / ID</label>
+                <input type="text" id="dinoName" placeholder="e.g. Tyrannosaurus Rex">
+            </div>
+            <div class="form-group">
+                <label>Dietary Classification</label>
+                <select id="dinoDiet">
+                    <option value="carnivore">Carnivore (Meat-Eater)</option>
+                    <option value="herbivore">Herbivore (Plant-Eater)</option>
+                    <option value="omnivore">Omnivore (Generalist)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Asset Image URL</label>
+                <input type="url" id="dinoImage" placeholder="https://image-source.com/specimen.jpg">
+            </div>
+            <div class="form-group">
+                <label>Observation Notes / DNA Breakdown</label>
+                <textarea id="dinoDesc" placeholder="Describe behavior, genetic markers, or habitat requirements..."></textarea>
+            </div>
+            <button class="btn-action" style="width: 100%;" onclick="submitDino()">
+                <i class="fa fa-cloud-upload-alt"></i> Authorize Data Indexing
+            </button>
+        </div>
     </div>
 
+    <div id="notification">SYSTEM_ALERT: Connection Stabilized</div>
+
     <script>
+        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -238,101 +633,137 @@
             messagingSenderId: "144100722100",
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
-        
-        firebase.initializeApp(firebaseConfig);
+
+        const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
-        auth.onAuthStateChanged((user) => {
+        let currentAgent = "Guest_Agent";
+        let allDinos = [];
+
+        // --- Auth & Init ---
+        auth.onAuthStateChanged(user => {
             if (user) {
-                loadDinos();
-            } else {
-                window.location.href = "login.html";
+                currentAgent = user.email.split('@')[0];
+                document.getElementById('agent-display').innerText = `${currentAgent.toUpperCase()}@SECURE_LINK`;
             }
+            loadDatabase();
         });
 
-        function uploadDino() {
-            const name = document.getElementById('dino-name').value;
-            const diet = document.getElementById('dino-diet').value;
-            const image = document.getElementById('dino-img').value;
-            const desc = document.getElementById('dino-desc').value;
-            const user = auth.currentUser;
+        // --- Core Functions ---
+        function loadDatabase() {
+            db.ref('shared_dinos').on('value', snapshot => {
+                const data = snapshot.val();
+                allDinos = [];
+                if (data) {
+                    for (let id in data) {
+                        allDinos.push({ id, ...data[id] });
+                    }
+                }
+                renderDinos(allDinos);
+            });
+        }
 
-            if (name && diet && image && desc) {
-                const username = user.email.split('@')[0].toUpperCase();
-                
-                db.ref('shared_dinos').push({
-                    name: name,
-                    diet: diet,
-                    image: image,
-                    desc: desc,
-                    contributor: username,
-                    timestamp: Date.now()
-                }).then(() => {
-                    // Reward XP logic
-                    const cleanUsername = user.email.split('@')[0].replace(/\./g, '_');
-                    db.ref('users/' + cleanUsername + '/xp').transaction(current => (current || 0) + 100);
-                    
-                    // Reset fields
-                    document.getElementById('dino-name').value = '';
-                    document.getElementById('dino-img').value = '';
-                    document.getElementById('dino-desc').value = '';
-                    
-                    showNotification("Data successfully archived. +100 XP granted.");
-                });
+        function renderDinos(data) {
+            const grid = document.getElementById('dinoGrid');
+            if (data.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">No DNA records found in database. Start indexing.</div>`;
+                return;
+            }
+
+            grid.innerHTML = data.reverse().map(dino => `
+                <div class="dino-card">
+                    <div class="dino-img-container">
+                        <span class="diet-tag diet-${dino.diet}">${dino.diet}</span>
+                        <img src="${dino.image}" onerror="this.src='https://via.placeholder.com/400x200?text=DNA_RECONSTRUCTION_FAILED'" alt="${dino.name}">
+                    </div>
+                    <div class="dino-info">
+                        <h3 class="dino-name">${dino.name}</h3>
+                        <p class="dino-desc">${dino.desc || 'No additional data provided.'}</p>
+                        <div class="dino-meta">
+                            <span><i class="fa fa-user-secret"></i> ${dino.contributor || 'ANONYMOUS'}</span>
+                            <span><i class="fa fa-clock"></i> ${new Date(dino.timestamp).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterRecords() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allDinos.filter(d => 
+                d.name.toLowerCase().includes(query) || 
+                d.diet.toLowerCase().includes(query) ||
+                (d.desc && d.desc.toLowerCase().includes(query))
+            );
+            renderDinos(filtered);
+        }
+
+        function submitDino() {
+            const name = document.getElementById('dinoName').value.trim();
+            const diet = document.getElementById('dinoDiet').value;
+            const image = document.getElementById('dinoImage').value.trim();
+            const desc = document.getElementById('dinoDesc').value.trim();
+
+            if (!name || !image || !desc) {
+                notify("CRITICAL_ERROR: Missing mandatory data fields.");
+                return;
+            }
+
+            const newDino = {
+                name, diet, image, desc,
+                contributor: currentAgent,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            db.ref('shared_dinos').push(newDino).then(() => {
+                notify("PROTOCOL_SUCCESS: Asset uploaded to secure server.");
+                closeModal();
+                // Clear inputs
+                document.getElementById('dinoName').value = "";
+                document.getElementById('dinoImage').value = "";
+                document.getElementById('dinoDesc').value = "";
+            }).catch(err => {
+                notify("UPLOAD_FAILED: Check network encryption.");
+                console.error(err);
+            });
+        }
+
+        // --- UI Utils ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const isOpen = sidebar.classList.contains('open');
+            
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                overlay.style.display = 'none';
             } else {
-                showNotification("Error: Fields cannot be null.", true);
+                sidebar.classList.add('open');
+                overlay.style.display = 'block';
             }
         }
 
-        function showNotification(msg, isError = false) {
-            const n = document.createElement('div');
-            n.style.position = 'fixed';
-            n.style.bottom = '20px';
-            n.style.right = '20px';
-            n.style.padding = '15px 25px';
-            n.style.background = isError ? 'var(--primary)' : '#1a1a1a';
-            n.style.color = 'white';
-            n.style.borderRadius = '8px';
-            n.style.zIndex = '10000';
-            n.style.fontSize = '0.8rem';
-            n.style.fontFamily = 'monospace';
-            n.style.border = '1px solid var(--border)';
-            n.innerText = `[SYSTEM_MSG] ${msg}`;
-            document.body.appendChild(n);
-            setTimeout(() => n.remove(), 4000);
+        function openModal() { document.getElementById('uploadModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('uploadModal').style.display = 'none'; }
+
+        function notify(msg) {
+            const n = document.getElementById('notification');
+            n.innerText = msg;
+            n.style.display = 'block';
+            setTimeout(() => { n.style.display = 'none'; }, 4000);
         }
 
-        function loadDinos() {
-            db.ref('shared_dinos').on('value', snap => {
-                const list = document.getElementById('dino-list');
-                list.innerHTML = "";
-                
-                let data = [];
-                snap.forEach(child => {
-                    data.push(child.val());
-                });
-
-                // Show newest first
-                data.reverse().forEach(d => {
-                    const dietClass = d.diet.toLowerCase();
-                    list.innerHTML += `
-                        <div class="dino-card">
-                            <img src="${d.image}" class="dino-img" onerror="this.src='https://via.placeholder.com/400x200?text=IMAGE_NOT_FOUND'">
-                            <div class="dino-body">
-                                <span class="diet-tag ${dietClass}">${d.diet}</span>
-                                <h4 class="dino-name">${d.name}</h4>
-                                <p class="dino-desc">${d.desc}</p>
-                                <div class="contributor-tag">
-                                    <span>SOURCE: ${d.contributor}</span>
-                                    <span>ID_${Math.floor(Math.random()*9000)+1000}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
+        // Random Glitch Effect on Hover
+        document.querySelectorAll('.dino-card').forEach(card => {
+            card.addEventListener('mouseover', () => {
+                if (Math.random() > 0.9) {
+                    card.style.transform = `translate(${Math.random()*2}px, ${Math.random()*2}px)`;
+                    setTimeout(() => card.style.transform = '', 50);
+                }
             });
-        }
+        });
+
     </script>
 </body>
 </html>

@@ -1,135 +1,56 @@
-🦖 Dark Jurassic Network | Technical Briefing
-
-Welcome to the central intelligence hub. This documentation outlines the architecture, features, and security protocols of the Dark Jurassic web ecosystem.
-
-🛰️ Core Infrastructure
-
-Frontend: HTML5, CSS3 (Tailwind-inspired custom styles), JavaScript (ES6+).
-
-Backend: Firebase (Authentication & Real-time Database).
-
-Mapping: Leaflet.js (JS-based interactive geographical tracking).
-
-Design Aesthetic: High-contrast "Cyber-Terminal" (Dark mode, neon red accents, scanline overlays).
-
-📂 Page Directory
-
-1. login.html (Authentication Gate)
-
-Purpose: The entry point for all users.
-
-Logic: Uses Firebase Auth for email/password validation.
-
-Registration: New users are automatically initialized in the database upon account creation.
-
-2. index.html (Command Center)
-
-Purpose: The main dashboard providing an overview of system health.
-
-Features:
-
-Live Intel Feed: Displays recent announcements or global alerts.
-
-Quick Links: Navigation to all sub-modules.
-
-Radar Status: Shows a live summary of the most recent dinosaur sighting.
-
-3. profile.html (Agent Dossier)
-
-Purpose: Personal identity management and career progression.
-
-Key Features:
-
-Name Changer: Allows agents to update their operational codename and bio.
-
-XP Progress Bar: Visualizes distance to the next clearance level.
-
-Rank System: Dynamically calculates titles (e.g., Lab Assistant → Apex Predator) based on XP.
-
-4. sightings.html (Live Tracker)
-
-Purpose: Real-time geographical tracking of escaped biological assets.
-
-Integrations: * Leaflet Map: Renders active markers on a global map.
-
-Live Feed: Displays a chronological list of sightings.
-
-Expiration Logic: Markers and feed items automatically flag as "Expired" after a set duration.
-
-5. dinosaurs.html (Species Database)
-
-Purpose: Collaborative wiki for biological data.
-
-Features:
-
-Public Contributions: Any agent can upload new species data (Name, Diet, Image URL).
-
-Incentive: Users gain +100 XP for every verified database entry.
-
-6. vault.html (Classified Vault)
-
-Purpose: Gated content accessible only to high-ranking agents.
-
-Logic: Compares the user's current XP against the requiredXP of specific files. Locked files remain unreadable until the threshold is met.
-
-7. users.html (Agent Directory)
-
-Purpose: Leaderboard and social proof.
-
-Features: Displays all registered agents sorted by XP, showing their current clearance level and rank.
-
-8. dms.html (Secure Messaging)
-
-Purpose: Encrypted communication between agents.
-
-Logic: Generates a unique chatId based on two usernames (alphabetically sorted) to create private channels.
-
-Mobile Support: Uses visualViewport listeners to ensure the keyboard doesn't break the layout.
-
-9. cards.html (Dino Stones)
-
-Purpose: Tactical training simulation (Mini-game).
-
-Gameplay: A grid-based card battle game where card stats (top, bottom, left, right) determine territory capture.
-
-10. blackmarket.html (XP Exchange)
-
-Purpose: Resource spending module.
-
-Logic: Allows users to trade accumulated XP for "Role Upgrades" or vanity titles, updating the Firebase role field.
-
-🛠️ Database Schema (Firebase)
-
-Node
-
-Purpose
-
-users/{username}
-
-Stores displayName, bio, xp, and role.
-
-sightings/
-
-Stores geolocation data, timestamps, and reporting agent info.
-
-shared_dinos/
-
-Publicly contributed species data.
-
-direct_messages/{chatId}/
-
-Historical message logs between two users.
-
-intel/
-
-Global announcements managed by admin.
-
-⚠️ Security Protocols
-
-Auth Guard: Every sensitive page includes a script to redirect unauthenticated users back to login.html.
-
-Sanitization: Usernames are sanitized (dots to underscores) to comply with Firebase key path restrictions.
-
-Dossier Sync: Profile updates use atomic update() calls to prevent accidental data overwrites.
-
-[END OF BRIEFING]
+# DARK JURASSIC - Forum Expansion
+
+This document outlines the recent expansion of the `forum.html` page and provides instructions on how to set up the Firebase integration.
+
+## Changes Made
+
+The `forum.html` page has been completely overhauled to provide a modern, feature-rich, and visually unique experience. The following changes have been made:
+
+- **Expanded HTML Structure:** The `forum.html` file has been expanded to include a more complex and feature-rich layout.
+- **Mobile-Friendly Design:** The forum is now fully responsive and optimized for mobile devices.
+- **Glitchy & Updated Layout:** The user interface has been updated with a "glitchy" aesthetic, including animations and visual effects.
+- **New Features:** The forum now includes a variety of new features, such as:
+    - User authentication (login, logout)
+    - Real-time fetching of threads and comments
+    - Create, read, update, and delete (CRUD) functionality for posts and comments
+    - Search and filtering options
+    - User profiles with avatars and ranks
+    - File attachments for posts
+    - Markdown support in posts and comments
+    - Notifications for user actions
+- **Firebase Integration:** The forum is fully integrated with Firebase for authentication, real-time database, and storage.
+
+## File Structure
+
+The following files have been created or modified:
+
+- `forum.html`: The main HTML file for the forum.
+- `style.css`: The CSS file containing all the styles for the forum.
+- `firebase-config.js`: The Firebase configuration file.
+- `forum.js`: The JavaScript file containing all the logic for the forum.
+
+## Firebase Setup
+
+To use the forum, you will need to set up a Firebase project and update the `firebase-config.js` file with your project's credentials.
+
+1. **Create a Firebase Project:** If you don't already have one, create a new project in the [Firebase Console](https://console.firebase.google.com/).
+2. **Enable Authentication:** In the Firebase Console, go to the "Authentication" section and enable the "Email/Password" sign-in method.
+3. **Enable Realtime Database:** In the Firebase Console, go to the "Realtime Database" section and create a new database.
+4. **Enable Storage:** In the Firebase Console, go to the "Storage" section and create a new storage bucket.
+5. **Get Your Firebase Config:** In the Firebase Console, go to your project's settings and find your Firebase project's configuration object. It will look something like this:
+```javascript
+const firebaseConfig = {
+  apiKey: "AIza...",
+  authDomain: "your-project-id.firebaseapp.com",
+  databaseURL: "https://your-project-id.firebaseio.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project-id.appspot.com",
+  messagingSenderId: "123...",
+  appId: "1:123...:web:abc..."
+};
+```
+6. **Update `firebase-config.js`:** Copy your Firebase project's configuration object and paste it into the `firebase-config.js` file, replacing the placeholder values.
+
+## Running the Forum
+
+Once you have set up your Firebase project and updated the `firebase-config.js` file, you can run the forum by opening the `forum.html` file in your web browser.
