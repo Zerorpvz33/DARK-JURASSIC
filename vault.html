@@ -204,9 +204,7 @@
             height: 100%;
         }
 
-        @media (max-width: 1024px) {
-            .nav-links { display: none; }
-        }
+        @media (max-width: 1024px) { .nav-links { display: none; } }
 
         .nav-links a {
             color: var(--text-dim);
@@ -254,9 +252,7 @@
             color: #fff;
         }
 
-        @media (max-width: 1024px) {
-            .menu-toggle { display: block; }
-        }
+        @media (max-width: 1024px) { .menu-toggle { display: block; } }
 
         /* --- Main Content --- */
         main {
@@ -782,7 +778,7 @@
         <ul class="sidebar-links">
                 <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
                 <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
-                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="sightings.html"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
                 <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
                 <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
                 <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
@@ -800,10 +796,11 @@
     <header>
         <nav class="navbar">
             <a href="index.html" class="logo">
-                <img src="logo.png" alt="Dark Jurassic Logo">
+                <img src="logo.png" alt="Logo">
                 <span>DARK JURASSIC</span>
             </a>
 
+            <ul class="nav-links">
                 <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
                 <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
                 <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
@@ -945,7 +942,7 @@
             </div>
         </div>
     </div>
-
+ 
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dark Jurassic | Secure Uplink v5.2</title>
+    <title>Dark Jurassic | Encrypted Comms V6.0</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <!-- External Fonts & Icons -->
@@ -167,7 +167,7 @@
             border-bottom: 1px solid var(--border);
             position: fixed;
             top: 0; width: 100%;
-            z-index: 2000;
+            z-index: 1000;
             backdrop-filter: blur(10px);
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
@@ -233,8 +233,8 @@
             border-bottom: 2px solid transparent;
         }
 
-        .nav-links li a i { font-size: 1.1rem; }
-
+        .nav-links li a i { font-size: 1.1rem; margin-bottom: 2px; }
+        
         .nav-links li a:hover, .nav-links li a.active {
             color: var(--primary);
             background: linear-gradient(to bottom, transparent 0%, rgba(230, 57, 70, 0.1) 100%);
@@ -361,6 +361,7 @@
             display: grid;
             grid-template-columns: 350px 1fr;
             overflow: hidden;
+            position: relative;
         }
 
         /* --- Contacts Sidebar --- */
@@ -369,6 +370,7 @@
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
+            z-index: 10;
         }
 
         .contacts-header {
@@ -395,6 +397,7 @@
             cursor: pointer;
             border-bottom: 2px solid transparent;
             transition: 0.3s;
+            font-family: 'Orbitron', sans-serif;
         }
 
         .contact-tab.active {
@@ -501,6 +504,7 @@
             flex-direction: column;
             background: var(--bg-dark);
             position: relative;
+            height: 100%;
         }
 
         .chat-header {
@@ -727,13 +731,28 @@
         @media (max-width: 900px) {
             .nav-links { display: none; }
             .menu-toggle { display: block; }
-            .dm-container { grid-template-columns: 1fr; }
+            .dm-container { display: block; position: relative; }
+            
             .contacts-panel { 
-                position: absolute; width: 100%; height: 100%; 
-                z-index: 10; transition: 0.4s transform ease;
+                width: 100%; 
+                height: 100%; 
+                display: flex;
             }
-            .contacts-panel.hidden { transform: translateX(-100%); }
-            .chat-panel { width: 100%; }
+            
+            .chat-panel { 
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%; 
+                height: 100%;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                z-index: 20;
+            }
+            
+            .chat-panel.active {
+                transform: translateX(0);
+            }
+            
             .bubble { max-width: 85%; }
             .back-btn { display: block !important; cursor: pointer; margin-right: 20px; font-size: 1.2rem; }
         }
@@ -807,7 +826,7 @@
     </header>
 
     <main class="hero">
-        <h1 class="glitch-text" data-text="SECURE UPLINK v5.2">SECURE UPLINK v5.2</h1>
+        <h1 class="glitch-text" data-text="SECURE UPLINK v6.0">SECURE UPLINK v6.0</h1>
         <div class="agent-badge">
             <div class="status-dot"></div>
             <span id="agent-display">AUTHENTICATING AGENT...</span>
@@ -817,7 +836,7 @@
     <section class="dm-container">
         
         <!-- Sidebar with active conversations -->
-        <aside class="contacts-panel hidden" id="contacts-panel">
+        <aside class="contacts-panel" id="contacts-panel">
             <div class="contacts-header">
                 <span style="font-family:'Orbitron'; color:var(--primary);">ACTIVE NODES</span>
                 <i class="fa fa-sync-alt" style="cursor:pointer; font-size:0.8rem; color:var(--text-dim);" onclick="loadUsers()"></i>
@@ -836,7 +855,7 @@
         </aside>
 
         <!-- Main Chat Area -->
-        <div class="chat-panel">
+        <div class="chat-panel" id="chat-panel">
             
             <div id="empty-state" class="empty-chat" style="display: flex;">
                 <i class="fa fa-user-shield"></i>
@@ -846,7 +865,7 @@
 
             <div class="chat-header">
                 <div class="chat-user-title">
-                    <i class="fa fa-arrow-left back-btn" onclick="toggleContactsView()"></i>
+                    <i class="fa fa-arrow-left back-btn" onclick="closeChatMobile()"></i>
                     <div class="avatar" id="active-avatar">?</div>
                     <div>
                         <span class="user-name" id="active-name">SECURE_CHANNEL</span>
@@ -954,8 +973,8 @@
             }
         }
 
-        function toggleContactsView() {
-            document.getElementById('contacts-panel').classList.toggle('hidden');
+        function closeChatMobile() {
+            document.getElementById('chat-panel').classList.remove('active');
         }
 
         function filterTab(tab) {
@@ -1045,8 +1064,10 @@
             // Re-render to show active state
             displayUsers(allUsers); // Refresh to update active class logic in displayUsers if needed, or just toggle class manually
 
-            // Responsive: close contact list on mobile
-            if (window.innerWidth <= 850) toggleContactsView();
+            // Responsive: slide chat view in
+            if (window.innerWidth <= 900) {
+                document.getElementById('chat-panel').classList.add('active');
+            }
 
             loadMessages(userId);
         }
@@ -1187,13 +1208,6 @@
         document.getElementById('msgInput').addEventListener('keypress', (e) => {
             if(e.key === 'Enter') sendMessage();
         });
-
-        // Auto-refresh layout logic
-        window.onresize = () => {
-            if(window.innerWidth > 850) {
-                document.getElementById('contacts-panel').classList.remove('hidden'); // Corrected ID
-            }
-        };
 
         // UI Glitch Simulation
         setInterval(() => {
