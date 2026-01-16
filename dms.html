@@ -50,9 +50,9 @@
             outline: none;
         }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary-dim); }
 
         body {
@@ -61,8 +61,10 @@
             font-family: 'JetBrains+Mono', monospace;
             overflow: hidden;
             height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
+    padding-top: var(--nav-height);
             font-size: 14px;
         }
 
@@ -271,16 +273,11 @@
 
         /* --- HERO SECTION --- */
         .hero {
-            padding: 20px;
-            background: linear-gradient(180deg, rgba(5,5,5,0.8) 0%, rgba(5,5,5,1) 100%), 
-                        url('https://images.unsplash.com/photo-1518546305927-5a555bb7020d?q=80&w=1600');
-            background-size: cover;
-            background-position: center;
+            padding: 15px 20px;
+            background: var(--bg-panel);
             border-bottom: 1px solid var(--border);
             text-align: center;
-            margin-top: var(--nav-height);
             position: relative;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
         .glitch-text {
@@ -358,10 +355,10 @@
         /* --- DM Layout --- */
         .dm-container {
             flex: 1;
-            display: grid;
-            grid-template-columns: 350px 1fr;
+            display: block;
             overflow: hidden;
             position: relative;
+            min-height: 0;
         }
 
         /* --- Contacts Sidebar --- */
@@ -371,6 +368,8 @@
             display: flex;
             flex-direction: column;
             z-index: 10;
+            width: 100%;
+            height: 100%;
         }
 
         .contacts-header {
@@ -503,8 +502,18 @@
             display: flex;
             flex-direction: column;
             background: var(--bg-dark);
-            position: relative;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
             height: 100%;
+            min-height: 0;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 20;
+        }
+
+        .chat-panel.active {
+            transform: translateX(0);
         }
 
         .chat-header {
@@ -525,6 +534,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            min-height: 0;
             background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
             background-size: 20px 20px;
         }
@@ -574,12 +584,13 @@
         }
 
         .input-area {
-            padding: 20px;
+            padding: 20px 20px max(20px, env(safe-area-inset-bottom)) 20px;
             background: var(--bg-panel);
             border-top: 1px solid var(--border);
             display: flex;
             gap: 15px;
             align-items: center;
+            flex-shrink: 0; /* Prevent shrinking */
         }
 
         .input-area input {
@@ -731,33 +742,16 @@
         @media (max-width: 900px) {
             .nav-links { display: none; }
             .menu-toggle { display: block; }
-            .dm-container { display: block; position: relative; }
-            
-            .contacts-panel { 
-                width: 100%; 
-                height: 100%; 
-                display: flex;
-            }
-            
-            .chat-panel { 
-                position: absolute;
-                top: 0; left: 0;
-                width: 100%; 
-                height: 100%;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-                z-index: 20;
-            }
-            
-            .chat-panel.active {
-                transform: translateX(0);
-            }
             
             .bubble { max-width: 85%; }
-            .back-btn { display: block !important; cursor: pointer; margin-right: 20px; font-size: 1.2rem; }
         }
 
-        .back-btn { display: none; }
+        .back-btn { 
+            display: block; 
+            cursor: pointer; 
+            margin-right: 20px; 
+            font-size: 1.2rem; 
+        }
 
     </style>
 </head>
@@ -781,17 +775,19 @@
             </button>
         </div>
         <ul class="sidebar-links">
-                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
-                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
-                <li><a href="sightings.html"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
-                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
-                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
-                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
-                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
-                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
-                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
-                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
+            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
+            <li><a href="forum.html"><i class="fa fa-comments"></i> Intel Feed</a></li>
+            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
+            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
+            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agent Network</a></li>
+            <li><a href="dms.html" class="active"><i class="fa fa-envelope"></i> Private DMs</a></li>
+            <li><a href="cards.html"><i class="fa fa-id-card"></i> Trading Cards</a></li>
+            <li><a href="game.html"><i class="fa fa-gamepad"></i> Game</a></li>
+            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
+            <li><a href="vault.html"><i class="fa fa-lock"></i> Secure Vault</a></li>
+            <li><a href="profile.html"><i class="fa fa-cog"></i> System Config</a></li>
+            <li id="admin-sidebar" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i> Admin</a></li>
+            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
         </ul>
         <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
             SECURE CONNECTION<br>V4.0.2 STABLE
@@ -811,7 +807,9 @@
                 <li><a href="sightings.html"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
                 <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
                 <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="dms.html" class="active"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="cards.html"><i class="fa fa-id-card"></i><span class="nav-text">Cards</span></a></li>
+                <li><a href="game.html"><i class="fa fa-gamepad"></i><span class="nav-text">Game</span></a></li>
                 <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
                 <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
                 <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
@@ -1064,10 +1062,8 @@
             // Re-render to show active state
             displayUsers(allUsers); // Refresh to update active class logic in displayUsers if needed, or just toggle class manually
 
-            // Responsive: slide chat view in
-            if (window.innerWidth <= 900) {
-                document.getElementById('chat-panel').classList.add('active');
-            }
+            // Slide chat view in (now for all devices)
+            document.getElementById('chat-panel').classList.add('active');
 
             loadMessages(userId);
         }

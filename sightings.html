@@ -808,7 +808,7 @@
         <ul class="sidebar-links">
                 <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
                 <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
-                <li><a href="sightings.html"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
                 <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
                 <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
                 <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
@@ -834,7 +834,7 @@
             <ul class="nav-links">
                 <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
                 <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
-                <li><a href="sightings.html"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
                 <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
                 <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
                 <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
@@ -950,22 +950,140 @@
                 <span class="close-modal" onclick="closeModal()"><i class="fa fa-times"></i></span>
             </div>
             
-            <div class="form-group">
-                <label>ASSET DESIGNATION (SPECIES)</label>
-                <select id="specName" onchange="autoFillThreat()">
-                    <option value="">-- SELECT SPECIES --</option>
-                    <option value="Tyrannosaurus Rex">Tyrannosaurus Rex</option>
-                    <option value="Velociraptor">Velociraptor</option>
-                    <option value="Spinosaurus">Spinosaurus</option>
-                    <option value="Triceratops">Triceratops</option>
-                    <option value="Brachiosaurus">Brachiosaurus</option>
-                    <option value="Pteranodon">Pteranodon</option>
-                    <option value="Mosasaurus">Mosasaurus</option>
-                    <option value="Dilophosaurus">Dilophosaurus</option>
-                    <option value="Compsognathus">Compsognathus</option>
-                    <option value="Unknown">Unknown / Hybrid</option>
-                </select>
-            </div>
+          <div class="form-group">
+    <label>ASSET DESIGNATION (SPECIES)</label>
+    <select id="specName" onchange="autoFillThreat()">
+        <option value="">-- SELECT SPECIES --</option>
+        
+        <option value="Acanthopholis">Acanthopholis</option>
+        <option value="Acrocanthosaurus">Acrocanthosaurus</option>
+        <option value="Alamosaurus">Alamosaurus</option>
+        <option value="Albertosaurus">Albertosaurus</option>
+        <option value="Allosaurus">Allosaurus</option>
+        <option value="Amargasaurus">Amargasaurus</option>
+        <option value="Ankylodocus">Ankylodocus (Hybrid)</option>
+        <option value="Ankylosaurus">Ankylosaurus</option>
+        <option value="Apatosaurus">Apatosaurus</option>
+        <option value="Archaeornithomimus">Archaeornithomimus</option>
+        <option value="Archelon">Archelon</option>
+        <option value="Atrociraptor">Atrociraptor</option>
+        <option value="Attenborosaurus">Attenborosaurus</option>
+        <option value="Augustynolophus">Augustynolophus</option>
+        <option value="Australovenator">Australovenator</option>
+        <option value="Barbaridactylus">Barbaridactylus</option>
+        <option value="Baryonyx">Baryonyx</option>
+        <option value="Brachiosaurus">Brachiosaurus</option>
+        <option value="Camarasaurus">Camarasaurus</option>
+        <option value="Carcharodontosaurus">Carcharodontosaurus</option>
+        <option value="Carnotaurus">Carnotaurus</option>
+        <option value="Cearadactylus">Cearadactylus</option>
+        <option value="Ceratosaurus">Ceratosaurus</option>
+        <option value="Chasmosaurus">Chasmosaurus</option>
+        <option value="Chialingosaurus">Chialingosaurus</option>
+        <option value="Chungkingosaurus">Chungkingosaurus</option>
+        <option value="Coelophysis">Coelophysis</option>
+        <option value="Compsognathus">Compsognathus</option>
+        <option value="Concavenator">Concavenator</option>
+        <option value="Corythosaurus">Corythosaurus</option>
+        <option value="Crichtonsaurus">Crichtonsaurus</option>
+        <option value="Cryolophosaurus">Cryolophosaurus</option>
+        <option value="Deinocheirus">Deinocheirus</option>
+        <option value="Deinonychus">Deinonychus</option>
+        <option value="Dilophosaurus">Dilophosaurus</option>
+        <option value="Dimetrodon">Dimetrodon</option>
+        <option value="Dimorphodon">Dimorphodon</option>
+        <option value="Diplodocus">Diplodocus</option>
+        <option value="Dorygnathus">Dorygnathus</option>
+        <option value="Dracorex">Dracorex</option>
+        <option value="Dreadnoughtus">Dreadnoughtus</option>
+        <option value="Dryosaurus">Dryosaurus</option>
+        <option value="Dsungaripterus">Dsungaripterus</option>
+        <option value="Dunkleosteus">Dunkleosteus</option>
+        <option value="Edmontosaurus">Edmontosaurus</option>
+        <option value="Elasmosaurus">Elasmosaurus</option>
+        <option value="Euoplocephalus">Euoplocephalus</option>
+        <option value="Gallimimus">Gallimimus</option>
+        <option value="Geosternbergia">Geosternbergia</option>
+        <option value="Giganotosaurus">Giganotosaurus</option>
+        <option value="Gigantoraptor">Gigantoraptor</option>
+        <option value="Gigantspinosaurus">Gigantspinosaurus</option>   
+        <option value="Herrerasaurus">Herrerasaurus</option>
+        <option value="Homalocephale">Homalocephale</option>
+        <option value="Huayangosaurus">Huayangosaurus</option>
+        <option value="Ichthyosaurus">Ichthyosaurus</option>
+        <option value="Iguanodon">Iguanodon</option>
+        <option value="Indominus Rex">Indominus Rex (Hybrid)</option>
+        <option value="Indoraptor">Indoraptor (Hybrid)</option>
+        <option value="Jeholopterus">Jeholopterus</option>
+        <option value="Kentrosaurus">Kentrosaurus</option>
+        <option value="Kronosaurus">Kronosaurus</option>
+        <option value="Liopleurodon">Liopleurodon</option>
+        <option value="Lystrosaurus">Lystrosaurus</option>   
+        <option value="Maaradactylus">Maaradactylus</option>
+        <option value="Maiasaura">Maiasaura</option>
+        <option value="Majungasaurus">Majungasaurus</option>
+        <option value="Mamenchisaurus">Mamenchisaurus</option>
+        <option value="Megalodon">Megalodon</option>
+        <option value="Megalosaurus">Megalosaurus</option>
+        <option value="Metriacanthosaurus">Metriacanthosaurus</option>
+        <option value="Microceratus">Microceratus</option>
+        <option value="Minmi">Minmi</option>
+        <option value="Monolophosaurus">Monolophosaurus</option>
+        <option value="Moros Intrepidus">Moros Intrepidus</option>
+        <option value="Mosasaurus">Mosasaurus</option>
+        <option value="Muttaburrasaurus">Muttaburrasaurus</option>
+        <option value="Nasutoceratops">Nasutoceratops</option>
+        <option value="Nigersaurus">Nigersaurus</option>
+        <option value="Nodosaurus">Nodosaurus</option>
+        <option value="Nothosaurus">Nothosaurus</option>    
+        <option value="Olorotitan">Olorotitan</option>
+        <option value="Ouranosaurus">Ouranosaurus</option>
+        <option value="Oviraptor">Oviraptor</option>
+        <option value="Pachycephalosaurus">Pachycephalosaurus</option>
+        <option value="Pachyrhinosaurus">Pachyrhinosaurus</option>
+        <option value="Parasaurolophus">Parasaurolophus</option>
+        <option value="Pentaceratops">Pentaceratops</option>
+        <option value="Plesiosaurus">Plesiosaurus</option>
+        <option value="Polacanthus">Polacanthus</option>
+        <option value="Proceratosaurus">Proceratosaurus</option>
+        <option value="Pteranodon">Pteranodon</option>
+        <option value="Pyroraptor">Pyroraptor</option>
+        <option value="Qianzhousaurus">Qianzhousaurus</option>
+        <option value="Quetzalcoatlus">Quetzalcoatlus</option>
+        <option value="Sauropelta">Sauropelta</option>
+        <option value="Scorpios Rex">Scorpios Rex (Hybrid)</option>
+        <option value="Segisaurus">Segisaurus</option>
+        <option value="Shonisaurus">Shonisaurus</option>
+        <option value="Sinoceratops">Sinoceratops</option>
+        <option value="Sinosauropteryx">Sinosauropteryx</option>
+        <option value="Spinoceratops">Spinoceratops (Hybrid)</option>
+        <option value="Spinoraptor">Spinoraptor (Hybrid)</option>
+        <option value="Spinosaurus">Spinosaurus</option>
+        <option value="Stegoceratops">Stegoceratops (Hybrid)</option>
+        <option value="Stegosaurus">Stegosaurus</option>
+        <option value="Struthiomimus">Struthiomimus</option>
+        <option value="Stygimoloch">Stygimoloch</option>
+        <option value="Styracosaurus">Styracosaurus</option>
+        <option value="Styxosaurus">Styxosaurus</option>
+        <option value="Suchomimus">Suchomimus</option>
+        <option value="Tapejara">Tapejara</option>
+        <option value="Tarbosaurus">Tarbosaurus</option>
+        <option value="Thanatosdrakon">Thanatosdrakon</option>
+        <option value="Therizinosaurus">Therizinosaurus</option>
+        <option value="Torosaurus">Torosaurus</option>
+        <option value="Triceratops">Triceratops</option>
+        <option value="Troodon">Troodon</option>
+        <option value="Tropeognathus">Tropeognathus</option>
+        <option value="Tsintaosaurus">Tsintaosaurus</option>
+        <option value="Tylosaurus">Tylosaurus</option>
+        <option value="Tyrannosaurus Rex">Tyrannosaurus Rex</option>
+        <option value="Utahraptor">Utahraptor</option>
+        <option value="Velociraptor">Velociraptor</option>
+        <option value="Wuerhosaurus">Wuerhosaurus</option>
+        <option value="Yutyrannus">Yutyrannus</option>
+        <option value="Unknown">Unknown / Custom Hybrid</option>
+    </select>
+</div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">

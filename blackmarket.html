@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dark Jurassic | Black Market Network</title>
+    <title>Dark Jurassic | Black Market Terminal V6.0</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <!-- External Assets -->
@@ -24,11 +24,13 @@
             --gold: #ffd700;
             --gold-glow: rgba(255, 215, 0, 0.3);
             --bg-dark: #050505;
-            --bg-panel: rgba(10, 10, 10, 0.95);
+            --bg-panel: #0a0a0a;
             --bg-card: #0d0d0d;
             --border: rgba(255, 255, 255, 0.1);
+            --border-focus: rgba(230, 57, 70, 0.8);
             --text-main: #e0e0e0;
             --text-dim: #888888;
+            --text-highlight: #ffffff;
             --success: #2ecc71;
             --danger: #ff0000;
             --sidebar-width: 280px;
@@ -54,6 +56,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            font-size: 14px;
         }
 
         /* --- Custom Scrollbar --- */
@@ -117,6 +120,50 @@
             text-shadow: -2px 0 #00fff9;
             clip: rect(44px, 450px, 56px, 0);
             animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        /* --- Sidebar (Mobile) --- */
+        .mobile-sidebar {
+            position: fixed;
+            top: 0; left: -100%;
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--primary);
+            z-index: 2000;
+            transition: 0.4s ease;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mobile-sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.8); }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #222;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
+        .sidebar-links li a {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: 0.2s;
+            border-left: 4px solid transparent;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .sidebar-links li a:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--primary);
+            border-left-color: var(--primary);
         }
 
         @keyframes glitch-anim {
@@ -236,56 +283,6 @@
 
         @media (max-width: 1024px) {
             .menu-toggle { display: block; }
-        }
-
-        /* --- Mobile Sidebar --- */
-        .mobile-sidebar {
-            position: fixed;
-            top: 0; left: -100%;
-            width: var(--sidebar-width);
-            height: 100%;
-            background: var(--bg-panel);
-            border-right: 1px solid var(--primary);
-            z-index: 2000;
-            transition: 0.4s ease;
-            padding-top: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .mobile-sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.8); }
-
-        .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid #222;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .sidebar-header .logo img { height: 30px; }
-        .sidebar-header .logo span { font-size: 1rem; }
-
-        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
-        .sidebar-links li a {
-            padding: 15px 25px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: var(--text-dim);
-            text-decoration: none;
-            transition: 0.2s;
-            border-left: 4px solid transparent;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
-
-        .sidebar-links li a:hover {
-            background: rgba(255,255,255,0.05);
-            color: var(--primary);
-            border-left-color: var(--primary);
         }
 
         .sidebar-overlay {
@@ -606,6 +603,25 @@
             cursor: not-allowed;
         }
 
+        .hack-btn {
+            background: transparent;
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+            padding: 8px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            transition: 0.3s;
+            margin-left: 5px;
+        }
+        
+        .hack-btn:hover {
+            background: var(--secondary);
+            color: #000;
+            box-shadow: 0 0 15px var(--secondary-glow);
+        }
+
         /* --- Crypto Miner --- */
         .mining-rig {
             background: #080808;
@@ -711,6 +727,64 @@
         .history-table td { padding: 10px; border-bottom: 1px solid #111; }
         .history-table tr:hover { background: rgba(255,255,255,0.02); }
 
+        /* --- Modals --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--primary);
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 0 50px rgba(230, 57, 70, 0.2);
+            animation: modalPop 0.3s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px; right: 15px;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        .close-modal:hover { color: var(--primary); }
+
+        /* --- Hacking Minigame --- */
+        .hack-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin: 20px 0;
+        }
+        .hack-cell {
+            background: #111;
+            border: 1px solid #333;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: monospace;
+            color: var(--secondary);
+        }
+        .hack-cell:hover { background: #222; }
+        .hack-cell.active { background: var(--secondary); color: #000; }
+
         /* --- Notifications --- */
         .push-notification-container {
             position: fixed;
@@ -764,7 +838,7 @@
         <div class="sidebar-header">
             <div class="logo" style="color: var(--primary);">
                 <img src="logo.png" alt="Logo">
-                <span>SYSTEM MENU</span>
+                <span>Menu</span>
             </div>
             <button class="menu-toggle" onclick="toggleSidebar()" style="display:block; border:none;">
                 <i class="fa fa-times"></i>
@@ -784,7 +858,7 @@
                 <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
         </ul>
         <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
-            SECURE CONNECTION<br>V4.0.2 STABLE
+            SECURE CONNECTION<br>V6.0.0 STABLE
         </div>
     </aside>
 
@@ -817,12 +891,15 @@
 
     <main>
         <section class="hero">
-            <h1 class="glitch-text" data-text="BLACK MARKET V4.0">BLACK MARKET V4.0</h1>
+            <h1 class="glitch-text" data-text="BLACK MARKET V6.0">BLACK MARKET V6.0</h1>
             <div class="agent-badge">
                 <div class="status-dot"></div>
                 <span id="agent-display">AUTHENTICATING AGENT...</span>
             </div>
-            <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-dim);">Your Balance: <span id="balance-display" class="xp-val">0</span> XP</p>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-dim);">
+                BALANCE: <span id="balance-display" class="xp-val">0</span> XP | 
+                <span style="cursor:pointer; color:var(--secondary); text-decoration:underline;" onclick="openInventory()">VIEW INVENTORY</span>
+            </p>
         </section>
 
         <!-- Ticker Tape -->
@@ -838,7 +915,7 @@
         </div>
 
         <!-- Crypto Miner -->
-        <div class="mining-rig">
+        <div class="mining-rig" onclick="toggleMining()">
             <div>
                 <h3 style="color: var(--success); font-family: 'Orbitron'; margin-bottom: 5px;">BACKGROUND MINER ACTIVE</h3>
                 <p style="font-size: 0.7rem; color: var(--text-dim);">Using idle CPU cycles to decrypt InGen ledgers. Rewards paid in XP.</p>
@@ -926,6 +1003,34 @@
         </section>
     </main>
 
+    <!-- Inventory Modal -->
+    <div class="modal" id="inventoryModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('inventoryModal')">&times;</span>
+            <h2 style="font-family: 'Orbitron'; color: var(--primary); margin-bottom: 20px;">ACQUIRED ASSETS</h2>
+            <div id="inventory-list" style="max-height: 300px; overflow-y: auto;">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Hacking Minigame Modal -->
+    <div class="modal" id="hackModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('hackModal')">&times;</span>
+            <h2 style="font-family: 'Orbitron'; color: var(--secondary); margin-bottom: 10px;">BRUTE FORCE PROTOCOL</h2>
+            <p style="font-size: 0.8rem; color: #ccc; margin-bottom: 20px;">
+                Find the matching hex sequence to bypass the firewall. Success grants a 50% discount. Failure locks the item.
+            </p>
+            <div style="text-align: center; margin-bottom: 15px; font-family: monospace; font-size: 1.2rem; color: #fff;">
+                TARGET: <span id="hack-target" style="color: var(--secondary); font-weight: bold;">--</span>
+            </div>
+            <div class="hack-grid" id="hack-grid"></div>
+            <div id="hack-timer" style="height: 4px; background: var(--secondary); width: 100%; transition: width 1s linear;"></div>
+            <div id="hack-status" style="margin-top: 15px; text-align: center; font-size: 0.8rem;"></div>
+        </div>
+    </div>
+
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -946,6 +1051,8 @@
         let currentXP = 0;
         let username = "";
         let activeFilter = 'all';
+        let miningInterval = null;
+        let activeHackItem = null;
 
         // Market Data
         const marketItems = [
@@ -1131,6 +1238,7 @@
                     if (data) {
                         currentXP = data.xp || 0;
                         document.getElementById('balance-display').innerText = currentXP;
+                        
                         renderMarket();
                         loadHistory();
 
@@ -1174,6 +1282,9 @@
                             <button class="buy-btn" onclick="purchaseItem('${item.id}', ${item.price})" ${!canAfford ? 'disabled' : ''}>
                                 ${canAfford ? 'AUTHORIZE' : 'LOW FUNDS'}
                             </button>
+                            <button class="hack-btn" onclick="startHack('${item.id}')" title="Attempt Hack">
+                                <i class="fa fa-terminal"></i>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1207,6 +1318,9 @@
                             <span class="xp-val">${item.price} XP</span>
                             <button class="buy-btn" onclick="purchaseItem('${item.id}', ${item.price})" ${!canAfford ? 'disabled' : ''}>
                                 ${canAfford ? 'AUTHORIZE' : 'LOW FUNDS'}
+                            </button>
+                            <button class="hack-btn" onclick="startHack('${item.id}')" title="Attempt Hack">
+                                <i class="fa fa-terminal"></i>
                             </button>
                         </div>
                     </div>
@@ -1276,12 +1390,18 @@
         }
 
         // --- Purchase Logic ---
-        function purchaseItem(itemId, price) {
+        function purchaseItem(itemId, price, isDiscounted = false) {
             if (currentXP < price) return;
 
             const item = marketItems.find(i => i.id === itemId);
-            if (confirm(`INITIATE TRANSACTION: Transfer ${price} XP for ${item.title}?`)) {
+            const confirmMsg = isDiscounted 
+                ? `HACK SUCCESSFUL! Buy ${item.title} for ${price} XP (50% OFF)?` 
+                : `INITIATE TRANSACTION: Transfer ${price} XP for ${item.title}?`;
+
+            if (confirm(confirmMsg)) {
                 
+                const timestamp = Date.now();
+
                 // Update Firebase
                 db.ref('users/' + username).update({
                     xp: currentXP - price
@@ -1289,9 +1409,16 @@
                     // Log purchase to global activity
                     db.ref('market_logs').push({
                         agent: username,
-                        item: item.title,
+                        item: item.title + (isDiscounted ? " (HACKED)" : ""),
                         cost: price,
-                        timestamp: Date.now()
+                        timestamp: timestamp
+                    });
+
+                    // Add to inventory
+                    db.ref('users/' + username + '/inventory').push({
+                        itemId: item.id,
+                        title: item.title,
+                        timestamp: timestamp
                     });
                     showNotification(`TRANSACTION SUCCESSFUL: ${item.title} ACQUIRED`, "success");
                 }).catch(err => {
@@ -1345,7 +1472,7 @@
         // --- Mining Simulation ---
         function startMining() {
             let mined = 0;
-            setInterval(() => {
+            miningInterval = setInterval(() => {
                 const hash = Math.floor(Math.random() * 50) + 10;
                 document.getElementById('hash-rate').innerText = `${hash} H/s`;
                 
@@ -1364,6 +1491,103 @@
                 }
                 bar.style.width = width + "%";
             }, 500);
+        }
+
+        function toggleMining() {
+            // Visual toggle only for now, logic runs always
+            const rig = document.querySelector('.mining-rig');
+            rig.style.borderColor = rig.style.borderColor === 'var(--success)' ? 'var(--border)' : 'var(--success)';
+        }
+
+        // --- Inventory System ---
+        function openInventory() {
+            const modal = document.getElementById('inventoryModal');
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa fa-circle-notch fa-spin"></i> Loading assets...</div>';
+            modal.style.display = 'flex';
+
+            db.ref('users/' + username + '/inventory').once('value').then(snap => {
+                list.innerHTML = "";
+                if(snap.exists()) {
+                    snap.forEach(child => {
+                        const item = child.val();
+                        const date = new Date(item.timestamp).toLocaleDateString();
+                        list.innerHTML += `
+                            <div style="padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between;">
+                                <span style="color: #fff;">${item.title}</span>
+                                <span style="color: #666; font-size: 0.8rem;">${date}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    list.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">No assets acquired yet.</div>';
+                }
+            });
+        }
+
+        // --- Hacking Minigame ---
+        function startHack(itemId) {
+            activeHackItem = marketItems.find(i => i.id === itemId);
+            const modal = document.getElementById('hackModal');
+            const grid = document.getElementById('hack-grid');
+            const targetEl = document.getElementById('hack-target');
+            const timerEl = document.getElementById('hack-timer');
+            const statusEl = document.getElementById('hack-status');
+
+            modal.style.display = 'flex';
+            statusEl.innerText = "";
+            statusEl.style.color = "#ccc";
+            
+            // Generate random hex target
+            const targetHex = Math.floor(Math.random() * 255).toString(16).toUpperCase().padStart(2, '0');
+            targetEl.innerText = "0x" + targetHex;
+
+            // Generate grid
+            grid.innerHTML = "";
+            let correctIndex = Math.floor(Math.random() * 25);
+            
+            for(let i=0; i<25; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'hack-cell';
+                const hex = i === correctIndex ? targetHex : Math.floor(Math.random() * 255).toString(16).toUpperCase().padStart(2, '0');
+                cell.innerText = hex;
+                cell.onclick = () => resolveHack(i === correctIndex);
+                grid.appendChild(cell);
+            }
+
+            // Timer
+            timerEl.style.width = "100%";
+            setTimeout(() => timerEl.style.width = "0%", 10); // Trigger CSS transition
+            
+            // Auto-fail after 5s
+            window.hackTimeout = setTimeout(() => {
+                resolveHack(false);
+            }, 5000);
+        }
+
+        function resolveHack(success) {
+            clearTimeout(window.hackTimeout);
+            const statusEl = document.getElementById('hack-status');
+            
+            if(success) {
+                statusEl.innerText = "ACCESS GRANTED. DISCOUNT APPLIED.";
+                statusEl.style.color = "var(--success)";
+                setTimeout(() => {
+                    closeModal('hackModal');
+                    purchaseItem(activeHackItem.id, Math.floor(activeHackItem.price / 2), true);
+                }, 1000);
+            } else {
+                statusEl.innerText = "ACCESS DENIED. LOCKOUT INITIATED.";
+                statusEl.style.color = "var(--danger)";
+                showNotification("HACK FAILED. SECURITY ALERT TRIGGERED.", "error");
+                setTimeout(() => {
+                    closeModal('hackModal');
+                }, 1500);
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
         }
 
         // --- UI Interactions ---
