@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dark Jurassic | Global Command Terminal</title>
+    <title>Dark Jurassic | Command Terminal V4.0</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <!-- External Assets -->
@@ -16,34 +16,44 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
+        /* --- CORE VARIABLES --- */
         :root {
             --primary: #e63946;
+            --primary-dim: #8a232b;
             --primary-glow: rgba(230, 57, 70, 0.5);
+            --secondary: #00d4ff;
+            --secondary-glow: rgba(0, 212, 255, 0.3);
             --bg-dark: #050505;
             --bg-panel: #0a0a0a;
-            --card-bg: #0d0d0d;
-            --border: #1a1a1a;
+            --bg-card: #0e0e0e;
+            --border: rgba(255, 255, 255, 0.1);
+            --border-focus: rgba(230, 57, 70, 0.8);
             --accent-blue: #5dade2;
             --text-main: #eeeeee;
             --text-dim: #888888;
+            --text-highlight: #ffffff;
             --success: #2ecc71;
             --warning: #f1c40f;
+            --danger: #ff0000;
             --sidebar-width: 280px;
             --nav-height: 70px;
+            --scanline-color: rgba(0, 0, 0, 0.5);
+            --glass: rgba(20, 20, 20, 0.6);
         }
 
-        /* --- Scrollbar --- */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
+        /* --- GLOBAL RESET & SCROLLBAR --- */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             -webkit-tap-highlight-color: transparent;
+            outline: none;
         }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
         body {
             background-color: var(--bg-dark);
@@ -51,9 +61,13 @@
             font-family: 'JetBrains+Mono', monospace;
             overflow-x: hidden;
             line-height: 1.6;
+            font-size: 14px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- Background Effects --- */
+        /* --- BACKGROUND FX (SCANLINES & NOISE) --- */
         .scanlines {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -62,30 +76,38 @@
             background-size: 100% 4px, 3px 100%;
             pointer-events: none;
             z-index: 9999;
+            opacity: 0.6;
         }
 
         .noise {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('https://media.giphy.com/media/oEI9uWUic9ZSM/giphy.gif');
-            opacity: 0.03;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmYvP41FAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfmBwUQDw0u825TAAAAHWlUWHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAABbSURBVDjL7dOxDcAgDAXRVkzABowBS2YBVsAmnSVj4Q6i/qP4010iKj5F559iJ65S816b1E5c40l6X+3Ew0y9b/biZqY+N/txM9P42+zHw0xjb/bjZabxt9mPl5n6B3D6Wv44K56WAAAAAElFTkSuQmCC');
+            opacity: 0.05;
             pointer-events: none;
             z-index: 9998;
+            animation: noise-anim 0.5s infinite linear;
         }
 
-        /* --- Navigation --- */
+        @keyframes noise-anim {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
+
+        /* --- HEADER & NAVIGATION --- */
         header {
             height: var(--nav-height);
-            background: rgba(10, 10, 10, 0.95);
+            background: rgba(5, 5, 5, 0.95);
             border-bottom: 1px solid var(--border);
             position: fixed;
             top: 0; width: 100%;
             z-index: 1000;
             backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
         .navbar {
-            max-width: 1600px;
+            max-width: 1800px;
             margin: 0 auto;
             height: 100%;
             display: flex;
@@ -104,52 +126,76 @@
             font-weight: 900;
             font-size: 1.2rem;
             letter-spacing: 2px;
+            text-transform: uppercase;
+            position: relative;
         }
 
         .logo img {
             height: 40px;
             filter: drop-shadow(0 0 5px var(--primary-glow));
+            transition: 0.3s;
+        }
+
+        .logo:hover img {
+            filter: drop-shadow(0 0 10px var(--primary));
+            transform: scale(1.05);
         }
 
         .nav-links {
             display: flex;
             list-style: none;
-            gap: 10px;
+            gap: 5px;
+            height: 100%;
         }
 
         .nav-links li a {
             color: var(--text-dim);
             text-decoration: none;
-            font-size: 0.85rem;
-            padding: 8px 12px;
-            border-radius: 4px;
+            font-size: 0.75rem;
+            padding: 0 15px;
+            height: 100%;
             transition: 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 4px;
+            border-bottom: 2px solid transparent;
         }
 
-        .nav-links li a i { font-size: 1.1rem; }
+        .nav-links li a i { font-size: 1.1rem; margin-bottom: 2px; }
+        
         .nav-links li a:hover, .nav-links li a.active {
             color: var(--primary);
-            background: rgba(230, 57, 70, 0.1);
-            box-shadow: 0 0 10px rgba(230, 57, 70, 0.1);
+            background: linear-gradient(to bottom, transparent 0%, rgba(230, 57, 70, 0.1) 100%);
+            border-bottom-color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
         }
 
-        .nav-text { font-size: 0.65rem; text-transform: uppercase; font-weight: bold; }
+        .nav-text { 
+            font-size: 0.6rem; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px;
+        }
 
         .menu-toggle {
             display: none;
             background: none;
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 10px;
-            border-radius: 5px;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 12px;
+            border-radius: 4px;
             cursor: pointer;
+            transition: 0.3s;
         }
 
-        /* --- Sidebar (Mobile) --- */
+        .menu-toggle:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* --- MOBILE SIDEBAR --- */
         .mobile-sidebar {
             position: fixed;
             top: 0; left: -100%;
@@ -158,34 +204,43 @@
             background: var(--bg-panel);
             border-right: 1px solid var(--primary);
             z-index: 2000;
-            transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            transition: 0.4s ease;
             padding-top: 20px;
-            box-shadow: 20px 0 50px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
         }
 
-        .mobile-sidebar.open { left: 0; }
+        .mobile-sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.8); }
 
         .sidebar-header {
             padding: 0 20px 20px;
             border-bottom: 1px solid #222;
-            margin-bottom: 10px;
-        }
-
-        .sidebar-links { list-style: none; }
-        .sidebar-links li a {
-            padding: 14px 25px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 18px;
+            justify-content: space-between;
+        }
+
+        .sidebar-header .logo img { height: 30px; }
+        .sidebar-header .logo span { font-size: 1rem; }
+
+        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
+        .sidebar-links li a {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
             color: var(--text-dim);
             text-decoration: none;
             transition: 0.2s;
             border-left: 4px solid transparent;
-            font-size: 0.9rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
         }
 
         .sidebar-links li a:hover {
-            background: rgba(230, 57, 70, 0.05);
+            background: rgba(255,255,255,0.05);
             color: var(--primary);
             border-left-color: var(--primary);
         }
@@ -193,31 +248,50 @@
         .sidebar-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             z-index: 1999;
             display: none;
+            backdrop-filter: blur(3px);
         }
 
-        /* --- Main Layout --- */
+        /* --- MAIN LAYOUT GRID --- */
         main {
             margin-top: var(--nav-height);
             padding: 20px;
-            max-width: 1600px;
+            max-width: 1800px;
             margin-left: auto;
             margin-right: auto;
             display: grid;
-            grid-template-columns: 350px 1fr 300px;
+            grid-template-columns: 320px 1fr 320px;
+            grid-template-rows: auto auto 1fr;
             gap: 20px;
+            flex: 1;
         }
 
-        /* --- Components --- */
+        /* --- WIDGET / PANEL STYLES --- */
         .terminal-panel {
-            background: var(--card-bg);
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 4px;
             padding: 20px;
             position: relative;
             overflow: hidden;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-panel:hover {
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .terminal-panel::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.5;
         }
 
         .panel-header {
@@ -226,23 +300,30 @@
             align-items: center;
             margin-bottom: 15px;
             border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
+            padding-bottom: 10px;
         }
 
         .panel-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             color: var(--primary);
             text-transform: uppercase;
             letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* --- Glitch Text --- */
+        .panel-title i { font-size: 1rem; }
+
+        /* --- GLITCH TEXT EFFECT --- */
         .glitch-text {
             position: relative;
             display: inline-block;
             color: #fff;
-            mix-blend-mode: lighten;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .glitch-text::before, .glitch-text::after {
@@ -253,85 +334,121 @@
             clip: rect(0, 0, 0, 0);
         }
 
-        .glitch-text::after {
-            left: 2px;
-            text-shadow: -1px 0 var(--primary);
-            animation: glitch-anim 2s infinite linear alternate-reverse;
+        .glitch-text::before {
+            left: -2px;
+            text-shadow: 2px 0 var(--secondary);
+            animation: glitch-anim-1 2s infinite linear alternate-reverse;
         }
 
-        @keyframes glitch-anim {
+        .glitch-text::after {
+            left: 2px;
+            text-shadow: -2px 0 var(--primary);
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim-1 {
             0% { clip: rect(10px, 9999px, 20px, 0); }
             20% { clip: rect(45px, 9999px, 60px, 0); }
             40% { clip: rect(15px, 9999px, 30px, 0); }
             100% { clip: rect(80px, 9999px, 90px, 0); }
         }
 
-        /* --- Hero Section --- */
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(80px, 9999px, 90px, 0); }
+            20% { clip: rect(10px, 9999px, 20px, 0); }
+            40% { clip: rect(50px, 9999px, 60px, 0); }
+            100% { clip: rect(5px, 9999px, 15px, 0); }
+        }
+
+        /* --- HERO SECTION --- */
         .hero {
             grid-column: 1 / -1;
-            padding: 40px;
-            background: linear-gradient(rgba(230, 57, 70, 0.05), transparent), url('https://images.unsplash.com/photo-1620121692029-d088224efc74?q=80&w=1600');
+            padding: 50px 20px;
+            background: linear-gradient(180deg, rgba(5,5,5,0.8) 0%, rgba(5,5,5,1) 100%), 
+                        url('https://images.unsplash.com/photo-1620121692029-d088224efc74?q=80&w=1600');
             background-size: cover;
             background-position: center;
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
         .hero h1 {
-            font-size: 3rem;
-            font-family: 'Orbitron', sans-serif;
-            margin-bottom: 10px;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            z-index: 2;
         }
 
         .agent-badge {
             display: flex;
             align-items: center;
             gap: 10px;
-            background: rgba(0,0,0,0.8);
-            padding: 8px 20px;
-            border-radius: 50px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 25px;
+            border-radius: 4px;
             border: 1px solid var(--primary);
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            z-index: 2;
+            backdrop-filter: blur(5px);
         }
 
         .status-dot {
-            width: 10px; height: 10px;
+            width: 8px; height: 8px;
             background: var(--success);
             border-radius: 50%;
             box-shadow: 0 0 10px var(--success);
             animation: pulse 1.5s infinite;
         }
 
-        /* --- Module Styles --- */
+        /* --- LOGS & FEEDS --- */
         .log-container {
-            height: 400px;
+            flex: 1;
+            min-height: 300px;
+            max-height: 500px;
             overflow-y: auto;
             font-size: 0.75rem;
             font-family: 'JetBrains+Mono', monospace;
             padding-right: 5px;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border: 1px solid #111;
         }
 
-        .log-entry { margin-bottom: 5px; border-left: 2px solid var(--border); padding-left: 10px; }
+        .log-entry { 
+            margin-bottom: 6px; 
+            border-left: 2px solid var(--border); 
+            padding-left: 10px; 
+            animation: fadeIn 0.3s ease-out;
+        }
+        
         .log-time { color: var(--text-dim); }
         .log-tag { color: var(--primary); font-weight: bold; }
         .log-msg-success { color: var(--success); }
         .log-msg-warn { color: var(--warning); }
+        .log-msg-danger { color: var(--danger); font-weight: bold; }
 
+        /* --- STAT CARDS --- */
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-card {
             background: rgba(255,255,255,0.03);
             padding: 15px;
-            border-radius: 6px;
+            border-radius: 4px;
             text-align: center;
+            border: 1px solid transparent;
+            transition: 0.3s;
         }
+        .stat-card:hover { border-color: var(--primary); background: rgba(230, 57, 70, 0.05); }
+
         .stat-val { font-size: 1.5rem; color: var(--primary); font-weight: 700; display: block; }
         .stat-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; }
 
+        /* --- PROGRESS BARS --- */
         .integrity-bar {
             height: 4px;
             background: #222;
@@ -343,32 +460,129 @@
         .integrity-fill {
             height: 100%;
             background: var(--primary);
-            width: 98%;
+            width: 0%;
             transition: 0.5s;
+            box-shadow: 0 0 10px var(--primary);
         }
 
-        /* --- Footer --- */
+        /* --- ACTIVE AGENTS LIST --- */
+        .agent-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #1a1a1a;
+            transition: 0.2s;
+        }
+        .agent-list-item:hover { background: rgba(255,255,255,0.02); }
+        .agent-avatar {
+            width: 30px; height: 30px;
+            background: #222;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            border: 1px solid #333;
+        }
+        .agent-details { flex: 1; margin-left: 10px; }
+        .agent-name { font-size: 0.8rem; font-weight: bold; display: block; }
+        .agent-status { font-size: 0.65rem; color: var(--success); }
+
+        /* --- CANVAS VISUALIZERS --- */
+        canvas {
+            width: 100%;
+            height: 100px;
+            background: #000;
+            border: 1px solid #222;
+            margin-top: 10px;
+        }
+
+        /* --- PUSH NOTIFICATION SYSTEM --- */
+        .push-notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .push-alert {
+            background: rgba(10, 10, 10, 0.95);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            width: 300px;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .push-alert::after {
+            content: "";
+            position: absolute;
+            bottom: 0; left: 0; height: 2px; width: 100%;
+            background: var(--primary);
+            animation: timeOut 5s linear forwards;
+        }
+
+        .push-title { font-family: 'Orbitron'; font-size: 0.8rem; color: var(--primary); margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .push-body { font-size: 0.75rem; color: #ccc; }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes timeOut {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- FOOTER --- */
         footer {
+            grid-column: 1 / -1;
             margin-top: 40px;
             padding: 40px 20px;
             border-top: 1px solid var(--border);
             text-align: center;
             font-size: 0.7rem;
             color: var(--text-dim);
+            background: #080808;
         }
 
-        /* --- Responsive Queries --- */
-        @media (max-width: 1200px) {
-            main { grid-template-columns: 1fr 1fr; }
-            .side-module-right { grid-column: span 2; }
+        /* --- RESPONSIVE QUERIES --- */
+        @media (max-width: 1400px) {
+            main { 
+                grid-template-columns: 1fr 1fr; 
+                grid-template-rows: auto auto auto;
+            }
+            .hero { grid-column: 1 / -1; }
+            .side-module-left { grid-column: 1; }
+            .side-module-right { grid-column: 2; }
+            .main-module { grid-column: 1 / -1; grid-row: 3; }
         }
 
-        @media (max-width: 768px) {
-            main { grid-template-columns: 1fr; }
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; display: flex; flex-direction: column; }
             .nav-links { display: none; }
             .menu-toggle { display: block; }
             .hero h1 { font-size: 1.8rem; }
-            .side-module-right { grid-column: span 1; }
+            .navbar { padding: 0 15px; }
         }
 
         @keyframes pulse {
@@ -376,36 +590,55 @@
             50% { opacity: 0.4; }
             100% { opacity: 1; }
         }
+
+        /* --- UTILS --- */
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .text-warning { color: var(--warning); }
+        .text-dim { color: var(--text-dim); }
+        .blink { animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
     </style>
 </head>
 <body>
 
+    <!-- VISUAL OVERLAYS -->
     <div class="scanlines"></div>
     <div class="noise"></div>
     <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="push-notification-container" id="push-container"></div>
 
-    <!-- Mobile Navigation Sidebar -->
+    <!-- MOBILE SIDEBAR -->
     <aside class="mobile-sidebar" id="sidebar">
         <div class="sidebar-header">
-            <a href="index.html" class="logo">
+            <div class="logo">
                 <img src="logo.png" alt="Logo">
-                <span>TERMINAL</span>
-            </a>
+                <span>SYSTEM MENU</span>
+            </div>
+            <button class="menu-toggle" onclick="toggleSidebar()" style="display:block; border:none;">
+                <i class="fa fa-times"></i>
+            </button>
         </div>
         <ul class="sidebar-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
         </ul>
+        <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
+            SECURE CONNECTION<br>V4.0.2 STABLE
+        </div>
     </aside>
 
+    <!-- DESKTOP HEADER -->
     <header>
         <nav class="navbar">
             <a href="index.html" class="logo">
@@ -414,16 +647,17 @@
             </a>
 
             <ul class="nav-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
             </ul>
 
             <button class="menu-toggle" onclick="toggleSidebar()">
@@ -432,22 +666,28 @@
         </nav>
     </header>
 
+    <!-- MAIN CONTENT GRID -->
     <main>
-        <!-- Hero Unit -->
+        <!-- HERO SECTION -->
         <section class="hero">
-            <h1 class="glitch-text" data-text="TERMINAL ACCESS V3.5">TERMINAL ACCESS V3.5</h1>
+            <h1 class="glitch-text" data-text="GLOBAL COMMAND TERMINAL">GLOBAL COMMAND TERMINAL</h1>
             <div class="agent-badge">
                 <div class="status-dot"></div>
                 <span id="agent-display">INITIATING HANDSHAKE...</span>
             </div>
+            <p style="margin-top: 15px; color: var(--text-dim); font-size: 0.8rem; max-width: 600px;">
+                WELCOME TO THE DARK JURASSIC NETWORK. ALL COMMUNICATIONS ARE ENCRYPTED. UNAUTHORIZED ACCESS WILL RESULT IN IMMEDIATE TERMINATION.
+            </p>
         </section>
 
-        <!-- Left Column: System Status -->
-        <div class="side-module">
+        <!-- LEFT COLUMN: SYSTEM METRICS -->
+        <div class="side-module-left">
+            
+            <!-- System Health -->
             <div class="terminal-panel">
                 <div class="panel-header">
-                    <span class="panel-title">System Metrics</span>
-                    <i class="fa fa-microchip"></i>
+                    <span class="panel-title"><i class="fa fa-microchip"></i> SYSTEM METRICS</span>
+                    <i class="fa fa-circle blink text-success" style="font-size: 0.5rem;"></i>
                 </div>
                 <div class="stat-grid">
                     <div class="stat-card">
@@ -464,87 +704,143 @@
                     <div class="integrity-bar"><div class="integrity-fill" id="integrity-fill"></div></div>
                 </div>
                 <div style="margin-top: 20px;">
-                    <span class="stat-label">Uplink: Satellite Echo-7</span>
-                    <div class="integrity-bar"><div class="integrity-fill" style="width: 45%; background: var(--accent-blue);"></div></div>
+                    <span class="stat-label">Satellite Uplink (Echo-7)</span>
+                    <div class="integrity-bar"><div class="integrity-fill" style="width: 65%; background: var(--accent-blue);" id="uplink-fill"></div></div>
                 </div>
             </div>
 
+            <!-- Hardware Status -->
             <div class="terminal-panel" style="margin-top: 20px;">
                 <div class="panel-header">
-                    <span class="panel-title">Hardware Temp</span>
-                    <i class="fa fa-thermometer-half"></i>
+                    <span class="panel-title"><i class="fa fa-server"></i> SERVER LOAD</span>
                 </div>
-                <div style="font-size: 0.7rem;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                        <span>CPU Core 0</span><span>44°C</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                        <span>GPU Cluster</span><span>58°C</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                        <span>Memory Bank</span><span>32°C</span>
+                <canvas id="loadCanvas"></canvas>
+                <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;">
+                    <span>CPU: <span id="cpu-val">34%</span></span>
+                    <span>RAM: <span id="ram-val">12GB</span></span>
+                </div>
+            </div>
+
+            <!-- Weather / Environment -->
+            <div class="terminal-panel" style="margin-top: 20px;">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="fa fa-cloud-rain"></i> ISLA NUBLAR ENV</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fa fa-cloud-showers-heavy" style="font-size: 2rem; color: var(--accent-blue);"></i>
+                    <div>
+                        <div style="font-size: 1.2rem; font-weight: bold;">24°C</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">HUMIDITY: 88% | WIND: 12KT</div>
                     </div>
                 </div>
             </div>
+
         </div>
 
-        <!-- Middle Column: Main Feed -->
+        <!-- MIDDLE COLUMN: MAIN FEED & MAP -->
         <div class="main-module">
+            
+            <!-- Live Map Placeholder -->
             <div class="terminal-panel">
                 <div class="panel-header">
-                    <span class="panel-title">Real-Time Intel Feed</span>
-                    <i class="fa fa-rss"></i>
+                    <span class="panel-title"><i class="fa fa-globe"></i> GLOBAL ASSET TRACKING</span>
+                    <span style="font-size: 0.6rem; color: var(--primary);">LIVE FEED</span>
+                </div>
+                <div style="height: 200px; background: #000; position: relative; overflow: hidden; border: 1px solid #222;">
+                    <!-- Simple CSS Map Representation -->
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 80%; border: 1px dashed #333; border-radius: 50%;"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40%; height: 40%; border: 1px dashed #333; border-radius: 50%;"></div>
+                    <div style="position: absolute; top: 0; left: 50%; width: 1px; height: 100%; background: rgba(255,255,255,0.05);"></div>
+                    <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(255,255,255,0.05);"></div>
+                    
+                    <!-- Animated Dots -->
+                    <div class="status-dot" style="position: absolute; top: 30%; left: 40%; animation-duration: 2s;"></div>
+                    <div class="status-dot" style="position: absolute; top: 60%; left: 70%; animation-duration: 3s; background: var(--warning); box-shadow: 0 0 10px var(--warning);"></div>
+                    <div class="status-dot" style="position: absolute; top: 45%; left: 20%; animation-duration: 4s; background: var(--accent-blue); box-shadow: 0 0 10px var(--accent-blue);"></div>
+                    
+                    <div style="position: absolute; bottom: 10px; left: 10px; font-size: 0.6rem; color: var(--text-dim);">
+                        LAT: <span id="map-lat">0.00</span> | LNG: <span id="map-lng">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Terminal Logs -->
+            <div class="terminal-panel" style="margin-top: 20px; flex: 1;">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="fa fa-terminal"></i> SYSTEM LOGS</span>
+                    <div style="display: flex; gap: 5px;">
+                        <div style="width: 8px; height: 8px; background: #333; border-radius: 50%;"></div>
+                        <div style="width: 8px; height: 8px; background: #333; border-radius: 50%;"></div>
+                        <div style="width: 8px; height: 8px; background: #333; border-radius: 50%;"></div>
+                    </div>
                 </div>
                 <div class="log-container" id="terminal-logs">
-                    <!-- Logs injected via JS -->
+                    <!-- JS Injected Logs -->
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Quick Ops -->
-        <div class="side-module side-module-right">
+        <!-- RIGHT COLUMN: AGENTS & ALERTS -->
+        <div class="side-module-right">
+            
+            <!-- Active Agents -->
             <div class="terminal-panel">
                 <div class="panel-header">
-                    <span class="panel-title">Active Field Agents</span>
-                    <i class="fa fa-users"></i>
+                    <span class="panel-title"><i class="fa fa-users"></i> ACTIVE AGENTS</span>
                 </div>
                 <div id="active-agents-list" style="max-height: 200px; overflow-y:auto;">
-                    <!-- Agent list injected via JS -->
-                    <div style="text-align: center; color: var(--text-dim); font-size: 0.7rem; padding: 20px;">
-                        Scanning encrypted channels...
-                    </div>
+                    <div style="padding: 20px; text-align: center; color: var(--text-dim);">Scanning Network...</div>
                 </div>
             </div>
 
+            <!-- Security Alert -->
             <div class="terminal-panel" style="margin-top: 20px;">
                 <div class="panel-header">
-                    <span class="panel-title">Security Alert</span>
-                    <i class="fa fa-shield-alt"></i>
+                    <span class="panel-title"><i class="fa fa-shield-alt"></i> SECURITY STATUS</span>
                 </div>
-                <p style="font-size: 0.7rem; border-left: 2px solid var(--primary); padding-left: 10px; color: var(--text-dim);">
-                    [CLASSIFIED] Unidentified genetic signatures detected in the Wild Sector. Avoid Area-51 coordinates.
-                </p>
+                <div style="background: rgba(230, 57, 70, 0.1); border: 1px solid var(--primary); padding: 15px; border-radius: 4px;">
+                    <div style="color: var(--primary); font-weight: bold; font-size: 0.8rem; margin-bottom: 5px;">
+                        <i class="fa fa-exclamation-triangle"></i> BREACH DETECTED
+                    </div>
+                    <p style="font-size: 0.7rem; color: #ccc;">
+                        Unauthorized biological signatures detected in Sector 4. All personnel advised to maintain radio silence.
+                    </p>
+                </div>
             </div>
 
-            <div class="terminal-panel" style="margin-top: 20px; background: rgba(230, 57, 70, 0.05);">
+            <!-- Quick Links -->
+            <div class="terminal-panel" style="margin-top: 20px;">
                 <div class="panel-header">
-                    <span class="panel-title">Global Coords</span>
-                    <i class="fa fa-map-marker-alt"></i>
+                    <span class="panel-title"><i class="fa fa-bolt"></i> QUICK ACCESS</span>
                 </div>
-                <div id="live-coords" style="font-family: monospace; font-size: 0.9rem; color: var(--primary);">
-                    0.0000, 0.0000
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <a href="forum.html" style="text-decoration: none; background: #111; padding: 10px; text-align: center; border: 1px solid #333; color: #fff; font-size: 0.7rem; transition: 0.2s; display: block;">
+                        <i class="fa fa-bullhorn" style="color: var(--accent-blue);"></i><br>BROADCAST
+                    </a>
+                    <a href="sightings.html" style="text-decoration: none; background: #111; padding: 10px; text-align: center; border: 1px solid #333; color: #fff; font-size: 0.7rem; transition: 0.2s; display: block;">
+                        <i class="fa fa-eye" style="color: var(--success);"></i><br>REPORT
+                    </a>
+                    <a href="blackmarket.html" style="text-decoration: none; background: #111; padding: 10px; text-align: center; border: 1px solid #333; color: #fff; font-size: 0.7rem; transition: 0.2s; display: block;">
+                        <i class="fa fa-shopping-cart" style="color: var(--warning);"></i><br>BUY XP
+                    </a>
+                    <a href="vault.html" style="text-decoration: none; background: #111; padding: 10px; text-align: center; border: 1px solid #333; color: #fff; font-size: 0.7rem; transition: 0.2s; display: block;">
+                        <i class="fa fa-file-code" style="color: var(--primary);"></i><br>FILES
+                    </a>
                 </div>
             </div>
+
         </div>
     </main>
 
     <footer>
-        <p>&copy; 2024 DARK JURASSIC GLOBAL NETWORK. ALL RIGHTS RESERVED. [CLEARANCE LEVEL 4 REQUIRED]</p>
-        <p style="margin-top: 10px; opacity: 0.5;">POWERED BY INGEN CORE SYSTEMS // CLOUD SYNC V3.0</p>
+        <p>&copy; 2024 DARK JURASSIC NETWORK. UNAUTHORIZED USE IS A VIOLATION OF INGEN PROTOCOLS.</p>
+        <p style="margin-top: 10px; opacity: 0.5; font-size: 0.6rem;">
+            SYSTEM VERSION 4.0.2 | ENCRYPTION: AES-256 | SERVER: ISLA_NUBLAR_MAIN
+        </p>
     </footer>
 
     <script>
-        // --- Firebase Configuration ---
+        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -555,25 +851,36 @@
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
-        let currentAgent = "GUEST";
+        // --- GLOBAL VARIABLES ---
+        let currentAgent = "GUEST_USER";
         let myUsername = "";
+        let isSidebarOpen = false;
 
-        // --- Auth & Profile Listeners ---
+        // --- AUTHENTICATION HANDLER ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 myUsername = user.email.split('@')[0].replace(/\./g, '_');
+                
+                // Fetch Profile Data
                 db.ref('users/' + myUsername).on('value', snap => {
                     const data = snap.val();
                     currentAgent = data?.displayName || myUsername;
-                    document.getElementById('agent-display').innerText = `AUTHENTICATED: ${currentAgent.toUpperCase()}`;
-                    addLog(`Agent ${currentAgent} session verified.`, "success");
+                    document.getElementById('agent-display').innerText = `AGENT: ${currentAgent.toUpperCase()} [ONLINE]`;
+                    document.getElementById('agent-display').classList.add('text-success');
+                    
+                    // Only log login once per session load
+                    if (!window.sessionLogged) {
+                        addLog(`Connection established for Agent ${currentAgent}.`, "success");
+                        window.sessionLogged = true;
+                    }
                 });
                 
-                // Set online status
+                // Set Online Status
                 db.ref('status/' + myUsername).set({
                     name: currentAgent,
                     online: true,
@@ -582,48 +889,90 @@
                 db.ref('status/' + myUsername).onDisconnect().remove();
 
             } else {
-                document.getElementById('agent-display').innerText = "RESTRICTED ACCESS - PLEASE LOGIN";
-                addLog("Warning: Unauthenticated access detected.", "warn");
+                document.getElementById('agent-display').innerText = "UNAUTHORIZED ACCESS - READ ONLY";
+                document.getElementById('agent-display').classList.add('text-danger');
+                addLog("Warning: Anonymous connection detected. Functionality limited.", "warn");
+                
+                // Optional: Redirect to login after delay
+                // setTimeout(() => window.location.href = 'login.html', 5000);
             }
         });
 
-        // --- Sidebar Logic ---
+        // --- UI CONTROLS ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('open');
-            overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+            isSidebarOpen = !isSidebarOpen;
+            
+            if (isSidebarOpen) {
+                sidebar.classList.add('open');
+                overlay.style.display = 'block';
+            } else {
+                sidebar.classList.remove('open');
+                overlay.style.display = 'none';
+            }
         }
 
-        // --- Global Stats ---
+        // --- DATA LISTENERS ---
+
+        // 1. Total Agent Count
         db.ref('users').on('value', snap => {
             const count = snap.numChildren();
             document.getElementById('agent-count').innerText = count;
         });
 
+        // 2. Active Agents List
         db.ref('status').on('value', snap => {
             const container = document.getElementById('active-agents-list');
             container.innerHTML = "";
+            
+            if (!snap.exists()) {
+                container.innerHTML = '<div style="padding:15px; text-align:center; color:#555;">No active signals.</div>';
+                return;
+            }
+
             snap.forEach(child => {
                 const agent = child.val();
-                const item = document.createElement('div');
-                item.style.padding = "8px 0";
-                item.style.borderBottom = "1px solid #111";
-                item.style.display = "flex";
-                item.style.alignItems = "center";
-                item.style.justifyContent = "space-between";
-                item.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:6px; height:6px; background:var(--success); border-radius:50%;"></div>
-                        <span style="font-size:0.7rem;">@${child.key}</span>
+                const name = agent.name || child.key;
+                
+                const div = document.createElement('div');
+                div.className = 'agent-list-item';
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center;">
+                        <div class="agent-avatar">${name.charAt(0).toUpperCase()}</div>
+                        <div class="agent-details">
+                            <span class="agent-name">@${name}</span>
+                            <span class="agent-status">ONLINE</span>
+                        </div>
                     </div>
-                    <span style="font-size:0.55rem; color:var(--text-dim);">ACTIVE</span>
+                    <i class="fa fa-wifi text-success" style="font-size:0.7rem;"></i>
                 `;
-                container.appendChild(item);
+                container.appendChild(div);
             });
         });
 
-        // --- System Log UI ---
+        // 3. Push Notification System (Listening to 'alerts' node)
+        db.ref('alerts').limitToLast(1).on('child_added', snap => {
+            const alert = snap.val();
+            // Only show if timestamp is recent (within last minute) to avoid spam on load
+            const now = Date.now();
+            if (alert.timestamp && now - alert.timestamp < 60000) {
+                showPushNotification(alert.title, alert.message, alert.type);
+                addLog(`ALERT RECEIVED: ${alert.title}`, "danger");
+            }
+        });
+
+        // 4. Recent Intel (Forum)
+        db.ref('forum_threads').limitToLast(1).on('child_added', snap => {
+            const thread = snap.val();
+            // Check if recent to avoid flood
+            if (Date.now() - thread.timestamp < 30000) {
+                addLog(`New Intel: "${thread.title}" uploaded by ${thread.author}`, "info");
+                showPushNotification("NEW INTEL", `Agent ${thread.author} posted: ${thread.title}`, "info");
+            }
+        });
+
+        // --- LOGGING SYSTEM ---
         function addLog(msg, type = 'info') {
             const logBox = document.getElementById('terminal-logs');
             const entry = document.createElement('div');
@@ -632,69 +981,176 @@
             const now = new Date();
             const time = `[${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}]`;
             
-            let tag = "[SYSTEM]";
+            let tag = "SYS";
             let colorClass = "";
-            if(type === 'warn') { tag = "[DANGER]"; colorClass = "log-msg-warn"; }
-            if(type === 'success') { tag = "[SECURE]"; colorClass = "log-msg-success"; }
+            
+            if(type === 'warn') { tag = "WARN"; colorClass = "log-msg-warn"; }
+            if(type === 'success') { tag = "OK"; colorClass = "log-msg-success"; }
+            if(type === 'danger') { tag = "CRIT"; colorClass = "log-msg-danger"; }
+            if(type === 'info') { tag = "INFO"; colorClass = "text-highlight"; }
 
-            entry.innerHTML = `<span class="log-time">${time}</span> <span class="log-tag">${tag}</span> <span class="${colorClass}">${msg}</span>`;
+            entry.innerHTML = `<span class="log-time">${time}</span> <span class="log-tag">[${tag}]</span> <span class="${colorClass}">${msg}</span>`;
             logBox.prepend(entry);
 
-            // Keep only latest 50 logs
-            if(logBox.children.length > 50) logBox.removeChild(logBox.lastChild);
+            // Limit log history
+            if(logBox.children.length > 60) logBox.removeChild(logBox.lastChild);
         }
 
-        // --- Data Listeners (Forum / Sightings) ---
-        db.ref('forum_threads').limitToLast(3).on('child_added', snap => {
-            const thread = snap.val();
-            addLog(`New Intel Broadcast: "${thread.title}" by Agent ${thread.author || 'Anonymous'}`);
-        });
+        // --- PUSH NOTIFICATION UI ---
+        function showPushNotification(title, message, type = 'info') {
+            const container = document.getElementById('push-container');
+            
+            const alert = document.createElement('div');
+            alert.className = 'push-alert';
+            
+            // Color coding based on type
+            let icon = 'fa-info-circle';
+            let color = 'var(--primary)';
+            
+            if (type === 'success') { icon = 'fa-check-circle'; color = 'var(--success)'; }
+            if (type === 'warn') { icon = 'fa-exclamation-triangle'; color = 'var(--warning)'; }
+            
+            alert.style.borderLeftColor = color;
+            
+            alert.innerHTML = `
+                <div class="push-title" style="color:${color}">
+                    <span><i class="fa ${icon}"></i> ${title}</span>
+                    <span style="font-size:0.6rem; opacity:0.7;">NOW</span>
+                </div>
+                <div class="push-body">${message}</div>
+            `;
+            
+            container.appendChild(alert);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                alert.style.animation = 'slideInRight 0.4s reverse forwards';
+                setTimeout(() => alert.remove(), 400);
+            }, 5000);
+        }
 
-        db.ref('sightings').limitToLast(3).on('child_added', snap => {
-            const s = snap.val();
-            addLog(`SIGHTING ALERT: ${s.name} spotted at ${s.location}. Threat assessed.`, "warn");
-        });
+        // --- CANVAS VISUALIZER (Server Load) ---
+        const canvas = document.getElementById('loadCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let dataPoints = [];
+        const maxPoints = 50;
 
-        // --- Simulators for "Glitchy" Vibe ---
-        setInterval(() => {
-            const coords = document.getElementById('live-coords');
-            if(coords) {
-                const lat = (Math.random() * 180 - 90).toFixed(4);
-                const lng = (Math.random() * 360 - 180).toFixed(4);
-                coords.innerText = `${lat}, ${lng}`;
+        function resizeCanvas() {
+            width = canvas.width = canvas.offsetWidth;
+            height = canvas.height = canvas.offsetHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Init data
+        for(let i=0; i<maxPoints; i++) dataPoints.push(Math.random() * 50 + 20);
+
+        function drawChart() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Grid
+            ctx.strokeStyle = '#111';
+            ctx.beginPath();
+            for(let i=0; i<width; i+=20) { ctx.moveTo(i,0); ctx.lineTo(i,height); }
+            for(let i=0; i<height; i+=20) { ctx.moveTo(0,i); ctx.lineTo(width,i); }
+            ctx.stroke();
+
+            // Update Data
+            dataPoints.shift();
+            const last = dataPoints[dataPoints.length-1];
+            let next = last + (Math.random() - 0.5) * 20;
+            if(next < 10) next = 10;
+            if(next > 90) next = 90;
+            dataPoints.push(next);
+
+            // Update Text UI
+            document.getElementById('cpu-val').innerText = Math.floor(next) + "%";
+            
+            // Draw Line
+            ctx.strokeStyle = '#e63946';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const step = width / (maxPoints - 1);
+            
+            for(let i=0; i<maxPoints; i++) {
+                const x = i * step;
+                const y = height - (dataPoints[i] / 100 * height);
+                if(i===0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
             }
-        }, 4000);
+            ctx.stroke();
 
+            // Fill
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.fillStyle = 'rgba(230, 57, 70, 0.2)';
+            ctx.fill();
+
+            requestAnimationFrame(drawChart);
+        }
+        drawChart();
+
+        // --- SIMULATION LOOPS ---
+        
+        // 1. Integrity Bar Fluctuation
         setInterval(() => {
-            const val = (97 + Math.random() * 2.9).toFixed(1);
+            const val = (96 + Math.random() * 3.9).toFixed(1);
             const el = document.getElementById('integrity-val');
             const fill = document.getElementById('integrity-fill');
+            const uplink = document.getElementById('uplink-fill');
+            
             if(el && fill) {
                 el.innerText = `${val}%`;
                 fill.style.width = `${val}%`;
-                if(val < 98) addLog("Minor uplink interference detected.", "warn");
+                uplink.style.width = `${(Math.random() * 20 + 60).toFixed(0)}%`;
+                
+                if(val < 97) {
+                    fill.style.background = 'var(--warning)';
+                } else {
+                    fill.style.background = 'var(--primary)';
+                }
             }
-        }, 12000);
+        }, 2000);
 
-        const worldEvents = [
-            "Asset #884 containment compromised.",
-            "Satellite relay 'ECHO-4' re-established.",
-            "Black market prices for DNA vials surging.",
-            "New species data decrypted: Giganotosaurus.",
-            "Agent Dossier #122 archived by system.",
-            "Incoming encrypted message from [REDACTED].",
-            "Hardware temperature at Nublar site rising."
+        // 2. Map Coordinates Simulator
+        setInterval(() => {
+            const lat = (Math.random() * 180 - 90).toFixed(4);
+            const lng = (Math.random() * 360 - 180).toFixed(4);
+            document.getElementById('map-lat').innerText = lat;
+            document.getElementById('map-lng').innerText = lng;
+        }, 1000);
+
+        // 3. Random Ambient Logs
+        const ambientLogs = [
+            "Scanning Sector 7 for thermal anomalies...",
+            "Encrypted packet received from unknown source.",
+            "Updating local cache...",
+            "Ping check: 24ms to Mainframe.",
+            "Bio-signature trace complete: Negative.",
+            "Refreshing security tokens...",
+            "Background task: Data Scrubbing active."
         ];
 
         setInterval(() => {
-            const msg = worldEvents[Math.floor(Math.random() * worldEvents.length)];
-            addLog(msg);
-        }, 20000);
+            if(Math.random() > 0.7) {
+                const msg = ambientLogs[Math.floor(Math.random() * ambientLogs.length)];
+                addLog(msg, "dim");
+            }
+        }, 8000);
 
+        // --- INITIALIZATION ---
         window.onload = () => {
-            addLog("Initializing terminal protocols...", "info");
-            addLog("Loading InGen hardware drivers...", "info");
-            addLog("System ready. Secure your connection.", "success");
+            addLog("Initializing Dark Jurassic OS v4.0...", "info");
+            setTimeout(() => addLog("Loading InGen Security Protocols...", "info"), 500);
+            setTimeout(() => addLog("Connecting to Firebase Realtime Database...", "info"), 1000);
+            setTimeout(() => addLog("System Ready. Waiting for input.", "success"), 1500);
+            
+            // Simulate a welcome push notification
+            setTimeout(() => {
+                showPushNotification("WELCOME AGENT", "Secure connection established. Happy hunting.", "success");
+            }, 2500);
         };
 
     </script>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dark Jurassic | Black Market Terminal</title>
+    <title>Dark Jurassic | Black Market Network</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <!-- External Assets -->
@@ -21,12 +21,16 @@
             --primary-glow: rgba(230, 57, 70, 0.5);
             --secondary: #00d4ff;
             --secondary-glow: rgba(0, 212, 255, 0.4);
+            --gold: #ffd700;
+            --gold-glow: rgba(255, 215, 0, 0.3);
             --bg-dark: #050505;
             --bg-panel: rgba(10, 10, 10, 0.95);
             --bg-card: #0d0d0d;
             --border: rgba(255, 255, 255, 0.1);
             --text-main: #e0e0e0;
             --text-dim: #888888;
+            --success: #2ecc71;
+            --danger: #ff0000;
             --sidebar-width: 280px;
             --nav-height: 70px;
             --glitch-speed: 3s;
@@ -38,6 +42,7 @@
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            outline: none;
         }
 
         body {
@@ -46,12 +51,43 @@
             font-family: 'JetBrains+Mono', monospace;
             overflow-x: hidden;
             line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* --- Custom Scrollbar --- */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #050505; }
         ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff4d5a; }
+
+        /* --- Background FX --- */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 9000;
+            opacity: 0.4;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmYvP41FAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfmBwUQDw0u825TAAAAHWlUWHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAABbSURBVDjL7dOxDcAgDAXRVkzABowBS2YBVsAmnSVj4Q6i/qP4010iKj5F559iJ65S816b1E5c40l6X+3Ew0y9b/biZqY+N/txM9P42+zHw0xjb/bjZabxt9mPl5n6B3D6Wv44K56WAAAAAElFTkSuQmCC');
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 8999;
+            animation: noise-anim 0.5s infinite linear;
+        }
+
+        @keyframes noise-anim {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
 
         /* --- Glitch Header Effect --- */
         .glitch-text {
@@ -59,6 +95,7 @@
             font-family: 'Orbitron', sans-serif;
             text-transform: uppercase;
             letter-spacing: 4px;
+            color: #fff;
         }
 
         .glitch-text::before, .glitch-text::after {
@@ -75,26 +112,39 @@
             animation: glitch-anim 5s infinite linear alternate-reverse;
         }
 
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -2px 0 #00fff9;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
         @keyframes glitch-anim {
             0% { clip: rect(31px, 9999px, 94px, 0); }
             20% { clip: rect(62px, 9999px, 42px, 0); }
-            /* ... more steps for complexity ... */
             100% { clip: rect(10px, 9999px, 85px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(10px, 9999px, 85px, 0); }
+            20% { clip: rect(31px, 9999px, 94px, 0); }
+            100% { clip: rect(62px, 9999px, 42px, 0); }
         }
 
         /* --- Navbar --- */
         header {
             height: var(--nav-height);
-            background: rgba(0,0,0,0.8);
+            background: rgba(5, 5, 5, 0.95);
             border-bottom: 1px solid var(--border);
             position: fixed;
             top: 0; width: 100%;
             z-index: 1000;
             backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
         .navbar {
-            max-width: 1400px;
+            max-width: 1800px;
             margin: 0 auto;
             height: 100%;
             display: flex;
@@ -112,14 +162,26 @@
             font-family: 'Orbitron', sans-serif;
             font-weight: 900;
             font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .logo img { height: 40px; }
+        .logo img { 
+            height: 40px; 
+            filter: drop-shadow(0 0 5px var(--primary-glow));
+            transition: 0.3s;
+        }
+
+        .logo:hover img {
+            filter: drop-shadow(0 0 10px var(--primary));
+            transform: scale(1.05);
+        }
 
         .nav-links {
             display: flex;
-            gap: 15px;
+            gap: 5px;
             list-style: none;
+            height: 100%;
         }
 
         @media (max-width: 1024px) {
@@ -129,29 +191,47 @@
         .nav-links a {
             color: var(--text-dim);
             text-decoration: none;
-            font-size: 0.85rem;
-            padding: 8px 12px;
-            border-radius: 4px;
+            font-size: 0.75rem;
+            padding: 0 15px;
+            height: 100%;
             transition: 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 4px;
+            border-bottom: 2px solid transparent;
         }
 
         .nav-links a i { font-size: 1.1rem; }
         .nav-links a:hover, .nav-links a.active {
             color: var(--primary);
-            background: rgba(230, 57, 70, 0.1);
+            background: linear-gradient(to bottom, transparent 0%, rgba(230, 57, 70, 0.1) 100%);
+            border-bottom-color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .nav-text {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
         }
 
         .menu-toggle {
             background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.5rem;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 12px;
+            border-radius: 4px;
             cursor: pointer;
             display: none;
+            transition: 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: var(--primary);
+            color: #fff;
         }
 
         @media (max-width: 1024px) {
@@ -167,20 +247,27 @@
             background: var(--bg-panel);
             border-right: 1px solid var(--primary);
             z-index: 2000;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: 0.4s ease;
             padding-top: 20px;
-            box-shadow: 20px 0 50px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
         }
 
-        .mobile-sidebar.open { left: 0; }
+        .mobile-sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.8); }
 
         .sidebar-header {
-            padding: 0 25px 25px;
+            padding: 0 20px 20px;
             border-bottom: 1px solid #222;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .sidebar-links { list-style: none; }
+        .sidebar-header .logo img { height: 30px; }
+        .sidebar-header .logo span { font-size: 1rem; }
+
+        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
         .sidebar-links li a {
             padding: 15px 25px;
             display: flex;
@@ -190,11 +277,13 @@
             text-decoration: none;
             transition: 0.2s;
             border-left: 4px solid transparent;
-            font-size: 0.95rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
         }
 
-        .sidebar-links li a:hover, .sidebar-links li a.active {
-            background: rgba(230, 57, 70, 0.05);
+        .sidebar-links li a:hover {
+            background: rgba(255,255,255,0.05);
             color: var(--primary);
             border-left-color: var(--primary);
         }
@@ -202,28 +291,36 @@
         .sidebar-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             z-index: 1999;
             display: none;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(3px);
         }
 
         /* --- Main Content --- */
         main {
             margin-top: var(--nav-height);
             padding: 40px 20px;
-            max-width: 1200px;
+            max-width: 1600px;
             margin-left: auto;
             margin-right: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
         }
 
         .hero {
             text-align: center;
-            margin-bottom: 50px;
             padding: 40px 20px;
-            background: radial-gradient(circle at center, rgba(230, 57, 70, 0.05) 0%, transparent 70%);
+            background: linear-gradient(180deg, rgba(5,5,5,0.8) 0%, rgba(5,5,5,1) 100%), 
+                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1600');
+            background-size: cover;
+            background-position: center;
             border: 1px solid var(--border);
             border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
         .hero h1 { font-size: 2.5rem; margin-bottom: 10px; }
@@ -232,12 +329,13 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: rgba(255,255,255,0.03);
+            background: rgba(0,0,0,0.6);
             padding: 8px 20px;
-            border-radius: 50px;
+            border-radius: 4px;
             border: 1px solid var(--border);
             font-size: 0.8rem;
             color: var(--text-dim);
+            backdrop-filter: blur(5px);
         }
 
         .status-dot {
@@ -252,22 +350,179 @@
             0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; }
         }
 
+        /* --- Ticker Tape --- */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.9);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding-left: 100%;
+            box-sizing: content-box;
+        }
+
+        .ticker {
+            display: inline-block;
+            height: 30px;
+            line-height: 30px;
+            white-space: nowrap;
+            padding-right: 100%;
+            box-sizing: content-box;
+            animation: ticker 30s linear infinite;
+        }
+
+        .ticker-item {
+            display: inline-block;
+            padding: 0 2rem;
+            font-size: 0.75rem;
+            color: var(--secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
+
+        /* --- Market Controls --- */
+        .market-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            background: var(--bg-panel);
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: 'Orbitron';
+            font-size: 0.7rem;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(230, 57, 70, 0.1);
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 10px 10px 10px 35px;
+            color: #fff;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+        }
+
+        /* --- Live Auctions --- */
+        .section-title {
+            font-family: 'Orbitron';
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .auction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .auction-card {
+            background: linear-gradient(145deg, #0f0f0f, #050505);
+            border: 1px solid var(--gold);
+            padding: 20px;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+        }
+
+        .auction-card::before {
+            content: "LIVE BIDDING";
+            position: absolute;
+            top: 10px; right: -30px;
+            background: var(--gold);
+            color: #000;
+            font-size: 0.6rem;
+            padding: 2px 30px;
+            transform: rotate(45deg);
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        .auction-timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--gold);
+            text-align: center;
+            margin: 15px 0;
+            font-family: 'Orbitron';
+            text-shadow: 0 0 10px var(--gold-glow);
+        }
+
+        .bid-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 15px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 10px;
+        }
+
+        .current-bid { color: #fff; font-weight: bold; }
+
         /* --- Market Sections --- */
         .market-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 25px;
-            margin-top: 30px;
         }
 
         .market-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
             padding: 25px;
-            border-radius: 12px;
+            border-radius: 4px;
             position: relative;
             overflow: hidden;
             transition: 0.3s;
+            display: flex;
+            flex-direction: column;
         }
 
         .market-card:hover {
@@ -292,6 +547,7 @@
             color: var(--primary);
             margin-bottom: 15px;
             opacity: 0.8;
+            text-align: center;
         }
 
         .card-title {
@@ -299,6 +555,7 @@
             font-size: 1.1rem;
             margin-bottom: 8px;
             color: #fff;
+            text-align: center;
         }
 
         .card-desc {
@@ -306,6 +563,8 @@
             color: var(--text-dim);
             margin-bottom: 20px;
             min-height: 45px;
+            text-align: center;
+            flex-grow: 1;
         }
 
         .card-price {
@@ -314,6 +573,7 @@
             align-items: center;
             border-top: 1px solid #222;
             padding-top: 15px;
+            margin-top: auto;
         }
 
         .xp-val {
@@ -346,12 +606,73 @@
             cursor: not-allowed;
         }
 
+        /* --- Crypto Miner --- */
+        .mining-rig {
+            background: #080808;
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .mining-stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .hash-rate {
+            font-family: 'Orbitron';
+            color: var(--success);
+            font-size: 1.2rem;
+        }
+
+        .mining-visual {
+            width: 100px;
+            height: 40px;
+            background: #000;
+            border: 1px solid #222;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mining-bar {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            opacity: 0.5;
+            transition: width 0.2s;
+        }
+
+        /* --- Bounty Board --- */
+        .bounty-board {
+            background: var(--bg-panel);
+            border: 1px solid var(--danger);
+            padding: 20px;
+            border-radius: 4px;
+        }
+
+        .bounty-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #222;
+            transition: 0.2s;
+        }
+
+        .bounty-item:hover { background: rgba(255, 0, 0, 0.05); }
+
+        .bounty-target { font-weight: bold; color: #fff; }
+        .bounty-reward { color: var(--gold); font-family: 'Orbitron'; }
+
         /* --- Document Upload System --- */
         .upload-section {
-            margin-top: 60px;
-            background: #0a0a0a;
+            background: var(--bg-panel);
             border: 1px dashed var(--border);
-            border-radius: 12px;
+            border-radius: 4px;
             padding: 40px;
             text-align: center;
         }
@@ -378,57 +699,93 @@
             color: var(--text-dim);
         }
 
-        /* --- Notifications --- */
-        #notification {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: var(--bg-panel);
-            border-left: 4px solid var(--primary);
-            padding: 15px 25px;
-            border-radius: 4px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: none;
-            z-index: 9999;
-            animation: slideIn 0.3s ease-out;
-            font-size: 0.9rem;
+        /* --- Transaction History --- */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            color: var(--text-dim);
         }
 
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .history-table th { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); color: var(--primary); }
+        .history-table td { padding: 10px; border-bottom: 1px solid #111; }
+        .history-table tr:hover { background: rgba(255,255,255,0.02); }
+
+        /* --- Notifications --- */
+        .push-notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 6000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .push-alert {
+            background: rgba(10, 10, 10, 0.95);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            width: 300px;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
 
         /* --- Responsive Adjustments --- */
         @media (max-width: 600px) {
             .hero h1 { font-size: 1.8rem; }
             .market-grid { grid-template-columns: 1fr; }
             .upload-section { padding: 20px; }
+            .mining-rig { flex-direction: column; gap: 15px; text-align: center; }
+            .auction-grid { grid-template-columns: 1fr; }
         }
 
     </style>
 </head>
 <body>
 
+    <!-- VISUAL OVERLAYS -->
+    <div class="scanlines"></div>
+    <div class="noise"></div>
     <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="push-notification-container" id="push-container"></div>
 
     <!-- Mobile Navigation Sidebar -->
     <aside class="mobile-sidebar" id="sidebar">
         <div class="sidebar-header">
-            <a href="index.html" class="logo">
+            <div class="logo" style="color: var(--primary);">
                 <img src="logo.png" alt="Logo">
-                <span>TERMINAL</span>
-            </a>
+                <span>SYSTEM MENU</span>
+            </div>
+            <button class="menu-toggle" onclick="toggleSidebar()" style="display:block; border:none;">
+                <i class="fa fa-times"></i>
+            </button>
         </div>
         <ul class="sidebar-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
         </ul>
+        <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
+            SECURE CONNECTION<br>V4.0.2 STABLE
+        </div>
     </aside>
 
     <header>
@@ -439,16 +796,17 @@
             </a>
 
             <ul class="nav-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
             </ul>
 
             <button class="menu-toggle" onclick="toggleSidebar()">
@@ -467,10 +825,73 @@
             <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-dim);">Your Balance: <span id="balance-display" class="xp-val">0</span> XP</p>
         </section>
 
+        <!-- Ticker Tape -->
+        <div class="ticker-wrap">
+            <div class="ticker">
+                <div class="ticker-item">DINO-COIN: 1450 XP</div>
+                <div class="ticker-item">AMBER-FUTURES: +4.5%</div>
+                <div class="ticker-item">RAPTOR-EGG: 5000 XP (HIGH DEMAND)</div>
+                <div class="ticker-item">INGEN-STOCK: -12.3% (CRASH)</div>
+                <div class="ticker-item">BIOSYN-DATA: 800 XP/MB</div>
+                <div class="ticker-item">NEW BOUNTY: T-REX "REXY" - 1M XP</div>
+            </div>
+        </div>
+
+        <!-- Crypto Miner -->
+        <div class="mining-rig">
+            <div>
+                <h3 style="color: var(--success); font-family: 'Orbitron'; margin-bottom: 5px;">BACKGROUND MINER ACTIVE</h3>
+                <p style="font-size: 0.7rem; color: var(--text-dim);">Using idle CPU cycles to decrypt InGen ledgers. Rewards paid in XP.</p>
+            </div>
+            <div class="mining-stats">
+                <div>
+                    <div style="font-size: 0.6rem; color: var(--text-dim);">HASH RATE</div>
+                    <div class="hash-rate" id="hash-rate">0 H/s</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.6rem; color: var(--text-dim);">MINED</div>
+                    <div style="color: #fff; font-weight: bold;" id="mined-xp">0 XP</div>
+                </div>
+                <div class="mining-visual">
+                    <div class="mining-bar" id="mining-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Auctions -->
+        <section>
+            <div class="section-title"><i class="fa fa-gavel"></i> LIVE AUCTIONS</div>
+            <div class="auction-grid" id="auction-grid">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- Market Controls -->
+        <div class="market-controls">
+            <div class="filter-group">
+                <button class="filter-btn active" onclick="filterMarket('all')">ALL</button>
+                <button class="filter-btn" onclick="filterMarket('mercenary')">MERCENARIES</button>
+                <button class="filter-btn" onclick="filterMarket('informant')">INTEL</button>
+                <button class="filter-btn" onclick="filterMarket('hacker')">TECH</button>
+            </div>
+            <div class="search-box">
+                <i class="fa fa-search"></i>
+                <input type="text" id="marketSearch" placeholder="SEARCH BLACK MARKET..." oninput="searchMarket()">
+            </div>
+        </div>
+
         <!-- Dynamic Market Items -->
         <div class="market-grid" id="market-items">
             <!-- Items injected by JS -->
         </div>
+
+        <!-- Bounty Board -->
+        <section class="bounty-board" style="margin-top: 40px;">
+            <div class="section-title" style="color: var(--danger);"><i class="fa fa-crosshairs"></i> ACTIVE BOUNTIES</div>
+            <div id="bounty-list">
+                <!-- Injected via JS -->
+            </div>
+        </section>
 
         <!-- Document Upload System -->
         <section class="upload-section">
@@ -485,9 +906,25 @@
             </div>
             <div class="upload-status" id="upload-status">System ready for data ingestion...</div>
         </section>
-    </main>
 
-    <div id="notification"></div>
+        <!-- Transaction History -->
+        <section style="margin-top: 40px; background: var(--bg-card); padding: 20px; border: 1px solid var(--border);">
+            <h3 style="font-family: 'Orbitron'; color: var(--text-dim); font-size: 0.9rem; margin-bottom: 15px;">TRANSACTION LOG</h3>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>TIMESTAMP</th>
+                        <th>ITEM</th>
+                        <th>COST</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr><td colspan="4" style="text-align:center; padding: 20px;">No recent activity.</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
 
     <script>
         // --- Firebase Configuration ---
@@ -508,6 +945,7 @@
         let currentUser = null;
         let currentXP = 0;
         let username = "";
+        let activeFilter = 'all';
 
         // Market Data
         const marketItems = [
@@ -666,6 +1104,20 @@
 { id: "r200", title: "The Ultimate Asset", color: "mercenary", price: 1000000, desc: "You are the peak of evolution." }
         ];
 
+        // Live Auctions Data (Simulated)
+        const auctions = [
+            { id: "a1", title: "Indoraptor Prototype DNA", bid: 45000, time: 300 },
+            { id: "a2", title: "Site B Access Codes (Lvl 5)", bid: 12000, time: 120 },
+            { id: "a3", title: "Live Compsognathus (Crate of 5)", bid: 8500, time: 600 }
+        ];
+
+        // Bounties Data
+        const bounties = [
+            { target: "Blue (Velociraptor)", reward: "50,000 XP" },
+            { target: "Dr. Henry Wu (Alive)", reward: "100,000 XP" },
+            { target: "Lost Barbasol Can", reward: "25,000 XP" }
+        ];
+
         // --- Authentication ---
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -680,22 +1132,41 @@
                         currentXP = data.xp || 0;
                         document.getElementById('balance-display').innerText = currentXP;
                         renderMarket();
+                        loadHistory();
+
+                        if (data.role === 'admin') {
+                            document.getElementById('admin-nav').style.display = 'block';
+                            document.getElementById('admin-sidebar').style.display = 'block';
+                        }
                     }
                 });
+
+                // Start Mining
+                startMining();
+                renderAuctions();
+                renderBounties();
+
             } else {
                 window.location.href = 'login.html';
             }
         });
 
         // --- Render Market ---
-        function renderMarket() {
+        function renderMarket(filter = 'all') {
             const container = document.getElementById('market-items');
             container.innerHTML = marketItems.map(item => {
+                if (filter !== 'all' && item.color !== filter) return '';
+
                 const canAfford = currentXP >= item.price;
+                let icon = 'fa-user-secret';
+                if (item.color === 'hacker') icon = 'fa-laptop-code';
+                if (item.color === 'informant') icon = 'fa-file-contract';
+                if (item.color === 'traitor') icon = 'fa-mask';
+
                 return `
                     <div class="market-card">
                         ${item.price > 2000 ? '<div class="card-tag">ELITE</div>' : ''}
-                        <div class="card-icon"><i class="fa ${item.icon}"></i></div>
+                        <div class="card-icon"><i class="fa ${icon}"></i></div>
                         <h3 class="card-title">${item.title}</h3>
                         <p class="card-desc">${item.desc}</p>
                         <div class="card-price">
@@ -707,6 +1178,101 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function filterMarket(type) {
+            activeFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderMarket(type);
+        }
+
+        function searchMarket() {
+            const query = document.getElementById('marketSearch').value.toLowerCase();
+            const container = document.getElementById('market-items');
+            container.innerHTML = marketItems.map(item => {
+                if (!item.title.toLowerCase().includes(query) && !item.desc.toLowerCase().includes(query)) return '';
+                
+                const canAfford = currentXP >= item.price;
+                let icon = 'fa-user-secret';
+                if (item.color === 'hacker') icon = 'fa-laptop-code';
+                if (item.color === 'informant') icon = 'fa-file-contract';
+
+                return `
+                    <div class="market-card">
+                        <div class="card-icon"><i class="fa ${icon}"></i></div>
+                        <h3 class="card-title">${item.title}</h3>
+                        <p class="card-desc">${item.desc}</p>
+                        <div class="card-price">
+                            <span class="xp-val">${item.price} XP</span>
+                            <button class="buy-btn" onclick="purchaseItem('${item.id}', ${item.price})" ${!canAfford ? 'disabled' : ''}>
+                                ${canAfford ? 'AUTHORIZE' : 'LOW FUNDS'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- Render Auctions ---
+        function renderAuctions() {
+            const grid = document.getElementById('auction-grid');
+            grid.innerHTML = auctions.map(a => `
+                <div class="auction-card" id="auc-${a.id}">
+                    <h3 style="color: #fff; font-family: 'Orbitron';">${a.title}</h3>
+                    <div class="auction-timer" id="timer-${a.id}">00:00:00</div>
+                    <div class="bid-info">
+                        <span>CURRENT BID</span>
+                        <span class="current-bid">${a.bid} XP</span>
+                    </div>
+                    <button class="buy-btn" style="width:100%; border-color: var(--gold); color: var(--gold);" onclick="placeBid('${a.id}')">PLACE BID (+500 XP)</button>
+                </div>
+            `).join('');
+
+            // Start timers
+            auctions.forEach(a => startAuctionTimer(a.id, a.time));
+        }
+
+        function startAuctionTimer(id, seconds) {
+            let time = seconds;
+            const el = document.getElementById(`timer-${id}`);
+            const interval = setInterval(() => {
+                time--;
+                const h = Math.floor(time / 3600).toString().padStart(2,'0');
+                const m = Math.floor((time % 3600) / 60).toString().padStart(2,'0');
+                const s = (time % 60).toString().padStart(2,'0');
+                if(el) el.innerText = `${h}:${m}:${s}`;
+                
+                if(time <= 0) {
+                    clearInterval(interval);
+                    if(el) el.innerText = "SOLD";
+                }
+            }, 1000);
+        }
+
+        function placeBid(id) {
+            const auction = auctions.find(a => a.id === id);
+            if(currentXP < auction.bid + 500) {
+                showNotification("INSUFFICIENT FUNDS FOR BID", "error");
+                return;
+            }
+            
+            if(confirm(`Place bid of ${auction.bid + 500} XP?`)) {
+                auction.bid += 500;
+                renderAuctions(); // Re-render to update price
+                showNotification("BID ACCEPTED. YOU ARE HIGHEST BIDDER.", "success");
+            }
+        }
+
+        // --- Render Bounties ---
+        function renderBounties() {
+            const list = document.getElementById('bounty-list');
+            list.innerHTML = bounties.map(b => `
+                <div class="bounty-item">
+                    <span class="bounty-target">${b.target}</span>
+                    <span class="bounty-reward">${b.reward}</span>
+                </div>
+            `).join('');
         }
 
         // --- Purchase Logic ---
@@ -724,13 +1290,39 @@
                     db.ref('market_logs').push({
                         agent: username,
                         item: item.title,
+                        cost: price,
                         timestamp: Date.now()
                     });
-                    showNotification(`TRANSACTION SUCCESSFUL: ${item.title} delivered to your vault.`);
+                    showNotification(`TRANSACTION SUCCESSFUL: ${item.title} ACQUIRED`, "success");
                 }).catch(err => {
-                    showNotification(`TRANSACTION FAILED: ${err.message}`);
+                    showNotification(`TRANSACTION FAILED: ${err.message}`, "error");
                 });
             }
+        }
+
+        // --- Transaction History ---
+        function loadHistory() {
+            db.ref('market_logs').orderByChild('agent').equalTo(username).limitToLast(10).on('value', snap => {
+                const body = document.getElementById('history-body');
+                body.innerHTML = "";
+                if(snap.exists()) {
+                    const logs = [];
+                    snap.forEach(c => logs.push(c.val()));
+                    logs.reverse().forEach(log => {
+                        const date = new Date(log.timestamp).toLocaleString();
+                        body.innerHTML += `
+                            <tr>
+                                <td>${date}</td>
+                                <td style="color: #fff;">${log.item}</td>
+                                <td style="color: var(--danger);">-${log.cost} XP</td>
+                                <td style="color: var(--success);">COMPLETED</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">No recent activity.</td></tr>';
+                }
+            });
         }
 
         // --- File Upload Simulation ---
@@ -746,8 +1338,32 @@
                 const bonus = 50;
                 db.ref('users/' + username + '/xp').set(currentXP + bonus);
                 status.innerHTML = `<span style="color: #00ff00"><i class="fa fa-check"></i> UPLOAD VERIFIED. +${bonus} XP Reward granted.</span>`;
-                showNotification("INTEL VERIFIED: Data synchronized with HQ servers.");
+                showNotification("INTEL VERIFIED: +50 XP", "success");
             }, 3000);
+        }
+
+        // --- Mining Simulation ---
+        function startMining() {
+            let mined = 0;
+            setInterval(() => {
+                const hash = Math.floor(Math.random() * 50) + 10;
+                document.getElementById('hash-rate').innerText = `${hash} H/s`;
+                
+                // Visual bar
+                const bar = document.getElementById('mining-bar');
+                let width = parseInt(bar.style.width || 0);
+                width += 5;
+                if(width > 100) {
+                    width = 0;
+                    mined += 1;
+                    document.getElementById('mined-xp').innerText = `${mined} XP`;
+                    // Occasionally save to DB
+                    if(mined % 10 === 0) {
+                        db.ref('users/' + username + '/xp').set(currentXP + 1);
+                    }
+                }
+                bar.style.width = width + "%";
+            }, 500);
         }
 
         // --- UI Interactions ---
@@ -765,11 +1381,21 @@
             }
         }
 
-        function showNotification(msg) {
-            const n = document.getElementById('notification');
-            n.innerText = msg;
-            n.style.display = 'block';
-            setTimeout(() => { n.style.display = 'none'; }, 4000);
+        function showNotification(msg, type="info") {
+            const container = document.getElementById('push-container');
+            const div = document.createElement('div');
+            div.className = 'push-alert';
+            let color = 'var(--primary)';
+            if(type === 'success') color = 'var(--success)';
+            if(type === 'error') color = 'var(--danger)';
+            
+            div.style.borderLeftColor = color;
+            div.innerHTML = `
+                <div style="color:${color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">SYSTEM ALERT</div>
+                <div style="font-size:0.75rem; color:#ccc;">${msg}</div>
+            `;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 4000);
         }
 
         // Random Glitch Events
@@ -782,6 +1408,14 @@
                 setTimeout(() => target.innerText = original, 150);
             }
         }, 8000);
+
+        // Listen for global alerts
+        db.ref('alerts').limitToLast(1).on('child_added', snap => {
+            const alert = snap.val();
+            if (alert.timestamp && Date.now() - alert.timestamp < 60000) {
+                showNotification(alert.title + ": " + alert.message);
+            }
+        });
 
     </script>
 </body>

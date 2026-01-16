@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dark Jurassic | Agent Network</title>
+    <title>Dark Jurassic | Global Agent Network</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <!-- External Assets -->
@@ -16,50 +16,83 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
+        /* --- CORE VARIABLES --- */
         :root {
             --primary: #e63946;
+            --primary-dim: #8a232b;
             --primary-glow: rgba(230, 57, 70, 0.5);
             --secondary: #5dade2;
-            --bg-darker: #020202;
+            --secondary-glow: rgba(93, 173, 226, 0.3);
+            --bg-dark: #050505;
             --bg-panel: #0a0a0a;
-            --bg-card: #0d0d0d;
+            --bg-card: #0e0e0e;
             --border: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(230, 57, 70, 0.8);
             --text-main: #e0e0e0;
-            --text-dim: #888;
+            --text-dim: #888888;
+            --text-highlight: #ffffff;
             --sidebar-width: 280px;
             --nav-height: 70px;
             --success: #2ecc71;
             --warning: #f1c40f;
+            --danger: #ff0000;
+            --scanline-color: rgba(0, 0, 0, 0.5);
         }
 
-        /* --- Global Reset & Scrollbar --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg-darker); }
-        ::-webkit-scrollbar-thumb { background: var(--primary); }
+        /* --- GLOBAL RESET & SCROLLBAR --- */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dim); }
 
         body {
-            background-color: var(--bg-darker);
+            background-color: var(--bg-dark);
             color: var(--text-main);
             font-family: 'JetBrains+Mono', monospace;
             overflow-x: hidden;
             line-height: 1.6;
+            font-size: 14px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- Scanlines Overlay --- */
-        body::before {
-            content: " ";
-            display: block;
+        /* --- BACKGROUND FX (SCANLINES & NOISE) --- */
+        .scanlines {
             position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
                         linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 9999;
-            background-size: 100% 2px, 3px 100%;
+            background-size: 100% 4px, 3px 100%;
             pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
         }
 
-        /* --- Mobile Navigation Sidebar --- */
+        .noise {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmYvP41FAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfmBwUQDw0u825TAAAAHWlUWHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAABbSURBVDjL7dOxDcAgDAXRVkzABowBS2YBVsAmnSVj4Q6i/qP4010iKj5F559iJ65S816b1E5c40l6X+3Ew0y9b/biZqY+N/txM9P42+zHw0xjb/bjZabxt9mPl5n6B3D6Wv44K56WAAAAAElFTkSuQmCC');
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 9998;
+            animation: noise-anim 0.5s infinite linear;
+        }
+
+        @keyframes noise-anim {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
+
+        /* --- Sidebar (Mobile) --- */
         .mobile-sidebar {
             position: fixed;
             top: 0; left: -100%;
@@ -67,29 +100,36 @@
             height: 100%;
             background: var(--bg-panel);
             border-right: 1px solid var(--primary);
-            z-index: 3000;
-            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2000;
+            transition: 0.4s ease;
             padding-top: 20px;
-            box-shadow: 20px 0 50px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
         }
 
-        .mobile-sidebar.open { left: 0; }
+        .mobile-sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.8); }
 
         .sidebar-header {
             padding: 0 20px 20px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid #222;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        .sidebar-header .logo img {
-            height: 30px;
-            filter: drop-shadow(0 0 5px var(--primary-glow));
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+            font-family: 'Orbitron';
+            font-weight: bold;
         }
 
-        .sidebar-links { list-style: none; }
+        .sidebar-header img { height: 30px; }
+
+        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
         .sidebar-links li a {
             padding: 15px 25px;
             display: flex;
@@ -99,30 +139,40 @@
             text-decoration: none;
             transition: 0.2s;
             border-left: 4px solid transparent;
-            font-size: 0.9rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
-        .sidebar-links li a:hover, .sidebar-links li a.active {
-            background: rgba(230, 57, 70, 0.1);
+        .sidebar-links li a:hover {
+            background: rgba(255,255,255,0.05);
             color: var(--primary);
             border-left-color: var(--primary);
         }
 
-        /* --- Top Header / Navbar --- */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1999;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+
+        /* --- HEADER & NAVIGATION --- */
         header {
             height: var(--nav-height);
             background: rgba(5, 5, 5, 0.95);
             border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 2000;
+            position: fixed;
+            top: 0; width: 100%;
+            z-index: 1000;
             backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
         .navbar {
-            max-width: 1400px;
+            max-width: 1800px;
             margin: 0 auto;
             height: 100%;
             display: flex;
@@ -138,37 +188,64 @@
             text-decoration: none;
             color: var(--text-main);
             font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
+            font-weight: 900;
             font-size: 1.2rem;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            position: relative;
         }
 
-        .logo img { height: 35px; }
+        .logo img {
+            height: 40px;
+            filter: drop-shadow(0 0 5px var(--primary-glow));
+            transition: 0.3s;
+        }
+
+        .logo:hover img {
+            filter: drop-shadow(0 0 10px var(--primary));
+            transform: scale(1.05);
+        }
 
         .nav-links {
             display: flex;
-            gap: 5px;
             list-style: none;
+            gap: 5px;
+            height: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
         }
 
         .nav-links li a {
-            padding: 8px 12px;
             color: var(--text-dim);
             text-decoration: none;
             font-size: 0.75rem;
-            text-transform: uppercase;
+            padding: 0 15px;
+            height: 100%;
+            transition: 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 4px;
-            transition: 0.3s;
             border-bottom: 2px solid transparent;
         }
 
-        .nav-links li a i { font-size: 1.1rem; }
+        .nav-links li a i { font-size: 1.1rem; margin-bottom: 2px; }
+        
         .nav-links li a:hover, .nav-links li a.active {
             color: var(--primary);
+            background: linear-gradient(to bottom, transparent 0%, rgba(230, 57, 70, 0.1) 100%);
             border-bottom-color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .nav-text { 
+            font-size: 0.6rem; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px;
         }
 
         .menu-toggle {
@@ -177,17 +254,47 @@
             border: 1px solid var(--primary);
             color: var(--primary);
             padding: 8px 12px;
-            cursor: pointer;
             border-radius: 4px;
-            box-shadow: 0 0 10px var(--primary-glow);
+            cursor: pointer;
+            transition: 0.3s;
         }
 
-        /* --- Hero Section --- */
+        .menu-toggle:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        @media (max-width: 1024px) {
+            .menu-toggle { display: block; }
+        }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            margin-top: var(--nav-height);
+            padding: 20px;
+            max-width: 1800px;
+            margin-left: auto;
+            margin-right: auto;
+            flex: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* --- HERO SECTION --- */
         .hero {
-            padding: 40px 20px;
+            padding: 50px 20px;
             text-align: center;
-            background: linear-gradient(to bottom, #0a0a0a, #020202);
+            background: linear-gradient(180deg, rgba(5,5,5,0.8) 0%, rgba(5,5,5,1) 100%), 
+                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1600');
+            background-size: cover;
+            background-position: center;
             border-bottom: 1px solid var(--border);
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
         .glitch-text {
@@ -197,45 +304,98 @@
             position: relative;
             display: inline-block;
             color: #fff;
-            text-shadow: 2px 2px var(--primary);
             margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
+            clip: rect(0, 0, 0, 0);
+        }
+
+        .glitch-text::before {
+            left: -2px;
+            text-shadow: 2px 0 var(--secondary);
+            animation: glitch-anim-1 2s infinite linear alternate-reverse;
+        }
+
+        .glitch-text::after {
+            left: 2px;
+            text-shadow: -2px 0 var(--primary);
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim-1 {
+            0% { clip: rect(10px, 9999px, 20px, 0); }
+            20% { clip: rect(45px, 9999px, 60px, 0); }
+            40% { clip: rect(15px, 9999px, 30px, 0); }
+            100% { clip: rect(80px, 9999px, 90px, 0); }
+        }
+
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(80px, 9999px, 90px, 0); }
+            20% { clip: rect(10px, 9999px, 20px, 0); }
+            40% { clip: rect(50px, 9999px, 60px, 0); }
+            100% { clip: rect(5px, 9999px, 15px, 0); }
         }
 
         .agent-badge {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: rgba(255,255,255,0.03);
+            background: rgba(0,0,0,0.6);
             padding: 8px 20px;
-            border-radius: 50px;
+            border-radius: 4px;
             border: 1px solid var(--border);
             font-size: 0.8rem;
-            color: var(--secondary);
+            color: var(--text-dim);
+            backdrop-filter: blur(5px);
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 8px; height: 8px;
             background: var(--success);
             border-radius: 50%;
             box-shadow: 0 0 8px var(--success);
             animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-            0% { opacity: 0.4; }
-            50% { opacity: 1; }
-            100% { opacity: 0.4; }
+        /* --- NETWORK VISUALIZER --- */
+        .network-container {
+            width: 100%;
+            height: 200px;
+            background: #000;
+            border: 1px solid var(--border);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
         }
 
-        /* --- Search & Filters --- */
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .network-overlay {
+            position: absolute;
+            top: 10px; left: 10px;
+            font-family: 'Orbitron';
+            font-size: 0.7rem;
+            color: var(--primary);
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border: 1px solid var(--primary);
+        }
+
+        /* --- FILTERS --- */
         .filter-section {
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 0 20px;
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
+            margin-bottom: 30px;
+            background: var(--bg-panel);
+            padding: 20px;
+            border: 1px solid var(--border);
         }
 
         .search-container {
@@ -249,12 +409,12 @@
             left: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--primary);
+            color: var(--text-dim);
         }
 
         .search-container input {
             width: 100%;
-            background: var(--bg-panel);
+            background: #000;
             border: 1px solid var(--border);
             padding: 12px 15px 12px 45px;
             color: #fff;
@@ -268,14 +428,29 @@
             box-shadow: 0 0 15px var(--primary-glow);
         }
 
-        /* --- Agent Grid --- */
-        .agent-grid {
-            max-width: 1200px;
-            margin: 0 auto 100px;
+        .filter-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
             padding: 0 20px;
+            cursor: pointer;
+            font-family: 'Orbitron';
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(230, 57, 70, 0.1);
+        }
+
+        /* --- AGENT GRID --- */
+        .agent-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 25px;
+            margin-bottom: 50px;
         }
 
         .agent-card {
@@ -285,6 +460,7 @@
             position: relative;
             overflow: hidden;
             transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
         }
 
         .agent-card:hover {
@@ -333,6 +509,7 @@
             font-size: 1.1rem;
             color: var(--primary);
             text-transform: uppercase;
+            margin-bottom: 5px;
         }
 
         .agent-details .agent-uid {
@@ -352,7 +529,7 @@
             -webkit-box-orient: vertical;
         }
 
-        /* --- XP System --- */
+        /* --- XP SYSTEM --- */
         .xp-container {
             margin-top: 15px;
         }
@@ -364,6 +541,7 @@
             margin-bottom: 6px;
             text-transform: uppercase;
             font-weight: 700;
+            color: var(--text-dim);
         }
 
         .xp-bar {
@@ -371,6 +549,7 @@
             background: #222;
             width: 100%;
             position: relative;
+            overflow: hidden;
         }
 
         .xp-fill {
@@ -403,69 +582,181 @@
         .rank-agent { color: #e67e22; border-color: #e67e22; }
         .rank-recruit { color: #95a5a6; border-color: #95a5a6; }
 
-        .btn-profile {
-            background: none;
-            border: 1px solid var(--secondary);
-            color: var(--secondary);
-            padding: 5px 12px;
-            font-size: 0.7rem;
+        /* --- MODAL (DOSSIER) --- */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--primary);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 40px;
+            position: relative;
+            box-shadow: 0 0 50px rgba(230, 57, 70, 0.2);
+            animation: modalPop 0.3s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px; right: 20px;
+            color: var(--text-dim);
+            font-size: 1.5rem;
             cursor: pointer;
-            text-transform: uppercase;
             transition: 0.3s;
         }
+        .close-modal:hover { color: var(--primary); }
 
-        .btn-profile:hover {
-            background: var(--secondary);
-            color: #000;
+        .dossier-header {
+            display: flex;
+            gap: 30px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 30px;
+            margin-bottom: 30px;
         }
 
-        /* --- Responsive Queries --- */
+        .dossier-img {
+            width: 150px; height: 150px;
+            border: 2px solid var(--primary);
+            padding: 5px;
+        }
+        .dossier-img img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); }
+
+        .dossier-info h2 {
+            font-family: 'Orbitron';
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .dossier-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: var(--secondary); display: block; }
+        .stat-lbl { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+
+        /* --- TERMINAL LOG --- */
+        .terminal-log {
+            height: 150px;
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--success);
+            overflow-y: auto;
+            margin-top: 30px;
+        }
+        .log-entry { margin-bottom: 5px; opacity: 0.8; }
+        .log-time { color: var(--text-dim); margin-right: 10px; }
+
+        /* --- PUSH NOTIFICATIONS --- */
+        .push-notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 6000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .push-alert {
+            background: rgba(10, 10, 10, 0.95);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            width: 300px;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* --- RESPONSIVE --- */
         @media (max-width: 900px) {
             .nav-links { display: none; }
             .menu-toggle { display: block; }
             .glitch-text { font-size: 1.8rem; }
             .agent-grid { grid-template-columns: 1fr; }
+            .dossier-header { flex-direction: column; align-items: center; text-align: center; }
         }
 
-        @media (max-width: 500px) {
-            .hero { padding: 30px 15px; }
-            .filter-section { margin: 20px auto; }
-            .logo span { display: none; }
-        }
-
-        /* Overlays for Glitch */
-        .glitch-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, transparent 0%, rgba(230, 57, 70, 0.05) 50%, transparent 100%);
-            background-size: 100% 4px;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
 
+    <!-- VISUAL OVERLAYS -->
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+    <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="push-notification-container" id="push-container"></div>
+
     <!-- Mobile Navigation Sidebar -->
     <aside class="mobile-sidebar" id="sidebar">
         <div class="sidebar-header">
-            <a href="index.html" class="logo">
-                <img src="logo.png" alt="Dark Jurassic Logo">
-                <span>TERMINAL</span>
-            </a>
-            <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-times"></i></button>
+            <div class="logo" style="color: var(--primary);">
+                <img src="logo.png" alt="Logo">
+                <span>Menu</span>
+            </div>
+            <button class="menu-toggle" onclick="toggleSidebar()" style="display:block; border:none;">
+                <i class="fa fa-times"></i>
+            </button>
         </div>
         <ul class="sidebar-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
         </ul>
+        <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
+            SECURE CONNECTION<br>V4.0.2 STABLE
+        </div>
     </aside>
 
     <header>
@@ -476,16 +767,17 @@
             </a>
 
             <ul class="nav-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
             </ul>
 
             <button class="menu-toggle" onclick="toggleSidebar()">
@@ -496,20 +788,32 @@
 
     <main>
         <section class="hero">
-            <h1 class="glitch-text" data-text="AGENT NETWORK">AGENT NETWORK</h1>
-            <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;">ACCESSING INGEN PERSONNEL DATABASE...</p>
+            <h1 class="glitch-text" data-text="GLOBAL AGENT NETWORK">GLOBAL AGENT NETWORK</h1>
             <div class="agent-badge">
                 <div class="status-dot"></div>
                 <span id="auth-status">SYNCHRONIZING BIOS...</span>
             </div>
+            <p style="margin-top: 15px; color: var(--text-dim); font-size: 0.8rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                ACCESSING CLASSIFIED PERSONNEL DATABASE. UNAUTHORIZED VIEWING OF AGENT DOSSIERS IS A CLASS A FELONY.
+            </p>
         </section>
+
+        <!-- Network Visualizer -->
+        <div class="network-container">
+            <div class="network-overlay">LIVE NODE TRAFFIC</div>
+            <canvas id="networkCanvas"></canvas>
+        </div>
 
         <section class="filter-section">
             <div class="search-container">
                 <i class="fa fa-search"></i>
                 <input type="text" id="agentSearch" placeholder="Search by Agent Codename or ID..." oninput="filterAgents()">
             </div>
-            <!-- Dynamic sorting or filters can go here -->
+            <div style="display: flex; gap: 10px;">
+                <button class="filter-btn active" onclick="filterByRank('all')">ALL</button>
+                <button class="filter-btn" onclick="filterByRank('commander')">COMMAND</button>
+                <button class="filter-btn" onclick="filterByRank('specialist')">SPECIALIST</button>
+            </div>
         </section>
 
         <section class="agent-grid" id="agentGrid">
@@ -519,10 +823,60 @@
                 <p style="margin-top: 15px;">Establishing Handshake with Database...</p>
             </div>
         </section>
+
+        <!-- Terminal Log -->
+        <div class="terminal-log" id="terminal-log">
+            <div class="log-entry"><span class="log-time">[00:00:01]</span> SYSTEM_INIT... OK</div>
+            <div class="log-entry"><span class="log-time">[00:00:02]</span> CONNECTING TO FIREBASE RELAY... OK</div>
+        </div>
     </main>
 
+    <!-- DOSSIER MODAL -->
+    <div class="modal" id="dossierModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeDossier()">&times;</span>
+            
+            <div class="dossier-header">
+                <div class="dossier-img">
+                    <img id="modal-img" src="" alt="Agent">
+                </div>
+                <div class="dossier-info">
+                    <h2 id="modal-name">AGENT_NAME</h2>
+                    <p id="modal-id" style="color: var(--primary); font-family: monospace;">ID: UNKNOWN</p>
+                    <p id="modal-bio" style="color: #ccc; margin-top: 10px; font-size: 0.9rem;">Bio loading...</p>
+                </div>
+            </div>
+
+            <div class="dossier-stats">
+                <div class="stat-box">
+                    <span class="stat-val" id="modal-xp">0</span>
+                    <span class="stat-lbl">EXPERIENCE</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-val" id="modal-rank">RECRUIT</span>
+                    <span class="stat-lbl">RANK</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-val" id="modal-missions">0</span>
+                    <span class="stat-lbl">MISSIONS</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-val" style="color: var(--success);">ACTIVE</span>
+                    <span class="stat-lbl">STATUS</span>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+                <h3 style="font-family: 'Orbitron'; color: var(--text-dim); font-size: 0.9rem; margin-bottom: 10px;">CLEARANCE LEVEL</h3>
+                <div class="xp-bar">
+                    <div class="xp-fill" id="modal-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- Firebase Configuration ---
+        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -533,28 +887,40 @@
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
 
+        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
+        // --- GLOBAL VARIABLES ---
         let allAgents = [];
+        let isSidebarOpen = false;
 
-        // --- Core Authentication ---
+        // --- AUTHENTICATION ---
         auth.onAuthStateChanged(user => {
             const statusEl = document.getElementById('auth-status');
             if (user) {
                 const username = user.email.split('@')[0].replace(/\./g, '_');
                 statusEl.innerText = `AGENT: ${username.toUpperCase()} [CONNECTED]`;
+                statusEl.style.color = 'var(--success)';
+                addLog(`Session verified for ${username}. Access granted.`);
                 loadAgents();
+
+                db.ref('users/' + username).once('value').then(snapshot => {
+                    const data = snapshot.val();
+                    if (data && data.role === 'admin') {
+                        document.getElementById('admin-nav').style.display = 'block';
+                        document.getElementById('admin-sidebar').style.display = 'block';
+                    }
+                });
             } else {
                 statusEl.innerText = `UNAUTHORIZED ACCESS - LOGIN REQUIRED`;
-                statusEl.style.color = 'var(--primary)';
-                // Redirect if not logged in
-                setTimeout(() => window.location.href = "login.html", 3000);
+                statusEl.style.color = 'var(--danger)';
+                addLog("Warning: Anonymous connection detected.");
             }
         });
 
-        // --- Load Agents from Database ---
+        // --- DATA HANDLING ---
         function loadAgents() {
             db.ref('users').on('value', snapshot => {
                 const data = snapshot.val();
@@ -568,10 +934,10 @@
                 // Sort by XP by default (high to low)
                 allAgents.sort((a, b) => (b.xp || 0) - (a.xp || 0));
                 displayAgents(allAgents);
+                addLog(`Database sync complete. ${allAgents.length} agents loaded.`);
             });
         }
 
-        // --- Render UI ---
         function displayAgents(agents) {
             const grid = document.getElementById('agentGrid');
             grid.innerHTML = '';
@@ -589,11 +955,12 @@
 
                 const card = document.createElement('div');
                 card.className = 'agent-card';
+                card.onclick = () => openDossier(agent);
+                
                 card.innerHTML = `
-                    <div class="glitch-overlay"></div>
                     <div class="agent-info">
                         <div class="agent-avatar">
-                            <img src="${agent.profilePic || 'https://via.placeholder.com/150/0a0a0a/e63946?text=AGENT'}" alt="${agent.displayName}">
+                            <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=${agent.id}" alt="${agent.displayName}">
                         </div>
                         <div class="agent-details">
                             <span class="agent-uid">ID: ${agent.id.toUpperCase()}</span>
@@ -614,14 +981,65 @@
 
                     <div class="agent-meta">
                         <span class="rank-tag ${rankInfo.class}">${rankInfo.title}</span>
-                        <button class="btn-profile" onclick="viewAgent('${agent.id}')">Access Dossier</button>
+                        <i class="fa fa-chevron-right" style="color: var(--primary); font-size: 0.8rem;"></i>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        // --- Helper Logic ---
+        // --- FILTERING ---
+        function filterAgents() {
+            const query = document.getElementById('agentSearch').value.toLowerCase();
+            const filtered = allAgents.filter(a => 
+                (a.displayName && a.displayName.toLowerCase().includes(query)) || 
+                a.id.toLowerCase().includes(query)
+            );
+            displayAgents(filtered);
+        }
+
+        function filterByRank(type) {
+            // Update buttons
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (type === 'all') {
+                displayAgents(allAgents);
+            } else {
+                const filtered = allAgents.filter(a => {
+                    const rank = getRank(a.xp || 0);
+                    return rank.class.includes(type);
+                });
+                displayAgents(filtered);
+            }
+        }
+
+        // --- DOSSIER MODAL ---
+        function openDossier(agent) {
+            const modal = document.getElementById('dossierModal');
+            const xp = agent.xp || 0;
+            const rank = getRank(xp);
+            const nextXP = getNextRankXP(xp);
+            const progress = (xp / nextXP) * 100;
+
+            document.getElementById('modal-img').src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${agent.id}`;
+            document.getElementById('modal-name').innerText = agent.displayName || agent.id;
+            document.getElementById('modal-id').innerText = `ID: ${agent.id.toUpperCase()}`;
+            document.getElementById('modal-bio').innerText = agent.bio || "Classified information. No bio available.";
+            document.getElementById('modal-xp').innerText = xp;
+            document.getElementById('modal-rank').innerText = rank.title;
+            document.getElementById('modal-missions').innerText = Math.floor(xp / 100); // Simulated stat
+            document.getElementById('modal-bar').style.width = `${Math.min(progress, 100)}%`;
+
+            modal.style.display = 'flex';
+            addLog(`Accessing dossier for ${agent.id}... Success.`);
+        }
+
+        function closeDossier() {
+            document.getElementById('dossierModal').style.display = 'none';
+        }
+
+        // --- UTILS ---
         function getRank(xp) {
             if (xp >= 10000) return { title: "Grand Master", class: "rank-commander" };
             if (xp >= 5000) return { title: "Commander", class: "rank-commander" };
@@ -638,41 +1056,104 @@
             return xp + 5000;
         }
 
-        function filterAgents() {
-            const query = document.getElementById('agentSearch').value.toLowerCase();
-            const filtered = allAgents.filter(a => 
-                (a.displayName && a.displayName.toLowerCase().includes(query)) || 
-                a.id.toLowerCase().includes(query)
-            );
-            displayAgents(filtered);
-        }
-
-        function viewAgent(id) {
-            window.location.href = `profile.html?uid=${id}`;
-        }
-
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            isSidebarOpen = !isSidebarOpen;
+            
+            if (isSidebarOpen) {
+                sidebar.classList.add('open');
+                overlay.style.display = 'block';
+            } else {
+                sidebar.classList.remove('open');
+                overlay.style.display = 'none';
+            }
         }
 
-        // Close sidebar when clicking links on mobile
-        document.querySelectorAll('.sidebar-links a').forEach(link => {
-            link.addEventListener('click', () => {
-                document.getElementById('sidebar').classList.remove('open');
-            });
-        });
+        function addLog(msg) {
+            const log = document.getElementById('terminal-log');
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
+            log.prepend(entry);
+            if (log.children.length > 20) log.lastChild.remove();
+        }
 
-        // Matrix-like background effect for hero header
-        setInterval(() => {
-            const glitch = document.querySelector('.glitch-text');
-            if(glitch) {
-                const colors = ['#e63946', '#5dade2', '#fff'];
-                glitch.style.textShadow = `2px 2px ${colors[Math.floor(Math.random()*colors.length)]}`;
-                setTimeout(() => {
-                    glitch.style.textShadow = '2px 2px var(--primary)';
-                }, 100);
+        // --- CANVAS VISUALIZER ---
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let nodes = [];
+
+        function resizeCanvas() {
+            width = canvas.width = canvas.offsetWidth;
+            height = canvas.height = canvas.offsetHeight;
+            initNodes();
+        }
+
+        function initNodes() {
+            nodes = [];
+            for(let i=0; i<30; i++) {
+                nodes.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 1,
+                    vy: (Math.random() - 0.5) * 1
+                });
             }
-        }, 3000);
+        }
+
+        function drawNetwork() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#e63946';
+            ctx.strokeStyle = 'rgba(230, 57, 70, 0.2)';
+
+            nodes.forEach(node => {
+                node.x += node.vx;
+                node.y += node.vy;
+
+                if(node.x < 0 || node.x > width) node.vx *= -1;
+                if(node.y < 0 || node.y > height) node.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                nodes.forEach(other => {
+                    const dx = node.x - other.x;
+                    const dy = node.y - other.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < 100) {
+                        ctx.beginPath();
+                        ctx.moveTo(node.x, node.y);
+                        ctx.lineTo(other.x, other.y);
+                        ctx.stroke();
+                    }
+                });
+            });
+            requestAnimationFrame(drawNetwork);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawNetwork();
+
+        // --- PUSH NOTIFICATIONS ---
+        db.ref('alerts').limitToLast(1).on('child_added', snap => {
+            const alert = snap.val();
+            if (alert.timestamp && Date.now() - alert.timestamp < 60000) {
+                const container = document.getElementById('push-container');
+                const div = document.createElement('div');
+                div.className = 'push-alert';
+                div.innerHTML = `
+                    <div style="color:var(--primary); font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">${alert.title}</div>
+                    <div style="font-size:0.75rem; color:#ccc;">${alert.message}</div>
+                `;
+                container.appendChild(div);
+                setTimeout(() => div.remove(), 5000);
+            }
+        });
 
     </script>
 </body>

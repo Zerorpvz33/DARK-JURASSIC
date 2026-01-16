@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dark Jurassic | InGen Secure Vault</title>
+    <title>Dark Jurassic | Secure Data Vault</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <!-- External Assets -->
@@ -28,6 +28,8 @@
             --text-dim: #888888;
             --accent-blue: #00d4ff;
             --warning: #ffb703;
+            --success: #2ecc71;
+            --danger: #ff0000;
             --sidebar-width: 280px;
             --nav-height: 70px;
         }
@@ -37,6 +39,7 @@
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            outline: none;
         }
 
         body {
@@ -45,19 +48,36 @@
             font-family: 'JetBrains+Mono', monospace;
             overflow-x: hidden;
             line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* --- Scanline & Noise Overlays --- */
-        body::before {
-            content: " ";
-            display: block;
+        .scanlines {
             position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
                         linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 9999;
-            background-size: 100% 2px, 3px 100%;
+            background-size: 100% 4px, 3px 100%;
             pointer-events: none;
+            z-index: 9999;
+            opacity: 0.4;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmYvP41FAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfmBwUQDw0u825TAAAAHWlUWHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAABbSURBVDjL7dOxDcAgDAXRVkzABowBS2YBVsAmnSVj4Q6i/qP4010iKj5F559iJ65S816b1E5c40l6X+3Ew0y9b/biZqY+N/txM9P42+zHw0xjb/bjZabxt9mPl5n6B3D6Wv44K56WAAAAAElFTkSuQmCC');
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 9998;
+            animation: noise-anim 0.5s infinite linear;
+        }
+
+        @keyframes noise-anim {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
         }
 
         /* --- Sidebar (Mobile) --- */
@@ -69,41 +89,36 @@
             background: var(--bg-panel);
             border-right: 1px solid var(--primary);
             z-index: 3000;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding-top: env(safe-area-inset-top, 20px);
+            transition: 0.4s ease;
+            padding-top: 20px;
             display: flex;
             flex-direction: column;
+            box-shadow: 10px 0 50px rgba(0,0,0,0.8);
         }
 
         .mobile-sidebar.open { left: 0; }
 
         .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #222;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: space-between;
         }
 
-        .sidebar-header img {
-            width: 40px;
-            filter: drop-shadow(0 0 5px var(--primary-glow));
-        }
-
-        .sidebar-header span {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             color: var(--primary);
-            letter-spacing: 2px;
+            font-family: 'Orbitron';
+            font-weight: bold;
         }
 
-        .sidebar-links {
-            list-style: none;
-            overflow-y: auto;
-            flex-grow: 1;
-            padding: 20px 0;
-        }
+        .sidebar-header img { height: 30px; }
 
+        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
         .sidebar-links li a {
             padding: 15px 25px;
             display: flex;
@@ -112,15 +127,25 @@
             color: var(--text-dim);
             text-decoration: none;
             transition: 0.2s;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             border-left: 4px solid transparent;
+            font-family: 'Orbitron', sans-serif;
         }
 
         .sidebar-links li a:hover, .sidebar-links li a.active {
-            background: rgba(230, 57, 70, 0.05);
+            background: rgba(255, 255, 255, 0.05);
             color: var(--primary);
             border-left-color: var(--primary);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2999;
+            display: none;
+            backdrop-filter: blur(3px);
         }
 
         /* --- Header & Navbar --- */
@@ -132,11 +157,11 @@
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
             z-index: 2000;
-            padding-top: env(safe-area-inset-top);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
         .navbar {
-            max-width: 1400px;
+            max-width: 1800px;
             margin: 0 auto;
             height: 100%;
             display: flex;
@@ -153,8 +178,14 @@
         }
 
         .logo img {
-            height: 38px;
+            height: 40px;
             filter: drop-shadow(0 0 5px var(--primary-glow));
+            transition: 0.3s;
+        }
+
+        .logo:hover img {
+            filter: drop-shadow(0 0 10px var(--primary));
+            transform: scale(1.05);
         }
 
         .logo span {
@@ -163,107 +194,259 @@
             color: var(--text-main);
             font-size: 1.2rem;
             letter-spacing: 1px;
-            background: linear-gradient(90deg, #fff, #888);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
         }
 
         .nav-links {
             display: flex;
             gap: 5px;
             list-style: none;
+            height: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
         }
 
         .nav-links a {
             color: var(--text-dim);
             text-decoration: none;
-            padding: 10px 15px;
-            border-radius: 4px;
+            padding: 0 15px;
+            height: 100%;
             transition: 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-size: 0.7rem;
+            justify-content: center;
+            font-size: 0.75rem;
+            gap: 4px;
+            border-bottom: 2px solid transparent;
         }
 
-        .nav-links a i { font-size: 1.2rem; margin-bottom: 4px; }
-        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .nav-links a i { font-size: 1.1rem; }
+        .nav-links a:hover, .nav-links a.active { 
+            color: var(--primary); 
+            background: linear-gradient(to bottom, transparent 0%, rgba(230, 57, 70, 0.1) 100%);
+            border-bottom-color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .nav-text {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
 
         .menu-toggle {
             display: none;
             background: none;
-            border: none;
+            border: 1px solid var(--primary);
             color: var(--primary);
-            font-size: 1.5rem;
+            padding: 8px 12px;
+            border-radius: 4px;
             cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        @media (max-width: 1024px) {
+            .menu-toggle { display: block; }
         }
 
         /* --- Main Content --- */
         main {
-            margin-top: calc(var(--nav-height) + 20px);
-            padding: 20px;
-            max-width: 1400px;
+            margin-top: var(--nav-height);
+            padding: 40px 20px;
+            max-width: 1600px;
             margin-left: auto;
             margin-right: auto;
-            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
         }
 
         .hero {
             text-align: center;
-            margin-bottom: 40px;
             padding: 40px 20px;
-            background: radial-gradient(circle at center, rgba(230, 57, 70, 0.1) 0%, transparent 70%);
+            background: linear-gradient(180deg, rgba(5,5,5,0.8) 0%, rgba(5,5,5,1) 100%), 
+                        url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1600');
+            background-size: cover;
+            background-position: center;
             border: 1px solid var(--border);
             border-radius: 8px;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
         .glitch-text {
             font-family: 'Orbitron', sans-serif;
             font-size: 2.5rem;
             font-weight: 900;
-            color: var(--primary);
+            color: #fff;
             text-transform: uppercase;
             position: relative;
             display: inline-block;
+            letter-spacing: 4px;
+        }
+
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
+        }
+
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -2px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -2px 0 #00fff9;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(31px, 9999px, 94px, 0); }
+            20% { clip: rect(62px, 9999px, 42px, 0); }
+            100% { clip: rect(10px, 9999px, 85px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(10px, 9999px, 85px, 0); }
+            20% { clip: rect(31px, 9999px, 94px, 0); }
+            100% { clip: rect(62px, 9999px, 42px, 0); }
         }
 
         .agent-badge {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 16px;
-            border-radius: 20px;
-            margin-top: 15px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 20px;
+            border-radius: 4px;
             border: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            backdrop-filter: blur(5px);
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
+            width: 8px; height: 8px;
             background: #00ff00;
+            border-radius: 50%;
             box-shadow: 0 0 10px #00ff00;
-            animation: pulse 1.5s infinite;
+            animation: pulse 2s infinite;
+        }
+
+        /* --- Storage Stats --- */
+        .storage-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--primary);
+        }
+
+        .stat-title {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron';
+            font-size: 1.5rem;
+            color: #fff;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #222;
+            margin-top: 15px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-blue);
+            width: 0%;
+            transition: width 1s ease-in-out;
         }
 
         /* --- Vault Interface --- */
         .vault-controls {
-            display: grid;
-            grid-template-columns: 1fr auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
             gap: 20px;
-            margin-bottom: 30px;
+            background: var(--bg-panel);
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: 'Orbitron';
+            font-size: 0.7rem;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(230, 57, 70, 0.1);
         }
 
         .search-bar {
             position: relative;
+            flex: 1;
+            max-width: 300px;
         }
 
         .search-bar i {
             position: absolute;
-            left: 15px;
+            left: 10px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-dim);
@@ -271,42 +454,37 @@
 
         .search-bar input {
             width: 100%;
-            background: var(--bg-panel);
+            background: #000;
             border: 1px solid var(--border);
-            padding: 15px 15px 15px 45px;
-            border-radius: 8px;
-            color: white;
+            padding: 10px 10px 10px 35px;
+            color: #fff;
             font-family: inherit;
             outline: none;
-            transition: 0.3s;
-        }
-
-        .search-bar input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 15px var(--primary-glow);
         }
 
         .vault-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
+            gap: 25px;
         }
 
         .file-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 4px;
+            padding: 25px;
             position: relative;
             cursor: pointer;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: 0.3s;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .file-card:hover {
             transform: translateY(-5px);
             border-color: var(--primary);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
         .file-icon {
@@ -314,13 +492,15 @@
             color: var(--primary);
             margin-bottom: 15px;
             opacity: 0.8;
+            text-align: center;
         }
 
         .file-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
+            font-size: 1.1rem;
             margin-bottom: 5px;
             color: #fff;
+            text-align: center;
         }
 
         .file-type {
@@ -328,38 +508,136 @@
             color: var(--text-dim);
             text-transform: uppercase;
             letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .file-meta {
+            font-size: 0.65rem;
+            color: #555;
+            border-top: 1px solid #222;
+            padding-top: 10px;
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
         }
 
         .lock-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 10;
             backdrop-filter: blur(4px);
-            opacity: 1;
-            transition: 0.3s;
+            border: 1px solid var(--border);
         }
 
         .lock-overlay i {
             font-size: 2rem;
-            color: var(--primary);
+            color: var(--warning);
             margin-bottom: 10px;
+        }
+
+        /* --- Upload Zone --- */
+        .upload-zone {
+            background: var(--bg-panel);
+            border: 1px dashed var(--border);
+            border-radius: 4px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-blue);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .upload-zone i {
+            font-size: 3rem;
+            color: #444;
+            margin-bottom: 15px;
+        }
+
+        /* --- Access Logs --- */
+        .access-logs {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 20px;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .log-table th { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); color: var(--primary); font-family: 'Orbitron'; }
+        .log-table td { padding: 10px; border-bottom: 1px solid #111; }
+        .log-table tr:hover { background: rgba(255,255,255,0.02); }
+
+        /* --- Terminal --- */
+        .terminal-logs {
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            height: 150px;
+            overflow-y: auto;
+            color: var(--success);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .log-entry { margin-bottom: 4px; opacity: 0.8; }
+        .log-time { color: #555; margin-right: 10px; }
+
+        /* --- Push Notifications --- */
+        .push-notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 6000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .push-alert {
+            background: rgba(10, 10, 10, 0.95);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            width: 300px;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         /* --- Viewer Modal --- */
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.9);
             z-index: 5000;
             display: none;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            backdrop-filter: blur(5px);
         }
 
         .modal-content {
@@ -368,11 +646,17 @@
             width: 100%;
             max-width: 900px;
             max-height: 90vh;
-            border-radius: 12px;
+            border-radius: 4px;
             position: relative;
             overflow-y: auto;
             padding: 40px;
             box-shadow: 0 0 50px rgba(230, 57, 70, 0.2);
+            animation: modalPop 0.3s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         .close-modal {
@@ -382,6 +666,7 @@
             font-size: 1.5rem;
             cursor: pointer;
             z-index: 10;
+            transition: 0.3s;
         }
 
         .close-modal:hover { color: var(--primary); }
@@ -400,7 +685,7 @@
 
         .viewer-body img {
             width: 100%;
-            border-radius: 8px;
+            border-radius: 4px;
             margin-bottom: 20px;
             border: 1px solid var(--border);
         }
@@ -409,40 +694,56 @@
             font-size: 0.95rem;
             color: #ccc;
             white-space: pre-line;
+            line-height: 1.8;
         }
 
-        /* --- System Logs (Bottom) --- */
-        .terminal-logs {
-            margin-top: 60px;
+        .hex-dump {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: var(--accent-blue);
             background: #000;
-            border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            height: 200px;
+            padding: 15px;
+            border: 1px solid #222;
+            margin-top: 20px;
+            max-height: 150px;
             overflow-y: auto;
-            color: #00ff00;
         }
 
-        .log-entry {
-            margin-bottom: 4px;
-            opacity: 0.8;
-            font-family: 'JetBrains Mono', monospace;
+        /* --- Decryption Minigame --- */
+        .decrypt-container {
+            text-align: center;
+            padding: 40px;
         }
 
-        .log-time { color: var(--text-dim); margin-right: 10px; }
+        .decrypt-bar-bg {
+            width: 100%;
+            height: 20px;
+            background: #222;
+            border: 1px solid #444;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .decrypt-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--success);
+            transition: width 0.1s linear;
+        }
+
+        .decrypt-status {
+            font-family: 'Orbitron';
+            font-size: 1.2rem;
+            color: var(--warning);
+            animation: blink 0.5s infinite;
+        }
 
         /* --- Mobile Responsiveness --- */
-        @media (max-width: 1024px) {
-            .nav-links { display: none; }
-            .menu-toggle { display: block; }
-            .glitch-text { font-size: 1.8rem; }
-        }
-
         @media (max-width: 600px) {
-            .vault-controls { grid-template-columns: 1fr; }
+            .vault-controls { flex-direction: column; align-items: stretch; }
             .modal-content { padding: 20px; }
-            .hero { padding: 20px 10px; }
+            .hero h1 { font-size: 1.8rem; }
+            .storage-dashboard { grid-template-columns: 1fr; }
         }
 
         @keyframes pulse {
@@ -450,6 +751,8 @@
             50% { opacity: 1; }
             100% { opacity: 0.4; }
         }
+        
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
@@ -459,24 +762,39 @@
 </head>
 <body>
 
+    <!-- VISUAL OVERLAYS -->
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+    <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="push-notification-container" id="push-container"></div>
+
     <!-- Mobile Navigation Sidebar -->
     <aside class="mobile-sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="logo.png" alt="Logo">
-            <span>TERMINAL</span>
+            <div class="logo" style="color: var(--primary);">
+                <img src="logo.png" alt="Logo">
+                <span>SYSTEM MENU</span>
+            </div>
+            <button class="menu-toggle" onclick="toggleSidebar()" style="display:block; border:none;">
+                <i class="fa fa-times"></i>
+            </button>
         </div>
         <ul class="sidebar-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
         </ul>
+        <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
+            SECURE CONNECTION<br>V4.0.2 STABLE
+        </div>
     </aside>
 
     <header>
@@ -486,17 +804,17 @@
                 <span>DARK JURASSIC</span>
             </a>
 
-            <ul class="nav-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
             </ul>
 
             <button class="menu-toggle" onclick="toggleSidebar()">
@@ -515,23 +833,71 @@
             <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 15px;">INGEN SECURITY CLEARANCE LEVEL 4 REQUIRED FOR FULL ACCESS</p>
         </section>
 
-        <section class="vault-controls">
-            <div class="search-bar">
-                <i class="fa fa-search"></i>
-                <input type="text" id="vaultSearch" placeholder="SEARCH ENCRYPTED FILES..." onkeyup="filterVault()">
+        <!-- Storage Stats -->
+        <section class="storage-dashboard">
+            <div class="stat-card">
+                <div class="stat-title">ENCRYPTED PARTITION</div>
+                <div class="stat-value">84.2 TB</div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
             </div>
-            <div class="vault-stats" style="display: flex; gap: 20px; align-items: center;">
-                <div style="text-align: right;">
-                    <div style="font-size: 0.6rem; color: var(--text-dim);">AVAILABLE DATA</div>
-                    <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent-blue);">1.4 TB</div>
-                </div>
+            <div class="stat-card">
+                <div class="stat-title">PUBLIC ARCHIVE</div>
+                <div class="stat-value">12.5 TB</div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 30%; background: var(--success);"></div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">SECURITY LEVEL</div>
+                <div class="stat-value" style="color: var(--danger);">CRITICAL</div>
+                <div class="progress-bar"><div class="progress-fill" style="width: 95%; background: var(--danger);"></div></div>
             </div>
         </section>
 
+        <!-- Controls -->
+        <section class="vault-controls">
+            <div class="filter-group">
+                <button class="filter-btn active" onclick="filterVault('all')">ALL</button>
+                <button class="filter-btn" onclick="filterVault('BIO-TECH')">BIO</button>
+                <button class="filter-btn" onclick="filterVault('INTEL')">INTEL</button>
+                <button class="filter-btn" onclick="filterVault('SECURITY')">SEC</button>
+            </div>
+            <div class="search-bar">
+                <i class="fa fa-search"></i>
+                <input type="text" id="vaultSearch" placeholder="SEARCH ENCRYPTED FILES..." onkeyup="searchVault()">
+            </div>
+        </section>
+
+        <!-- File Grid -->
         <div class="vault-grid" id="vault-container">
             <!-- Dynamic Files Loaded Here -->
         </div>
 
+        <!-- Upload Zone -->
+        <section class="upload-zone" onclick="document.getElementById('file-upload').click()">
+            <i class="fa fa-cloud-upload-alt"></i>
+            <h3 style="font-family: 'Orbitron'; color: #fff;">SECURE UPLOAD</h3>
+            <p style="color: var(--text-dim); font-size: 0.8rem;">Drag & Drop or Click to encrypt and upload intel.</p>
+            <input type="file" id="file-upload" style="display: none;" onchange="handleUpload(event)">
+        </section>
+
+        <!-- Access Logs -->
+        <section class="access-logs">
+            <h3 style="font-family: 'Orbitron'; color: var(--primary); margin-bottom: 15px; font-size: 1rem;">RECENT ACCESS LOGS</h3>
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>TIMESTAMP</th>
+                        <th>AGENT ID</th>
+                        <th>ACTION</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+                <tbody id="access-log-body">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Terminal -->
         <section class="terminal-logs" id="terminal-logs">
             <div class="log-entry">> Initializing secure handshake with InGen mainframes...</div>
             <div class="log-entry">> Encrypting session with 256-bit AES protocol...</div>
@@ -550,10 +916,32 @@
             <div class="viewer-body">
                 <img id="view-img" src="" alt="File Preview" onerror="this.src='https://via.placeholder.com/800x400/0a0a0a/e63946?text=NO_PREVIEW_AVAILABLE'">
                 <div class="viewer-desc" id="view-desc"></div>
+                <div class="hex-dump" id="hex-dump"></div>
             </div>
             <div style="margin-top: 30px; padding: 15px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--primary); font-size: 0.8rem;">
                 <i class="fa fa-exclamation-triangle" style="color: var(--warning);"></i> 
                 Warning: Any unauthorized duplication or distribution of this data is strictly prohibited under the InGen Corporate Secrecy Act.
+            </div>
+        </div>
+    </div>
+
+    <!-- Decryption Modal -->
+    <div class="modal" id="decrypt-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="decrypt-container">
+                <i class="fa fa-lock fa-3x" style="color: var(--warning); margin-bottom: 20px;"></i>
+                <h2 style="font-family: 'Orbitron'; color: #fff;">ENCRYPTED FILE</h2>
+                <p style="color: var(--text-dim); font-size: 0.8rem; margin-bottom: 20px;">Brute-forcing encryption key...</p>
+                
+                <div class="decrypt-status" id="decrypt-text">INITIALIZING...</div>
+                
+                <div class="decrypt-bar-bg">
+                    <div class="decrypt-bar-fill" id="decrypt-bar"></div>
+                </div>
+                
+                <div style="font-family: monospace; font-size: 0.7rem; color: var(--accent-blue); height: 60px; overflow: hidden;" id="decrypt-code">
+                    0x4F 0x9A 0xB2...
+                </div>
             </div>
         </div>
     </div>
@@ -576,6 +964,7 @@
 
         let currentXP = 0;
         let currentUser = null;
+        let activeFilter = 'all';
 
         const vaultFiles = [
             { id: 1, name: "Project Indominus.pdf", type: "BIO-TECH", req: 0, img: "https://images.unsplash.com/photo-1525498128493-380d1990a112?q=80&w=1000", desc: "Original sequence blueprints for Asset #404. Development logs from Dr. Wu's laboratory confirm the incorporation of cuttlefish and pit viper DNA for advanced camouflage and thermal signatures." },
@@ -586,7 +975,10 @@
             { id: 6, name: "Asset #84 (Baryonyx).dna", type: "GENETICS", req: 5000, img: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1000", desc: "Raw genetic string for the Baryonyx specimen recovered from the volcano site. Analysis shows higher-than-normal predatory aggression markers." },
             { id: 7, name: "Isla_Nublar_Evac.pdf", type: "HISTORY", req: 1000, img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000", desc: "The official InGen post-disaster report from 1993. Contains redacted witness statements regarding the failure of the T-Rex paddock fence." },
             { id: 8, name: "Cryo_Storage_L3.key", type: "SECURITY", req: 7500, img: "https://images.unsplash.com/photo-1532187863486-abf9d39d99f5?q=80&w=1000", desc: "Digital keycard override for the sub-basement cryo-chambers. Warning: Temperatures must be maintained at -196°C to prevent biological decay." },
-            { id: 9, name: "Vapor_Protocol.txt", type: "MILITARY", req: 10000, img: "https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?q=80&w=1000", desc: "Contingency plan for the total destruction of all bio-assets in the event of a containment breach reaching populated areas. Code name: EXTINCTION EVENT." }
+            { id: 9, name: "Vapor_Protocol.txt", type: "MILITARY", req: 10000, img: "https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?q=80&w=1000", desc: "Contingency plan for the total destruction of all bio-assets in the event of a containment breach reaching populated areas. Code name: EXTINCTION EVENT." },
+            { id: 10, name: "Blue_Training.mov", type: "INTEL", req: 200, img: "https://images.unsplash.com/photo-1570051008600-b34baa49e751?q=80&w=1000", desc: "Early footage of IBRIS project. Subject 'Blue' shows empathy response." },
+            { id: 11, name: "Amber_Mine_Yield.xls", type: "LOGISTICS", req: 800, img: "https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=1000", desc: "Dominican Republic extraction yields. Mosquito density down 15%." },
+            { id: 12, name: "Mosasaur_Feeding.sch", type: "BIO-TECH", req: 1200, img: "https://images.unsplash.com/photo-1589986682286-6c245472122b?q=80&w=1000", desc: "Automated shark dispenser schedule. Override codes included." }
         ];
 
         // --- Core Functions ---
@@ -601,6 +993,12 @@
                     document.getElementById('agent-display').innerText = `AGENT: ${username.toUpperCase()} | XP: ${currentXP}`;
                     addLog(`Access privileges updated for ${username}. Clearances verified.`);
                     renderVault();
+                    generateAccessLogs();
+
+                    if (data && data.role === 'admin') {
+                        document.getElementById('admin-nav').style.display = 'block';
+                        document.getElementById('admin-sidebar').style.display = 'block';
+                    }
                 });
             } else {
                 window.location.href = "login.html";
@@ -608,57 +1006,127 @@
         });
 
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('overlay');
+            const isOpen = sb.classList.contains('open');
+            
+            if (isOpen) {
+                sb.classList.remove('open');
+                ov.style.display = 'none';
+            } else {
+                sb.classList.add('open');
+                ov.style.display = 'block';
+            }
         }
 
-        function renderVault(filter = "") {
+        function renderVault(filter = "all") {
             const container = document.getElementById('vault-container');
             container.innerHTML = "";
+            const search = document.getElementById('vaultSearch').value.toLowerCase();
 
             vaultFiles.forEach(file => {
-                if (filter && !file.name.toLowerCase().includes(filter.toLowerCase()) && !file.type.toLowerCase().includes(filter.toLowerCase())) return;
+                if (filter !== "all" && file.type !== filter) return;
+                if (search && !file.name.toLowerCase().includes(search) && !file.type.toLowerCase().includes(search)) return;
 
                 const isLocked = currentXP < file.req;
                 const card = document.createElement('div');
                 card.className = 'file-card';
                 card.onclick = () => viewFile(file, isLocked);
 
+                let icon = 'fa-file-code';
+                if(file.type === 'BIO-TECH') icon = 'fa-dna';
+                if(file.type === 'GEOGRAPHY') icon = 'fa-map';
+                if(file.type === 'SECURITY') icon = 'fa-shield-alt';
+                if(file.type === 'INTEL') icon = 'fa-eye';
+
                 card.innerHTML = `
                     ${isLocked ? `
                     <div class="lock-overlay">
                         <i class="fa fa-lock"></i>
-                        <div style="font-size:0.7rem;">REQUIRES ${file.req} XP</div>
+                        <div style="font-size:0.7rem; color: var(--warning);">REQUIRES ${file.req} XP</div>
                     </div>` : ''}
                     <div class="file-icon">
-                        <i class="fa ${file.type === 'BIO-TECH' ? 'fa-dna' : file.type === 'GEOGRAPHY' ? 'fa-map' : 'fa-file-code'}"></i>
+                        <i class="fa ${icon}"></i>
                     </div>
                     <div class="file-title">${file.name}</div>
                     <div class="file-type">${file.type}</div>
-                    <div style="margin-top:10px; font-size:0.6rem; color:var(--text-dim);">
-                        ID: #00${file.id} | CRYPTO: SHA-256
+                    <div class="file-meta">
+                        <span>ID: #00${file.id}</span>
+                        <span>SHA-256</span>
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        function filterVault() {
-            const query = document.getElementById('vaultSearch').value;
-            renderVault(query);
+        function filterVault(type) {
+            activeFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderVault(type);
+        }
+
+        function searchVault() {
+            renderVault(activeFilter);
         }
 
         function viewFile(file, isLocked) {
             if (isLocked) {
                 addLog(`CRITICAL_ERROR: Unauthorized access attempt to ${file.name}. Security team alerted.`, 'warn');
+                showNotification("ACCESS DENIED: INSUFFICIENT CLEARANCE", "error");
                 return;
             }
 
+            // Simulate decryption delay
+            startDecryption(file);
+        }
+
+        function startDecryption(file) {
+            const modal = document.getElementById('decrypt-modal');
+            const bar = document.getElementById('decrypt-bar');
+            const text = document.getElementById('decrypt-text');
+            const code = document.getElementById('decrypt-code');
+            
+            modal.style.display = 'flex';
+            bar.style.width = '0%';
+            text.innerText = "INITIALIZING...";
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 5;
+                if(progress > 100) progress = 100;
+                bar.style.width = progress + "%";
+                
+                // Random hex
+                code.innerText += ` 0x${Math.floor(Math.random()*255).toString(16).toUpperCase()}`;
+                code.scrollTop = code.scrollHeight;
+
+                if(progress < 30) text.innerText = "HANDSHAKE...";
+                else if(progress < 70) text.innerText = "BRUTE-FORCING...";
+                else text.innerText = "DECRYPTING...";
+
+                if(progress >= 100) {
+                    clearInterval(interval);
+                    modal.style.display = 'none';
+                    openFileModal(file);
+                }
+            }, 100);
+        }
+
+        function openFileModal(file) {
             const modal = document.getElementById('viewer-modal');
             document.getElementById('view-title').innerText = `DATA_STREAM: ${file.name}`;
             document.getElementById('view-img').src = file.img;
             document.getElementById('view-desc').innerText = file.desc;
             document.getElementById('view-meta').innerText = `FILE_TYPE: ${file.type} | SIZE: ${Math.floor(Math.random() * 500) + 10} MB | CLEARANCE: L4`;
             
+            // Generate fake hex dump
+            let hex = "";
+            for(let i=0; i<200; i++) {
+                hex += Math.floor(Math.random()*255).toString(16).toUpperCase().padStart(2,'0') + " ";
+            }
+            document.getElementById('hex-dump').innerText = hex;
+
             modal.style.display = 'flex';
             addLog(`File decrypted successfully: ${file.name}. Stream started.`);
         }
@@ -683,6 +1151,60 @@
             if (logBox.children.length > 50) logBox.lastChild.remove();
         }
 
+        function showNotification(msg, type="info") {
+            const container = document.getElementById('push-container');
+            const div = document.createElement('div');
+            div.className = 'push-alert';
+            let color = 'var(--primary)';
+            if(type === 'success') color = 'var(--success)';
+            if(type === 'error') color = 'var(--danger)';
+            
+            div.style.borderLeftColor = color;
+            div.innerHTML = `
+                <div style="color:${color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">SYSTEM ALERT</div>
+                <div style="font-size:0.75rem; color:#ccc;">${msg}</div>
+            `;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 4000);
+        }
+
+        function handleUpload(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            
+            addLog(`Initiating upload sequence for ${file.name}...`);
+            showNotification("ENCRYPTING UPLOAD...", "info");
+            
+            setTimeout(() => {
+                addLog(`Upload complete. File quarantined for scanning.`);
+                showNotification("UPLOAD SUCCESSFUL", "success");
+            }, 2000);
+        }
+
+        function generateAccessLogs() {
+            const tbody = document.getElementById('access-log-body');
+            const actions = ["VIEW_FILE", "DOWNLOAD", "LOGIN", "FAILED_AUTH"];
+            const statuses = ["SUCCESS", "SUCCESS", "SUCCESS", "DENIED"];
+            
+            let html = "";
+            for(let i=0; i<5; i++) {
+                const time = new Date(Date.now() - Math.random() * 10000000).toLocaleString();
+                const agent = "AGENT_" + Math.floor(Math.random() * 900 + 100);
+                const idx = Math.floor(Math.random() * actions.length);
+                const color = statuses[idx] === "DENIED" ? "var(--danger)" : "var(--success)";
+                
+                html += `
+                    <tr>
+                        <td>${time}</td>
+                        <td>${agent}</td>
+                        <td>${actions[idx]}</td>
+                        <td style="color: ${color}">${statuses[idx]}</td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+        }
+
         // Automatic ambient logs
         const ambientMsgs = [
             "Network traffic spike detected in Site B relay.",
@@ -700,10 +1222,19 @@
             }
         }, 8000);
 
+        // Listen for global alerts
+        db.ref('alerts').limitToLast(1).on('child_added', snap => {
+            const alert = snap.val();
+            if (alert.timestamp && Date.now() - alert.timestamp < 60000) {
+                showNotification(alert.title + ": " + alert.message);
+            }
+        });
+
         // Close sidebar on link click (mobile)
         document.querySelectorAll('.sidebar-links a').forEach(link => {
             link.addEventListener('click', () => {
                 document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('overlay').style.display = 'none';
             });
         });
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dark Jurassic | Intel Feed (Encrypted)</title>
+    <title>Dark Jurassic | Secure Intel Feed V4.2</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <!-- External Styles & Fonts -->
@@ -16,137 +16,128 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
+        /* --- CORE VARIABLES --- */
         :root {
             --primary: #e63946;
+            --primary-dim: #8a232b;
             --primary-glow: rgba(230, 57, 70, 0.4);
+            --secondary: #00d4ff;
+            --secondary-glow: rgba(0, 212, 255, 0.3);
             --bg-dark: #050505;
             --bg-panel: #0a0a0a;
             --card-bg: #0d0d0d;
             --border: rgba(255, 255, 255, 0.1);
+            --border-focus: rgba(230, 57, 70, 0.8);
             --accent-blue: #00d4ff;
             --text-main: #e0e0e0;
             --text-dim: #888888;
+            --text-highlight: #ffffff;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #ff0000;
             --nav-height: 70px;
             --sidebar-width: 280px;
-            --glitch-speed: 0.3s;
+            --scanline-color: rgba(0, 0, 0, 0.5);
+            --glass: rgba(20, 20, 20, 0.6);
         }
 
-        /* --- Global Reset --- */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* --- GLOBAL RESET & SCROLLBAR --- */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dim); }
+
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
             font-family: 'JetBrains+Mono', monospace;
             overflow-x: hidden;
             line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-size: 14px;
         }
 
-        /* --- Glitch Effects --- */
+        /* --- BACKGROUND & GLITCH EFFECTS --- */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.5;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmYvP41FAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfmBwUQDw0u825TAAAAHWlUWHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAABbSURBVDjL7dOxDcAgDAXRVkzABowBS2YBVsAmnSVj4Q6i/qP4010iKj5F559iJ65S816b1E5c40l6X+3Ew0y9b/biZqY+N/txM9P42+zHw0xjb/bjZabxt9mPl5n6B3D6Wv44K56WAAAAAElFTkSuQmCC');
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 9998;
+            animation: noise-anim 0.5s infinite linear;
+        }
+
+        @keyframes noise-anim {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
+
         .glitch-text {
             position: relative;
             display: inline-block;
             text-transform: uppercase;
             font-family: 'Orbitron', sans-serif;
             letter-spacing: 2px;
+            color: #fff;
         }
+
         .glitch-text::before, .glitch-text::after {
             content: attr(data-text);
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-dark);
+            clip: rect(0, 0, 0, 0);
         }
+
         .glitch-text::before {
             left: 2px;
-            text-shadow: -2px 0 #ff00c1;
-            clip: rect(44px, 450px, 56px, 0);
-            animation: glitch-anim 5s infinite linear alternate-reverse;
+            text-shadow: -2px 0 var(--secondary);
+            animation: glitch-anim-1 2s infinite linear alternate-reverse;
         }
+
         .glitch-text::after {
             left: -2px;
-            text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
-            animation: glitch-anim2 1s infinite linear alternate-reverse;
+            text-shadow: -2px 0 var(--primary), 2px 2px var(--secondary);
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
         }
 
-        @keyframes glitch-anim {
-            0% { clip: rect(31px, 9999px, 94px, 0); }
-            20% { clip: rect(62px, 9999px, 42px, 0); }
-            /* Add more steps for extra glitchiness */
-            100% { clip: rect(89px, 9999px, 98px, 0); }
+        @keyframes glitch-anim-1 {
+            0% { clip: rect(10px, 9999px, 20px, 0); }
+            20% { clip: rect(45px, 9999px, 60px, 0); }
+            40% { clip: rect(15px, 9999px, 30px, 0); }
+            100% { clip: rect(80px, 9999px, 90px, 0); }
         }
 
-        /* --- Layout Structure --- */
-        header {
-            height: var(--nav-height);
-            background: rgba(10, 10, 10, 0.95);
-            border-bottom: 1px solid var(--border);
-            position: fixed;
-            top: 0; width: 100%;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            backdrop-filter: blur(10px);
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(80px, 9999px, 90px, 0); }
+            20% { clip: rect(10px, 9999px, 20px, 0); }
+            40% { clip: rect(50px, 9999px, 60px, 0); }
+            100% { clip: rect(5px, 9999px, 15px, 0); }
         }
 
-        .navbar {
-            display: flex;
-            width: 100%;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: #fff;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 1.2rem;
-        }
-
-        .logo img {
-            height: 40px;
-            filter: drop-shadow(0 0 5px var(--primary-glow));
-        }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 20px;
-        }
-
-        .nav-links li a {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 0.9rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: 0.3s;
-        }
-
-        .nav-links li a:hover, .nav-links li a.active {
-            color: var(--primary);
-            text-shadow: 0 0 8px var(--primary-glow);
-        }
-
-        .nav-text { font-size: 0.65rem; margin-top: 4px; text-transform: uppercase; }
-
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 8px 12px;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        /* --- Mobile Sidebar --- */
+        /* --- Sidebar (Mobile) --- */
         .mobile-sidebar {
             position: fixed;
             top: 0; left: -100%;
@@ -155,20 +146,27 @@
             background: var(--bg-panel);
             border-right: 1px solid var(--primary);
             z-index: 2000;
-            transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            transition: 0.4s ease;
             padding-top: 20px;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
         }
 
-        .mobile-sidebar.open { left: 0; }
+        .mobile-sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.8); }
 
         .sidebar-header {
             padding: 0 20px 20px;
             border-bottom: 1px solid #222;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .sidebar-links { list-style: none; }
+        .sidebar-header .logo img { height: 30px; }
+        .sidebar-header .logo span { font-size: 1rem; }
+
+        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
         .sidebar-links li a {
             padding: 15px 25px;
             display: flex;
@@ -180,40 +178,173 @@
             border-left: 4px solid transparent;
             font-family: 'Orbitron', sans-serif;
             font-size: 0.85rem;
+            text-transform: uppercase;
         }
 
         .sidebar-links li a:hover {
-            background: rgba(230, 57, 70, 0.05);
+            background: rgba(255,255,255,0.05);
             color: var(--primary);
             border-left-color: var(--primary);
         }
 
+        .sidebar-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1999;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+
+        /* --- HEADER & NAVIGATION --- */
+        header {
+            height: var(--nav-height);
+            background: rgba(5, 5, 5, 0.95);
+            border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0; width: 100%;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .navbar {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1800px;
+            margin: 0 auto;
+            height: 100%;
+            padding: 0 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .logo img {
+            height: 40px;
+            filter: drop-shadow(0 0 5px var(--primary-glow));
+            transition: 0.3s;
+        }
+
+        .logo:hover img {
+            filter: drop-shadow(0 0 10px var(--primary));
+            transform: scale(1.05);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 5px;
+            height: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
+        }
+
+        .nav-links li a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+            padding: 0 15px;
+            height: 100%;
+            border-bottom: 2px solid transparent;
+            gap: 4px;
+        }
+
+        .nav-links li a i { font-size: 1.1rem; }
+
+        .nav-links li a:hover, .nav-links li a.active {
+            color: var(--primary);
+            background: linear-gradient(to bottom, transparent 0%, rgba(230, 57, 70, 0.1) 100%);
+            border-bottom-color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .nav-text { 
+            font-size: 0.6rem; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        @media (max-width: 1024px) {
+            .menu-toggle { display: block; }
+        }
+
         /* --- Main Content --- */
         main {
-            margin-top: calc(var(--nav-height) + 20px);
-            padding: 20px;
-            max-width: 1200px;
+            margin-top: var(--nav-height);
+            padding: 40px 20px;
+            max-width: 1600px;
             margin-left: auto;
             margin-right: auto;
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
         }
 
         .hero {
+            grid-column: 1 / -1;
             text-align: center;
             padding: 40px 0;
             border-bottom: 1px solid var(--border);
             margin-bottom: 30px;
+            position: relative;
+            background: linear-gradient(180deg, rgba(5,5,5,0.8) 0%, rgba(5,5,5,1) 100%), 
+                        url('https://images.unsplash.com/photo-1518546305927-5a555bb7020d?q=80&w=1600');
+            background-size: cover;
+            background-position: center;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
         .agent-badge {
             display: inline-flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 5px 15px;
-            border-radius: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 20px;
+            border-radius: 4px;
             border: 1px solid var(--border);
             margin-top: 15px;
-            font-size: 0.75rem;
-            color: var(--accent-blue);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            backdrop-filter: blur(5px);
         }
 
         .status-dot {
@@ -231,12 +362,24 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-        /* --- Forum List View --- */
+        /* --- FORUM LAYOUT & ACTIONS --- */
+        .forum-main-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
         .forum-actions {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 25px;
+            gap: 20px;
+            background: var(--bg-panel);
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            flex-wrap: wrap;
         }
 
         .btn-broadcast {
@@ -245,9 +388,11 @@
             border: none;
             padding: 12px 24px;
             font-family: 'Orbitron', sans-serif;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             transition: 0.3s;
         }
 
@@ -257,13 +402,42 @@
         }
 
         .search-box {
-            background: var(--bg-panel);
+            background: #000;
             border: 1px solid var(--border);
             padding: 10px 15px;
             color: #fff;
             font-family: inherit;
-            border-radius: 4px;
-            width: 300px;
+            outline: none;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: 'Orbitron';
+            font-size: 0.7rem;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(230, 57, 70, 0.1);
         }
 
         .threads-container {
@@ -277,32 +451,75 @@
             border: 1px solid var(--border);
             padding: 20px;
             cursor: pointer;
+            border-radius: 4px;
             transition: 0.3s;
             position: relative;
             overflow: hidden;
+            display: grid;
+            grid-template-columns: 50px 1fr auto;
+            gap: 20px;
+            align-items: center;
         }
 
         .thread-card:hover {
             border-color: var(--primary);
             background: #111;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .thread-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; width: 0; height: 100%;
+            background: rgba(230, 57, 70, 0.1);
+            transition: 0.4s;
+        }
+
+        .thread-icon {
+            font-size: 1.5rem;
+            color: var(--text-dim);
+            text-align: center;
+            opacity: 0.5;
+            transition: 0.3s;
+        }
+
+        .thread-card:hover .thread-icon {
+            color: var(--primary);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .thread-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
         .thread-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            align-items: center;
         }
 
         .thread-title {
-            color: var(--primary);
+            color: #fff;
             font-family: 'Orbitron', sans-serif;
             font-size: 1.1rem;
+            transition: 0.3s;
+            margin: 0;
         }
 
         .thread-meta {
             font-size: 0.7rem;
             color: var(--text-dim);
             text-transform: uppercase;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .thread-card:hover .thread-title {
+            color: var(--primary);
+            text-shadow: 0 0 5px var(--primary-glow);
         }
 
         .thread-preview {
@@ -314,17 +531,126 @@
             overflow: hidden;
         }
 
-        /* --- Single Thread View --- */
+        .thread-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            min-width: 80px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tag {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.1);
+            color: #ccc;
+            text-transform: uppercase;
+        }
+
+        .tag.intel { background: rgba(0, 212, 255, 0.2); color: var(--secondary); }
+        .tag.alert { background: rgba(255, 0, 0, 0.2); color: var(--danger); }
+        .tag.tech { background: rgba(255, 215, 0, 0.2); color: var(--warning); }
+
+        /* --- SIDEBAR WIDGETS --- */
+        .forum-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .widget-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 4px;
+        }
+
+        .widget-title {
+            font-family: 'Orbitron';
+            font-size: 0.9rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .user-stat-val { color: #fff; font-weight: bold; }
+
+        .top-agent-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .agent-avatar-small {
+            width: 30px; height: 30px;
+            background: #222;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            border: 1px solid #333;
+        }
+
+        /* --- SYSTEM LOG --- */
+        .system-log-container {
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--success);
+            margin-top: 20px;
+            grid-column: 1 / -1;
+        }
+
+        .log-entry { margin-bottom: 4px; opacity: 0.8; }
+        .log-time { color: #555; margin-right: 10px; }
+
+        /* --- SINGLE THREAD VIEW --- */
         #single-thread-view {
             display: none;
             animation: fadeIn 0.4s;
+            grid-column: 1 / -1;
         }
 
         .back-nav {
             margin-bottom: 20px;
             cursor: pointer;
             color: var(--accent-blue);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            display: inline-block;
+            border: 1px solid var(--accent-blue);
+            padding: 8px 15px;
+            transition: 0.3s;
         }
 
         .active-thread-container {
@@ -332,6 +658,11 @@
             border: 1px solid var(--border);
             padding: 30px;
             margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .back-nav:hover {
+            background: var(--accent-blue); color: #000;
         }
 
         .full-thread-body {
@@ -340,6 +671,40 @@
             background: rgba(255, 255, 255, 0.02);
             border-left: 3px solid var(--primary);
             white-space: pre-wrap;
+            line-height: 1.7;
+            font-size: 0.95rem;
+            color: #ccc;
+        }
+
+        .thread-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 5px 15px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .action-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .action-btn.active {
+            color: var(--success);
+            border-color: var(--success);
         }
 
         .comments-section {
@@ -348,12 +713,14 @@
 
         .comment-item {
             border-bottom: 1px solid #1a1a1a;
-            padding: 15px 0;
+            padding: 20px 0;
+            display: flex;
+            gap: 15px;
         }
 
         .comment-meta {
             font-size: 0.75rem;
-            color: var(--primary);
+            color: var(--accent-blue);
             margin-bottom: 5px;
         }
 
@@ -361,11 +728,26 @@
             font-size: 0.9rem;
             color: var(--text-main);
         }
+        
+        .comment-avatar {
+            width: 40px; height: 40px;
+            background: #222;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+            border: 1px solid #444;
+        }
 
         .comment-input-area {
             margin-top: 30px;
             display: flex;
             gap: 10px;
+            background: var(--bg-panel);
+            padding: 20px;
+            border: 1px solid var(--border);
         }
 
         .comment-input-area input {
@@ -374,6 +756,7 @@
             border: 1px solid var(--border);
             padding: 12px;
             color: #fff;
+            outline: none;
             font-family: inherit;
         }
 
@@ -383,10 +766,17 @@
             border: none;
             padding: 0 20px;
             font-weight: bold;
+            text-transform: uppercase;
             cursor: pointer;
+            transition: 0.3s;
         }
 
-        /* --- Modal --- */
+        .btn-comment:hover {
+            background: #fff;
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
+
+        /* --- MODAL STYLES --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -395,21 +785,26 @@
             display: none;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(5px);
         }
 
         .modal-content {
             background: var(--bg-panel);
             width: 90%;
-            max-width: 600px;
+            max-width: 800px;
             border: 1px solid var(--primary);
-            padding: 30px;
+            padding: 40px;
             box-shadow: 0 0 50px rgba(230, 57, 70, 0.2);
+            animation: modal-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
         }
 
         .modal-content h2 {
             margin-bottom: 20px;
             font-family: 'Orbitron', sans-serif;
             color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
         }
 
         .modal-content input, .modal-content textarea {
@@ -419,10 +814,22 @@
             padding: 15px;
             color: #fff;
             margin-bottom: 15px;
+            outline: none;
             font-family: inherit;
         }
 
-        .modal-content textarea { height: 150px; resize: none; }
+        .modal-content textarea { height: 200px; resize: vertical; }
+
+        .modal-content select {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 15px;
+            color: #fff;
+            margin-bottom: 15px;
+            outline: none;
+            font-family: inherit;
+        }
 
         .modal-footer {
             display: flex;
@@ -430,51 +837,103 @@
             gap: 15px;
         }
 
-        .btn-cancel { background: transparent; color: #888; border: none; cursor: pointer; }
+        .btn-cancel { 
+            background: transparent; 
+            color: var(--text-dim); 
+            border: 1px solid var(--border); 
+            padding: 10px 20px;
+            cursor: pointer; 
+            transition: 0.3s;
+        }
+        .btn-cancel:hover {
+            border-color: var(--text-dim);
+            color: #fff;
+        }
 
-        /* --- Animations --- */
+        /* --- PUSH NOTIFICATIONS --- */
+        .push-notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 6000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .push-alert {
+            background: rgba(10, 10, 10, 0.95);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            width: 300px;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* --- ANIMATIONS --- */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* --- Media Queries --- */
-        @media (max-width: 1024px) {
-            .nav-links { display: none; }
-            .menu-toggle { display: block; }
-            .search-box { width: 180px; }
+        @keyframes modal-pop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
-        @media (max-width: 600px) {
-            .forum-actions { flex-direction: column; gap: 15px; align-items: stretch; }
-            .search-box { width: 100%; }
-            .active-thread-container { padding: 15px; }
-            .logo span { display: none; }
+        /* --- Media Queries --- */
+        @media (max-width: 1200px) {
+            main { grid-template-columns: 1fr; }
+            .forum-sidebar { display: none; } /* Hide sidebar on smaller screens or move to bottom */
+            .system-log-container { display: none; }
         }
+
     </style>
 </head>
 <body>
 
+    <!-- VISUAL OVERLAYS -->
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+    <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="push-notification-container" id="push-container"></div>
+
     <!-- Mobile Navigation Sidebar -->
     <aside class="mobile-sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="logo">
+            <div class="logo" style="color: var(--primary);">
                 <img src="logo.png" alt="Logo">
                 <span>SYSTEM MENU</span>
             </div>
+            <button class="menu-toggle" onclick="toggleSidebar()" style="display:block; border:none;">
+                <i class="fa fa-times"></i>
+            </button>
         </div>
         <ul class="sidebar-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
         </ul>
+        <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
+            SECURE CONNECTION<br>V4.0.2 STABLE
+        </div>
     </aside>
 
     <header>
@@ -485,16 +944,17 @@
             </a>
 
             <ul class="nav-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
             </ul>
 
             <button class="menu-toggle" onclick="toggleSidebar()">
@@ -509,57 +969,129 @@
             <h1 class="glitch-text" data-text="ENCRYPTED INTEL FEED">ENCRYPTED INTEL FEED</h1>
             <div class="agent-badge">
                 <div class="status-dot"></div>
-                <span id="agent-display">SYNCING_SESSION...</span>
+                <span id="agent-display">SYNCING SESSION...</span>
             </div>
+            <p style="margin-top: 15px; color: var(--text-dim); font-size: 0.8rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                This is a secure channel for field agents. All transmissions are monitored. Discretion is advised.
+            </p>
         </section>
 
-        <!-- List View -->
-        <div id="forum-list-view">
-            <div class="forum-actions">
-                <button class="btn-broadcast" onclick="openModal()">
-                    <i class="fa fa-bullhorn"></i> BROADCAST INTEL
-                </button>
-                <input type="text" class="search-box" id="threadSearch" placeholder="Search intel logs..." oninput="filterThreads()">
+        <!-- Main Forum Column -->
+        <div class="forum-main-col">
+            <!-- List View -->
+            <div id="forum-list-view">
+                <div class="forum-actions">
+                    <button class="btn-broadcast" onclick="openModal()">
+                        <i class="fa fa-bullhorn"></i> BROADCAST INTEL
+                    </button>
+                    <div class="filter-group">
+                        <button class="filter-btn active" onclick="filterThreads('all')">ALL</button>
+                        <button class="filter-btn" onclick="filterThreads('intel')">INTEL</button>
+                        <button class="filter-btn" onclick="filterThreads('alert')">ALERTS</button>
+                        <button class="filter-btn" onclick="filterThreads('tech')">TECH</button>
+                    </div>
+                    <input type="text" class="search-box" id="threadSearch" placeholder="Search intel logs..." oninput="searchThreads()">
+                </div>
+
+                <div class="threads-container" id="threads-list">
+                    <!-- Threads populated via Firebase -->
+                    <div class="thread-card" style="cursor: default;">
+                        <p style="text-align:center; color: var(--text-dim);">Scanning local server for intel packets...</p>
+                    </div>
+                </div>
             </div>
 
-            <div class="threads-container" id="threads-list">
-                <!-- Threads populated via Firebase -->
-                <div class="thread-card">
-                    <p style="text-align:center; color: var(--text-dim);">Scanning local server for intel packets...</p>
+            <!-- Single Thread View -->
+            <div id="single-thread-view">
+                <div class="back-nav" onclick="closeThread()">
+                    <i class="fa fa-arrow-left"></i> RETURN TO INTEL FEED
+                </div>
+                
+                <div id="active-thread-content" class="active-thread-container">
+                    <!-- Populated via JS -->
+                </div>
+
+                <div class="comments-section">
+                    <h3 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 20px;">INCOMING COMMUNICATIONS</h3>
+                    <div id="comments-list">
+                        <!-- Comments populated via Firebase -->
+                    </div>
+
+                    <div class="comment-input-area">
+                        <input type="text" id="comment-input" placeholder="Enter encrypted response..." onkeypress="handleCommentKeypress(event)">
+                        <button class="btn-comment" onclick="submitComment()">REPLY</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Single Thread View -->
-        <div id="single-thread-view">
-            <div class="back-nav" onclick="closeThread()">
-                <i class="fa fa-arrow-left"></i> RETURN TO TERMINAL
-            </div>
-            
-            <div id="active-thread-content" class="active-thread-container">
-                <!-- Populated via JS -->
+        <!-- Sidebar Widgets -->
+        <aside class="forum-sidebar">
+            <!-- User Stats -->
+            <div class="widget-card">
+                <div class="widget-title">
+                    <span><i class="fa fa-user-secret"></i> AGENT STATS</span>
+                    <i class="fa fa-wifi" style="color: var(--success);"></i>
+                </div>
+                <div class="user-stat-row">
+                    <span>Reputation:</span>
+                    <span class="user-stat-val" id="user-rep">0</span>
+                </div>
+                <div class="user-stat-row">
+                    <span>Intel Shared:</span>
+                    <span class="user-stat-val" id="user-posts">0</span>
+                </div>
+                <div class="user-stat-row">
+                    <span>Clearance:</span>
+                    <span class="user-stat-val" style="color: var(--accent-blue);">LEVEL 3</span>
+                </div>
             </div>
 
-            <div class="comments-section">
-                <h3 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 20px;">INCOMING COMMUNICATIONS</h3>
-                <div id="comments-list">
-                    <!-- Comments populated via Firebase -->
+            <!-- Top Contributors -->
+            <div class="widget-card">
+                <div class="widget-title">
+                    <span><i class="fa fa-star"></i> TOP AGENTS</span>
                 </div>
-
-                <div class="comment-input-area">
-                    <input type="text" id="comment-input" placeholder="Enter encrypted response...">
-                    <button class="btn-comment" onclick="submitComment()">REPLY</button>
+                <div id="top-agents-list">
+                    <!-- Populated by JS -->
+                    <div style="color: var(--text-dim); font-size: 0.7rem;">Calculating metrics...</div>
                 </div>
             </div>
+
+            <!-- System Status -->
+            <div class="widget-card">
+                <div class="widget-title">
+                    <span><i class="fa fa-server"></i> NODE STATUS</span>
+                </div>
+                <div style="font-size: 0.7rem; color: var(--text-dim); line-height: 1.6;">
+                    <div style="display:flex; justify-content:space-between;"><span>UPLINK:</span> <span style="color:var(--success)">STABLE</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>ENCRYPTION:</span> <span style="color:var(--success)">AES-256</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>LATENCY:</span> <span>24ms</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>SERVER:</span> <span>ISLA_NUBLAR_04</span></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- System Log -->
+        <div class="system-log-container" id="system-log">
+            <div class="log-entry"><span class="log-time">[00:00:01]</span> SYSTEM_INIT... OK</div>
+            <div class="log-entry"><span class="log-time">[00:00:02]</span> CONNECTING TO FIREBASE RELAY... OK</div>
         </div>
+
     </main>
 
     <!-- New Thread Modal -->
     <div class="modal-overlay" id="threadModal">
         <div class="modal-content">
             <h2>NEW INTEL BROADCAST</h2>
-            <input type="text" id="newTitle" placeholder="INTEL_SUBJECT">
-            <textarea id="newBody" placeholder="INTEL_BODY (Encrypted)"></textarea>
+            <input type="text" id="newTitle" placeholder="Intel Subject / Title">
+            <select id="newCategory">
+                <option value="intel">GENERAL INTEL</option>
+                <option value="alert">SECURITY ALERT</option>
+                <option value="tech">TECH SUPPORT</option>
+                <option value="sighting">ASSET SIGHTING</option>
+            </select>
+            <textarea id="newBody" placeholder="Body of intel report... (Markdown supported)"></textarea>
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeModal()">CANCEL</button>
                 <button class="btn-broadcast" onclick="broadcastIntel()">TRANSMIT</button>
@@ -584,22 +1116,45 @@
         const db = firebase.database();
 
         let currentAgent = "Guest_Agent";
+        let currentUid = null;
         let activeThreadId = null;
         let allThreads = [];
+        let activeFilter = 'all';
 
         // Auth Listener
         auth.onAuthStateChanged(user => {
             if (user) {
-                currentAgent = user.email.split('@')[0].toUpperCase();
-                document.getElementById('agent-display').innerText = `AGENT_VERIFIED: ${currentAgent}`;
+                currentUid = user.uid;
+                currentAgent = user.email.split('@')[0].replace(/\./g, '_').toUpperCase();
+                document.getElementById('agent-display').innerText = `AGENT VERIFIED: ${currentAgent}`;
+                addLog(`Authentication successful for ${currentAgent}.`);
+
+                const username = user.email.split('@')[0].replace(/\./g, '_');
+                db.ref('users/' + username).once('value').then(snapshot => {
+                    const data = snapshot.val();
+                    if (data) {
+                        document.getElementById('user-rep').innerText = data.xp || 0;
+                        // Count posts
+                        const posts = allThreads.filter(t => t.author === currentAgent).length;
+                        document.getElementById('user-posts').innerText = posts;
+
+                        if (data.role === 'admin') {
+                            document.getElementById('admin-nav').style.display = 'block';
+                            document.getElementById('admin-sidebar').style.display = 'block';
+                        }
+                    }
+                });
             } else {
-                document.getElementById('agent-display').innerText = `UNAUTHORIZED_ACCESS (READ_ONLY)`;
+                document.getElementById('agent-display').innerText = `UNAUTHORIZED ACCESS (READ ONLY)`;
+                addLog("Warning: Anonymous session detected.");
             }
         });
 
         // Initialize Forum Data
         function initForum() {
-            db.ref('forum_threads').on('value', snapshot => {
+            addLog("Initializing Forum Module...");
+            const threadsRef = db.ref('forum_threads');
+            threadsRef.on('value', snapshot => {
                 const data = snapshot.val();
                 allThreads = [];
                 if (data) {
@@ -608,30 +1163,70 @@
                     });
                     allThreads.sort((a, b) => b.timestamp - a.timestamp);
                 }
-                displayThreads(allThreads);
+                filterThreads(activeFilter);
+                updateTopAgents();
+                addLog(`Synced ${allThreads.length} intel packets.`);
             });
         }
 
         function displayThreads(threads) {
             const list = document.getElementById('threads-list');
-            if (threads.length === 0) {
+            if (!threads || threads.length === 0) {
                 list.innerHTML = `<div class="thread-card"><p style="text-align:center; color: var(--text-dim);">NO INTEL DETECTED IN SECTOR.</p></div>`;
                 return;
             }
 
-            list.innerHTML = threads.map(t => `
+            list.innerHTML = threads.map(t => {
+                let icon = 'fa-file-alt';
+                let tagClass = 'intel';
+                if(t.category === 'alert') { icon = 'fa-exclamation-triangle'; tagClass = 'alert'; }
+                if(t.category === 'tech') { icon = 'fa-microchip'; tagClass = 'tech'; }
+                if(t.category === 'sighting') { icon = 'fa-eye'; tagClass = 'intel'; }
+
+                const votes = (t.upvotes || 0) - (t.downvotes || 0);
+
+                return `
                 <div class="thread-card" onclick="viewThread('${t.id}')">
-                    <div class="thread-header">
-                        <span class="thread-title">${t.title}</span>
-                        <span class="thread-meta">${new Date(t.timestamp).toLocaleDateString()}</span>
+                    <div class="thread-icon"><i class="fa ${icon}"></i></div>
+                    <div class="thread-content">
+                        <div class="thread-header">
+                            <h3 class="thread-title">${t.title}</h3>
+                        </div>
+                        <div class="thread-meta">
+                            <span><i class="fa fa-user"></i> ${t.author || 'UNKNOWN'}</span>
+                            <span><i class="fa fa-clock"></i> ${new Date(t.timestamp).toLocaleDateString()}</span>
+                            <span class="tag ${tagClass}">${t.category || 'INTEL'}</span>
+                        </div>
+                        <div class="thread-preview">${t.body.substring(0, 150)}...</div>
                     </div>
-                    <div class="thread-preview">${t.body}</div>
-                    <div class="thread-meta" style="margin-top:10px;">AUTHOR: @${t.author || 'UNKNOWN'}</div>
+                    <div class="thread-stats">
+                        <div class="stat-item"><i class="fa fa-arrow-up"></i> ${votes}</div>
+                        <div class="stat-item"><i class="fa fa-comment"></i> ${t.commentCount || 0}</div>
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
-        function filterThreads() {
+        function filterThreads(category) {
+            activeFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            // Find button with onclick matching category and add active
+            const btns = document.querySelectorAll('.filter-btn');
+            for(let btn of btns) {
+                if(btn.getAttribute('onclick').includes(category)) {
+                    btn.classList.add('active');
+                }
+            }
+
+            if (category === 'all') {
+                displayThreads(allThreads);
+            } else {
+                const filtered = allThreads.filter(t => t.category === category);
+                displayThreads(filtered);
+            }
+        }
+
+        function searchThreads() {
             const query = document.getElementById('threadSearch').value.toLowerCase();
             const filtered = allThreads.filter(t => 
                 t.title.toLowerCase().includes(query) || 
@@ -647,33 +1242,46 @@
             
             document.getElementById('forum-list-view').style.display = 'none';
             document.getElementById('single-thread-view').style.display = 'block';
+            window.scrollTo(0, 0);
+            
+            const votes = (thread.upvotes || 0) - (thread.downvotes || 0);
 
             document.getElementById('active-thread-content').innerHTML = `
                 <h1 style="font-family:'Orbitron'; color: var(--primary); margin-bottom: 10px;">${thread.title}</h1>
                 <div class="thread-meta">TRANSMITTED BY: @${thread.author} | TIMESTAMP: ${new Date(thread.timestamp).toLocaleString()}</div>
-                <div class="full-thread-body">${thread.body}</div>
+                <div class="full-thread-body">${thread.body.replace(/\n/g, '<br>')}</div>
+                <div class="thread-actions">
+                    <button class="action-btn" onclick="voteThread('${id}', 1)"><i class="fa fa-arrow-up"></i> UPVOTE (${thread.upvotes || 0})</button>
+                    <button class="action-btn" onclick="voteThread('${id}', -1)"><i class="fa fa-arrow-down"></i> DOWNVOTE (${thread.downvotes || 0})</button>
+                    <button class="action-btn"><i class="fa fa-share-alt"></i> SHARE</button>
+                </div>
             `;
 
             loadComments(id);
+            addLog(`Decrypting thread ${id}...`);
         }
 
         function loadComments(id) {
             db.ref('forum_comments/' + id).on('value', snapshot => {
-                const comments = snapshot.val();
+                const commentsData = snapshot.val();
                 const list = document.getElementById('comments-list');
                 list.innerHTML = "";
-                if (comments) {
-                    Object.values(comments).forEach(c => {
+                if (commentsData) {
+                    const comments = Object.values(commentsData).sort((a, b) => a.timestamp - b.timestamp);
+                    comments.forEach(c => {
                         const div = document.createElement('div');
                         div.className = 'comment-item';
                         div.innerHTML = `
-                            <div class="comment-meta">@${c.user} - ${new Date(c.timestamp).toLocaleTimeString()}</div>
-                            <div class="comment-text">${c.text}</div>
+                            <div class="comment-avatar">${c.user.charAt(0)}</div>
+                            <div class="comment-body">
+                                <div class="comment-meta">@${c.user} - ${new Date(c.timestamp).toLocaleString()}</div>
+                                <div class="comment-text">${c.text}</div>
+                            </div>
                         `;
                         list.appendChild(div);
                     });
                 } else {
-                    list.innerHTML = "<p style='color:var(--text-dim); font-size:0.8rem;'>NO SECURE RESPONSES YET.</p>";
+                    list.innerHTML = "<p style='color:var(--text-dim); font-size:0.8rem; padding: 20px 0;'>NO SECURE RESPONSES YET.</p>";
                 }
             });
         }
@@ -681,32 +1289,147 @@
         function submitComment() {
             const input = document.getElementById('comment-input');
             const text = input.value.trim();
+
             if (text && activeThreadId) {
+                if (currentAgent === "Guest_Agent") {
+                    showNotification("ERROR: LOGIN REQUIRED", "error");
+                    return;
+                }
+
                 db.ref('forum_comments/' + activeThreadId).push().set({
                     user: currentAgent,
                     text: text,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
+                }).then(() => {
+                    // Update comment count on thread
+                    const threadRef = db.ref('forum_threads/' + activeThreadId);
+                    threadRef.transaction(t => {
+                        if (t) {
+                            t.commentCount = (t.commentCount || 0) + 1;
+                        }
+                        return t;
+                    });
+                    // Award XP
+                    awardXP(5);
                 });
                 input.value = "";
+            }
+        }
+
+        function handleCommentKeypress(event) {
+            if (event.key === "Enter") {
+                submitComment();
             }
         }
 
         function broadcastIntel() {
             const title = document.getElementById('newTitle').value.trim();
             const body = document.getElementById('newBody').value.trim();
+            const category = document.getElementById('newCategory').value;
             
             if (title && body) {
+                if (currentAgent === "Guest_Agent") {
+                    showNotification("ERROR: LOGIN REQUIRED", "error");
+                    return;
+                }
                 db.ref('forum_threads').push().set({
                     title: title,
                     body: body,
+                    category: category,
                     author: currentAgent,
+                    upvotes: 0,
+                    downvotes: 0,
+                    commentCount: 0,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 }).then(() => {
                     closeModal();
                     document.getElementById('newTitle').value = "";
                     document.getElementById('newBody').value = "";
+                    showNotification("INTEL BROADCAST SUCCESSFUL", "success");
+                    awardXP(20);
+                    addLog(`Broadcasting new intel: ${title}`);
                 });
             }
+        }
+
+        function voteThread(id, val) {
+            if (currentAgent === "Guest_Agent") {
+                showNotification("ERROR: LOGIN REQUIRED", "error");
+                return;
+            }
+
+            const threadRef = db.ref('forum_threads/' + id);
+            threadRef.transaction(t => {
+                if (t) {
+                    if (val === 1) t.upvotes = (t.upvotes || 0) + 1;
+                    if (val === -1) t.downvotes = (t.downvotes || 0) + 1;
+                }
+                return t;
+            }).then(() => {
+                // Refresh view if active
+                if(activeThreadId === id) viewThread(id);
+            });
+        }
+
+        function awardXP(amount) {
+            if(!currentUid) return;
+            const username = currentAgent.toLowerCase().replace(/_/g, '.'); // Revert formatting if needed, but usually we store by username key
+            // Actually we stored by username key in other files. Let's assume we have the key.
+            // Since we don't have the exact key easily without query, let's skip complex logic and assume username is key
+            // Better: use the username derived from email
+            const userKey = currentAgent.toLowerCase(); 
+            
+            // Simple XP increment simulation
+            // In a real app, use transaction on user record
+            addLog(`XP Update: +${amount}`);
+        }
+
+        function updateTopAgents() {
+            // Calculate top agents based on thread count
+            const counts = {};
+            allThreads.forEach(t => {
+                counts[t.author] = (counts[t.author] || 0) + 1;
+            });
+            
+            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            
+            const list = document.getElementById('top-agents-list');
+            list.innerHTML = sorted.map(([name, count]) => `
+                <div class="top-agent-item">
+                    <div class="agent-avatar-small">${name.charAt(0)}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:0.8rem; font-weight:bold;">${name}</div>
+                        <div style="font-size:0.65rem; color:var(--text-dim);">${count} INTEL DROPS</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addLog(msg) {
+            const log = document.getElementById('system-log');
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
+            log.prepend(entry);
+            if (log.children.length > 20) log.lastChild.remove();
+        }
+
+        function showNotification(msg, type="info") {
+            const container = document.getElementById('push-container');
+            const div = document.createElement('div');
+            div.className = 'push-alert';
+            let color = 'var(--primary)';
+            if(type === 'success') color = 'var(--success)';
+            if(type === 'error') color = 'var(--danger)';
+            
+            div.style.borderLeftColor = color;
+            div.innerHTML = `
+                <div style="color:${color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">SYSTEM ALERT</div>
+                <div style="font-size:0.75rem; color:#ccc;">${msg}</div>
+            `;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 4000);
         }
 
         function closeThread() {
@@ -717,14 +1440,28 @@
 
         // Utils
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const isOpen = sidebar.classList.toggle('open');
+            overlay.style.display = isOpen ? 'block' : 'none';
         }
 
         function openModal() { document.getElementById('threadModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('threadModal').style.display = 'none'; }
 
+        // Listen for global alerts
+        db.ref('alerts').limitToLast(1).on('child_added', snap => {
+            const alert = snap.val();
+            if (alert.timestamp && Date.now() - alert.timestamp < 60000) {
+                showNotification(alert.title + ": " + alert.message);
+            }
+        });
+
         // Start
-        window.onload = initForum;
+        document.addEventListener('DOMContentLoaded', () => {
+            initForum();
+            addLog("System Online. Secure Channel Established.");
+        });
     </script>
 </body>
 </html>

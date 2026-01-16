@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dark Jurassic | DNA Species Database</title>
     <link rel="icon" type="image/png" href="logo.png">
     
@@ -10,66 +10,106 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDKs -->
+    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
+        /* --- CORE VARIABLES --- */
         :root {
             --primary: #e63946;
+            --primary-dim: #8a232b;
             --primary-glow: rgba(230, 57, 70, 0.5);
             --secondary: #5dade2;
+            --secondary-glow: rgba(93, 173, 226, 0.3);
             --bg-dark: #050505;
             --bg-panel: #0a0a0a;
+            --bg-card: #0e0e0e;
             --card-bg: #0d0d0d;
             --border: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(230, 57, 70, 0.8);
             --text-main: #e0e0e0;
-            --text-dim: #888;
-            --sidebar-width: 260px;
+            --text-dim: #888888;
+            --text-highlight: #ffffff;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+            --sidebar-width: 280px;
             --nav-height: 70px;
-            --glitch-speed: 3s;
+            --scanline-color: rgba(0, 0, 0, 0.5);
+            --herbivore: #2ecc71;
+            --carnivore: #e63946;
+            --omnivore: #f1c40f;
         }
 
-        /* --- Global Reset & Scrollbar --- */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--primary); }
+        /* --- GLOBAL RESET & SCROLLBAR --- */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
 
-        body {
-            font-family: 'JetBrains+Mono', monospace;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dim); }
+
+        body { 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'JetBrains+Mono', monospace; 
             overflow-x: hidden;
             line-height: 1.6;
+            font-size: 14px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- Background Effects --- */
+        /* --- BACKGROUND FX (SCANLINES & NOISE) --- */
         .scanlines {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
             background-size: 100% 4px, 3px 100%;
-            z-index: 999;
             pointer-events: none;
-            opacity: 0.3;
+            z-index: 9999;
+            opacity: 0.6;
         }
 
-        /* --- Navigation --- */
-        header {
+        .noise {
             position: fixed;
-            top: 0; left: 0; width: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmYvP41FAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfmBwUQDw0u825TAAAAHWlUWHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAABbSURBVDjL7dOxDcAgDAXRVkzABowBS2YBVsAmnSVj4Q6i/qP4010iKj5F559iJ65S816b1E5c40l6X+3Ew0y9b/biZqY+N/txM9P42+zHw0xjb/bjZabxt9mPl5n6B3D6Wv44K56WAAAAAElFTkSuQmCC');
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 9998;
+            animation: noise-anim 0.5s infinite linear;
+        }
+
+        @keyframes noise-anim {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
+
+        /* --- HEADER & NAVIGATION --- */
+        header {
             height: var(--nav-height);
             background: rgba(5, 5, 5, 0.95);
             border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0; width: 100%;
             z-index: 1000;
             backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
         .navbar {
-            max-width: 1400px;
+            max-width: 1800px;
             margin: 0 auto;
             height: 100%;
             display: flex;
@@ -78,51 +118,91 @@
             padding: 0 20px;
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
             text-decoration: none;
-            color: var(--text-main);
             font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
+            font-weight: 900; 
+            color: var(--text-main); 
+            text-transform: uppercase;
             letter-spacing: 2px;
+            font-size: 1.2rem;
+            position: relative;
+        }
+        
+        .logo img { 
+            height: 40px; 
+            filter: drop-shadow(0 0 5px var(--primary-glow));
+            transition: 0.3s;
         }
 
-        .logo img { height: 40px; }
+        .logo:hover img {
+            filter: drop-shadow(0 0 10px var(--primary));
+            transform: scale(1.05);
+        }
 
         .nav-links {
             display: flex;
-            gap: 5px;
+            gap: 5px; 
             list-style: none;
+            height: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
         }
 
         .nav-links li a {
             color: var(--text-dim);
             text-decoration: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            transition: 0.3s;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
+            padding: 0 15px;
+            height: 100%;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
-            gap: 2px;
+            transition: 0.3s;
+            gap: 4px;
+            border-bottom: 2px solid transparent;
         }
 
-        .nav-links li a i { font-size: 1.1rem; }
-        .nav-links li a.active, .nav-links li a:hover {
-            color: var(--primary);
-            background: rgba(230, 57, 70, 0.05);
+        .nav-links li a i { font-size: 1.1rem; margin-bottom: 2px; }
+
+        .nav-links li a:hover, .nav-links li a.active { 
+            color: var(--primary); 
+            background: linear-gradient(to bottom, transparent 0%, rgba(230, 57, 70, 0.1) 100%);
+            border-bottom-color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .nav-text { 
+            font-size: 0.6rem; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px;
         }
 
         .menu-toggle {
             display: none;
             background: none;
-            border: none;
+            border: 1px solid var(--primary);
             color: var(--primary);
-            font-size: 1.5rem;
+            padding: 8px 12px;
+            border-radius: 4px;
             cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        @media (max-width: 1024px) {
+            .menu-toggle { display: block; }
         }
 
         /* --- Sidebar (Mobile) --- */
@@ -134,19 +214,35 @@
             background: var(--bg-panel);
             border-right: 1px solid var(--primary);
             z-index: 2000;
-            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: 0.4s ease;
             padding-top: 20px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .mobile-sidebar.open { left: 0; }
+        .mobile-sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.8); }
 
         .sidebar-header {
             padding: 0 20px 20px;
             border-bottom: 1px solid #222;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .sidebar-links { list-style: none; }
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+            font-family: 'Orbitron';
+            font-weight: bold;
+        }
+
+        .sidebar-header img { height: 30px; }
+
+        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
         .sidebar-links li a {
             padding: 15px 25px;
             display: flex;
@@ -156,10 +252,13 @@
             text-decoration: none;
             transition: 0.2s;
             border-left: 4px solid transparent;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
         }
 
-        .sidebar-links li a:hover, .sidebar-links li a.active {
-            background: rgba(230, 57, 70, 0.05);
+        .sidebar-links li a:hover {
+            background: rgba(255,255,255,0.05);
             color: var(--primary);
             border-left-color: var(--primary);
         }
@@ -170,21 +269,34 @@
             background: rgba(0,0,0,0.8);
             z-index: 1999;
             display: none;
+            backdrop-filter: blur(3px);
         }
 
         /* --- Main Content --- */
         main {
             margin-top: var(--nav-height);
             padding: 40px 20px;
-            max-width: 1400px;
+            max-width: 1600px;
             margin-left: auto;
             margin-right: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
         }
 
         .hero {
             text-align: center;
-            margin-bottom: 50px;
+            padding: 40px 20px;
+            background: linear-gradient(180deg, rgba(5,5,5,0.8) 0%, rgba(5,5,5,1) 100%), 
+                        url('https://images.unsplash.com/photo-1518546305927-5a555bb7020d?q=80&w=1600');
+            background-size: cover;
+            background-position: center;
+            border: 1px solid var(--border);
+            border-radius: 8px;
             position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
         .glitch-text {
@@ -193,6 +305,7 @@
             color: #fff;
             position: relative;
             text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .glitch-text::before, .glitch-text::after {
@@ -200,6 +313,7 @@
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-dark);
+            clip: rect(0, 0, 0, 0);
         }
 
         .glitch-text::before {
@@ -218,13 +332,14 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: rgba(255,255,255,0.03);
-            padding: 5px 15px;
-            border-radius: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 20px;
+            border-radius: 4px;
             border: 1px solid var(--border);
             margin-top: 15px;
-            font-size: 0.75rem;
-            letter-spacing: 1px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            backdrop-filter: blur(5px);
         }
 
         .status-dot {
@@ -232,6 +347,11 @@
             background: #00ff00;
             border-radius: 50%;
             box-shadow: 0 0 10px #00ff00;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; }
         }
 
         /* --- Controls --- */
@@ -239,9 +359,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
             gap: 20px;
             flex-wrap: wrap;
+            background: var(--bg-panel);
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
         }
 
         .search-container {
@@ -252,67 +375,64 @@
 
         .search-container i {
             position: absolute;
-            left: 15px; top: 50%;
+            left: 10px; top: 50%;
             transform: translateY(-50%);
             color: var(--text-dim);
         }
 
         .search-container input {
             width: 100%;
-            background: var(--bg-panel);
+            background: #000;
             border: 1px solid var(--border);
-            padding: 12px 12px 12px 45px;
+            padding: 10px 10px 10px 35px;
             color: white;
-            border-radius: 8px;
             font-family: inherit;
             outline: none;
-            transition: 0.3s;
         }
 
-        .search-container input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 15px var(--primary-glow);
-        }
+        .search-container input:focus { border-color: var(--primary); }
 
         .btn-action {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-weight: bold;
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 18px;
+            border-radius: 4px;
             cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            transition: 0.3s;
             display: flex;
             align-items: center;
             gap: 10px;
-            transition: 0.3s;
-            text-transform: uppercase;
-            font-size: 0.8rem;
         }
 
         .btn-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px var(--primary-glow);
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 15px var(--primary-glow);
         }
 
-        /* --- Dino Grid --- */
+        /* --- Dino Kaarten --- */
         .dino-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 25px;
         }
 
         .dino-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 4px;
             overflow: hidden;
-            transition: 0.4s;
+            transition: 0.3s;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .dino-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-5px);
             border-color: var(--primary);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
@@ -353,12 +473,12 @@
         .diet-herbivore { background: #2a9d8f; color: white; }
         .diet-omnivore { background: #f4a261; color: white; }
 
-        .dino-info { padding: 20px; }
+        .dino-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
         .dino-name {
             font-family: 'Orbitron', sans-serif;
             font-size: 1.2rem;
             margin-bottom: 10px;
-            color: var(--primary);
+            color: #fff;
         }
 
         .dino-desc {
@@ -371,6 +491,7 @@
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             margin-bottom: 20px;
+            flex-grow: 1;
         }
 
         .dino-meta {
@@ -381,6 +502,7 @@
             padding-top: 15px;
             font-size: 0.7rem;
             color: var(--text-dim);
+            margin-top: auto;
         }
 
         /* --- Modals --- */
@@ -401,8 +523,8 @@
             width: 100%;
             max-width: 600px;
             border: 1px solid var(--primary);
-            border-radius: 12px;
-            padding: 30px;
+            border-radius: 4px;
+            padding: 40px;
             position: relative;
             animation: modalFade 0.3s ease;
         }
@@ -428,10 +550,12 @@
         .close-modal {
             background: none;
             border: none;
-            color: white;
+            color: var(--text-dim);
             font-size: 1.5rem;
             cursor: pointer;
+            transition: 0.3s;
         }
+        .close-modal:hover { color: var(--primary); }
 
         .form-group { margin-bottom: 20px; }
         .form-group label {
@@ -443,35 +567,45 @@
 
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
-            background: #151515;
+            background: #000;
             border: 1px solid var(--border);
             padding: 12px;
             color: white;
-            border-radius: 6px;
             font-family: inherit;
+            outline: none;
         }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
 
         .form-group textarea { height: 100px; resize: none; }
 
-        /* --- Notifications --- */
-        #notification {
+        /* --- PUSH NOTIFICATIONS --- */
+        .push-notification-container {
             position: fixed;
-            bottom: 30px; right: 30px;
-            background: var(--bg-panel);
-            border-left: 4px solid var(--primary);
-            padding: 15px 25px;
-            color: white;
-            z-index: 5000;
-            border-radius: 4px;
-            display: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            font-size: 0.85rem;
-            animation: slideUp 0.3s ease;
+            bottom: 20px;
+            right: 20px;
+            z-index: 6000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .push-alert {
+            background: rgba(10, 10, 10, 0.95);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            width: 300px;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         /* --- Animations --- */
@@ -508,49 +642,60 @@
 </head>
 <body>
 
+    <!-- VISUAL OVERLAYS -->
     <div class="scanlines"></div>
+    <div class="noise"></div>
+    <div class="push-notification-container" id="push-container"></div>
 
-    <!-- Mobile Navigation Sidebar -->
+    <!-- Mobile Sidebar -->
     <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
     <aside class="mobile-sidebar" id="sidebar">
         <div class="sidebar-header">
-            <a href="index.html" class="logo">
+            <div class="logo">
                 <img src="logo.png" alt="Logo">
-                <span>DARK JURASSIC</span>
-            </a>
+                <span>SYSTEM MENU</span>
+            </div>
+            <button class="menu-toggle" onclick="toggleSidebar()" style="display:block; border:none;">
+                <i class="fa fa-times"></i>
+            </button>
         </div>
         <ul class="sidebar-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
         </ul>
+        <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
+            SECURE CONNECTION<br>V4.0.2 STABLE
+        </div>
     </aside>
 
     <header>
         <nav class="navbar">
             <a href="index.html" class="logo">
-                <img src="logo.png" alt="Dark Jurassic Logo">
+                <img src="logo.png" alt="Logo">
                 <span>DARK JURASSIC</span>
             </a>
 
             <ul class="nav-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agents</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Profile</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Log Out</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
             </ul>
 
             <button class="menu-toggle" onclick="toggleSidebar()">
@@ -560,6 +705,7 @@
     </header>
 
     <main>
+        
         <section class="hero">
             <h1 class="glitch-text" data-text="SPECIES_DB_ACCESS">SPECIES_DB_ACCESS</h1>
             <div class="agent-badge">
@@ -585,6 +731,7 @@
                 <p style="margin-top: 15px; color: var(--text-dim);">Connecting to Remote Genome Server...</p>
             </div>
         </div>
+
     </main>
 
     <!-- Upload Modal -->
@@ -620,10 +767,7 @@
         </div>
     </div>
 
-    <div id="notification">SYSTEM_ALERT: Connection Stabilized</div>
-
     <script>
-        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -642,18 +786,30 @@
         let allDinos = [];
 
         // --- Auth & Init ---
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged((user) => {
             if (user) {
-                currentAgent = user.email.split('@')[0];
+                const username = user.email.split('@')[0].replace(/\./g, '_');
+                currentAgent = username;
                 document.getElementById('agent-display').innerText = `${currentAgent.toUpperCase()}@SECURE_LINK`;
+
+                db.ref('users/' + username).once('value').then(snapshot => {
+                    const data = snapshot.val();
+                    if (data && data.role === 'admin') {
+                        document.getElementById('admin-nav').style.display = 'block';
+                        document.getElementById('admin-sidebar').style.display = 'block';
+                    }
+                });
+            } else {
+                // Allow read-only access for guests
+                document.getElementById('agent-display').innerText = `GUEST_SESSION@READ_ONLY`;
             }
             loadDatabase();
         });
 
         // --- Core Functions ---
         function loadDatabase() {
-            db.ref('shared_dinos').on('value', snapshot => {
-                const data = snapshot.val();
+            db.ref('shared_dinos').on('value', snap => {
+                const data = snap.val();
                 allDinos = [];
                 if (data) {
                     for (let id in data) {
@@ -700,13 +856,18 @@
         }
 
         function submitDino() {
-            const name = document.getElementById('dinoName').value.trim();
+            const name = document.getElementById('dinoName').value;
             const diet = document.getElementById('dinoDiet').value;
-            const image = document.getElementById('dinoImage').value.trim();
-            const desc = document.getElementById('dinoDesc').value.trim();
+            const image = document.getElementById('dinoImage').value;
+            const desc = document.getElementById('dinoDesc').value;
+
+            if (currentAgent === "Guest_Agent") {
+                showNotification("ACCESS_DENIED: Guest agents cannot index new data.", "error");
+                return;
+            }
 
             if (!name || !image || !desc) {
-                notify("CRITICAL_ERROR: Missing mandatory data fields.");
+                showNotification("CRITICAL_ERROR: Missing mandatory data fields.", "error");
                 return;
             }
 
@@ -717,19 +878,36 @@
             };
 
             db.ref('shared_dinos').push(newDino).then(() => {
-                notify("PROTOCOL_SUCCESS: Asset uploaded to secure server.");
+                showNotification("PROTOCOL_SUCCESS: Asset uploaded to secure server.", "success");
                 closeModal();
                 // Clear inputs
                 document.getElementById('dinoName').value = "";
                 document.getElementById('dinoImage').value = "";
                 document.getElementById('dinoDesc').value = "";
             }).catch(err => {
-                notify("UPLOAD_FAILED: Check network encryption.");
+                showNotification("UPLOAD_FAILED: Check network encryption.", "error");
                 console.error(err);
             });
         }
 
         // --- UI Utils ---
+        function showNotification(msg, type="info") {
+            const container = document.getElementById('push-container');
+            const div = document.createElement('div');
+            div.className = 'push-alert';
+            let color = 'var(--primary)';
+            if(type === 'success') color = 'var(--success)';
+            if(type === 'error') color = 'var(--danger)';
+            
+            div.style.borderLeftColor = color;
+            div.innerHTML = `
+                <div style="color:${color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">SYSTEM ALERT</div>
+                <div style="font-size:0.75rem; color:#ccc;">${msg}</div>
+            `;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 4000);
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
@@ -747,21 +925,23 @@
         function openModal() { document.getElementById('uploadModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('uploadModal').style.display = 'none'; }
 
-        function notify(msg) {
-            const n = document.getElementById('notification');
-            n.innerText = msg;
-            n.style.display = 'block';
-            setTimeout(() => { n.style.display = 'none'; }, 4000);
-        }
+        // Listen for global alerts
+        db.ref('alerts').limitToLast(1).on('child_added', snap => {
+            const alert = snap.val();
+            if (alert.timestamp && Date.now() - alert.timestamp < 60000) {
+                showNotification(alert.title + ": " + alert.message);
+            }
+        });
 
         // Random Glitch Effect on Hover
-        document.querySelectorAll('.dino-card').forEach(card => {
-            card.addEventListener('mouseover', () => {
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.closest('.dino-card')) {
+                const card = e.target.closest('.dino-card');
                 if (Math.random() > 0.9) {
-                    card.style.transform = `translate(${Math.random()*2}px, ${Math.random()*2}px)`;
-                    setTimeout(() => card.style.transform = '', 50);
+                    card.style.transform = `translateY(-10px) translate(${Math.random()*2-1}px, ${Math.random()*2-1}px)`;
+                    setTimeout(() => card.style.transform = 'translateY(-10px)', 50);
                 }
-            });
+            }
         });
 
     </script>

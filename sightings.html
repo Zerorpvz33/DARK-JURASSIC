@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dark Jurassic | Live Asset Tracker</title>
+    <title>Dark Jurassic | Global Asset Tracker V5.0</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <!-- External Resources -->
@@ -19,22 +19,40 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
+        /* --- CORE VARIABLES --- */
         :root {
             --primary: #e63946;
+            --primary-dim: #8a232b;
             --primary-glow: rgba(230, 57, 70, 0.5);
+            --secondary: #00d4ff;
+            --secondary-glow: rgba(0, 212, 255, 0.3);
             --bg-dark: #050505;
             --bg-panel: #0a0a0a;
+            --bg-card: #0e0e0e;
             --sidebar-width: 280px;
             --nav-height: 70px;
             --border: rgba(255, 255, 255, 0.1);
+            --border-focus: rgba(230, 57, 70, 0.8);
             --text-main: #ffffff;
             --text-dim: #888888;
+            --text-highlight: #ffffff;
             --accent-blue: #00d4ff;
-            --success: #00ff88;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #ff0000;
+            --scanline-color: rgba(0, 0, 0, 0.5);
+            --glass: rgba(10, 10, 10, 0.8);
         }
 
-        /* --- Global Reset & Scrollbars --- */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* --- GLOBAL RESET & SCROLLBAR --- */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
@@ -43,28 +61,42 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+            font-size: 14px;
         }
 
-        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dim); }
 
-        /* --- Animations --- */
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
+        /* --- BACKGROUND FX (SCANLINES & NOISE) --- */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
         }
 
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
+        .noise {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmYvP41FAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfmBwUQDw0u825TAAAAHWlUWHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAABbSURBVDjL7dOxDcAgDAXRVkzABowBS2YBVsAmnSVj4Q6i/qP4010iKj5F559iJ65S816b1E5c40l6X+3Ew0y9b/biZqY+N/txM9P42+zHw0xjb/bjZabxt9mPl5n6B3D6Wv44K56WAAAAAElFTkSuQmCC');
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 9998;
+            animation: noise-anim 0.5s infinite linear;
         }
 
-        /* --- Sidebar (Desktop & Mobile) --- */
+        @keyframes noise-anim {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
+
+        /* --- Sidebar (Mobile) --- */
         .mobile-sidebar {
             position: fixed;
             top: 0; left: -100%;
@@ -72,215 +104,422 @@
             height: 100%;
             background: var(--bg-panel);
             border-right: 1px solid var(--primary);
-            z-index: 3000;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2000;
+            transition: 0.4s ease;
             padding-top: 20px;
             display: flex;
             flex-direction: column;
         }
 
-        .mobile-sidebar.open { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.8); }
+        .mobile-sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.8); }
 
         .sidebar-header {
-            padding: 0 25px 25px;
+            padding: 0 20px 20px;
             border-bottom: 1px solid var(--border);
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .sidebar-header .logo {
             display: flex;
             align-items: center;
-            gap: 15px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
+            gap: 10px;
             color: var(--primary);
+            font-family: 'Orbitron';
+            font-weight: bold;
         }
 
-        .sidebar-header img { width: 40px; height: 40px; }
+        .sidebar-header img { height: 30px; }
 
-        .sidebar-links { list-style: none; flex-grow: 1; overflow-y: auto; }
+        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
         .sidebar-links li a {
-            padding: 14px 25px;
+            padding: 15px 25px;
             display: flex;
             align-items: center;
-            gap: 18px;
+            gap: 15px;
             color: var(--text-dim);
             text-decoration: none;
-            transition: 0.3s;
+            transition: 0.2s;
             border-left: 4px solid transparent;
-            font-size: 0.95rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
         }
 
-        .sidebar-links li a i { width: 20px; text-align: center; font-size: 1.1rem; }
-        .sidebar-links li a:hover, .sidebar-links li a.active {
-            background: rgba(230, 57, 70, 0.08);
+        .sidebar-links li a:hover {
+            background: rgba(255,255,255,0.05);
             color: var(--primary);
             border-left-color: var(--primary);
         }
 
-        .sidebar-footer {
-            padding: 20px;
-            border-top: 1px solid var(--border);
-            font-size: 0.7rem;
-            color: #444;
-            text-align: center;
+        .sidebar-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1999;
+            display: none;
+            backdrop-filter: blur(3px);
         }
 
-        /* --- Navbar --- */
+        /* --- HEADER & NAVIGATION --- */
         header {
             height: var(--nav-height);
             background: rgba(5, 5, 5, 0.95);
             border-bottom: 1px solid var(--border);
             position: fixed;
             top: 0; width: 100%;
-            z-index: 2000;
+            z-index: 1000;
             backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
         .navbar {
-            max-width: 1400px;
+            max-width: 1800px;
             margin: 0 auto;
             height: 100%;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             padding: 0 20px;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             text-decoration: none;
+            color: var(--text-main);
             font-family: 'Orbitron', sans-serif;
-            color: var(--primary);
             font-weight: 900;
-            letter-spacing: 1px;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            position: relative;
         }
 
-        .logo img { height: 40px; }
+        .logo img {
+            height: 40px;
+            filter: drop-shadow(0 0 5px var(--primary-glow));
+            transition: 0.3s;
+        }
 
-        .nav-links { display: flex; gap: 5px; list-style: none; }
-        @media (max-width: 1100px) { .nav-links { display: none; } }
+        .logo:hover img {
+            filter: drop-shadow(0 0 10px var(--primary));
+            transform: scale(1.05);
+        }
 
-        .nav-links a {
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 5px;
+            height: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
+        }
+
+        .nav-links li a {
             color: var(--text-dim);
             text-decoration: none;
-            padding: 10px 15px;
-            border-radius: 4px;
+            font-size: 0.75rem;
+            padding: 0 15px;
+            height: 100%;
             transition: 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-size: 0.65rem;
-            gap: 5px;
+            justify-content: center;
+            gap: 4px;
+            border-bottom: 2px solid transparent;
         }
 
-        .nav-links a i { font-size: 1.2rem; }
-        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        .nav-links li a i { font-size: 1.1rem; margin-bottom: 2px; }
+        
+        .nav-links li a:hover, .nav-links li a.active {
+            color: var(--primary);
+            background: linear-gradient(to bottom, transparent 0%, rgba(230, 57, 70, 0.1) 100%);
+            border-bottom-color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .nav-text { 
+            font-size: 0.6rem; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px;
+        }
 
         .menu-toggle {
+            display: none;
             background: none;
             border: 1px solid var(--primary);
             color: var(--primary);
             padding: 8px 12px;
             border-radius: 4px;
             cursor: pointer;
-            display: block;
+            transition: 0.3s;
         }
 
-        /* --- Main Content --- */
+        .menu-toggle:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        @media (max-width: 1024px) {
+            .menu-toggle { display: block; }
+        }
+
+        /* --- MAIN LAYOUT --- */
         main {
             margin-top: var(--nav-height);
             flex-grow: 1;
             display: flex;
             flex-direction: column;
             position: relative;
-        }
-
-        /* --- Layout Grid --- */
-        .tracker-container {
-            display: grid;
-            grid-template-columns: 1fr 350px;
             height: calc(100vh - var(--nav-height));
         }
 
-        @media (max-width: 900px) {
-            .tracker-container { grid-template-columns: 1fr; grid-template-rows: 1fr 400px; }
+        .tracker-container {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            height: 100%;
+            overflow: hidden;
         }
 
-        /* --- Map Styling --- */
+        /* --- MAP STYLING --- */
         #map {
             width: 100%;
             height: 100%;
             background: #0b0e14;
+            position: relative;
+            z-index: 1;
         }
 
         .leaflet-container { background: #000 !important; }
-        .leaflet-tile { filter: brightness(0.4) invert(1) contrast(3) hue-rotate(180deg) saturate(0.5); }
-        .leaflet-popup-content-wrapper { background: #0a0a0a; color: #fff; border: 1px solid var(--primary); font-family: 'JetBrains Mono'; border-radius: 0; }
-        .leaflet-popup-tip { background: var(--primary); }
+        .leaflet-tile { 
+            filter: brightness(0.4) invert(1) contrast(3) hue-rotate(180deg) saturate(0.5); 
+            opacity: 0.8;
+        }
+        .leaflet-popup-content-wrapper { 
+            background: rgba(10, 10, 10, 0.95); 
+            color: #fff; 
+            border: 1px solid var(--primary); 
+            font-family: 'JetBrains Mono'; 
+            border-radius: 0; 
+            box-shadow: 0 0 20px rgba(230, 57, 70, 0.3);
+        }
+        .leaflet-popup-tip { background: var(--primary); opacity: 0.8; }
 
-        /* --- Sidebar Panel --- */
+        /* --- MAP HUD OVERLAY --- */
+        .map-hud {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 400; /* Above map tiles */
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+        }
+
+        .hud-corner {
+            position: absolute;
+            width: 50px; height: 50px;
+            border: 2px solid var(--primary);
+            opacity: 0.5;
+        }
+        .hud-tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+        .hud-tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+        .hud-bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+        .hud-br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+        .hud-status {
+            position: absolute;
+            top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 5px 15px;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-family: 'Orbitron';
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rec-dot {
+            width: 10px; height: 10px;
+            background: var(--danger);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        .hud-coords {
+            position: absolute;
+            bottom: 20px; left: 80px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-family: monospace;
+        }
+
+        .hud-weather {
+            position: absolute;
+            top: 20px; left: 80px;
+            font-size: 0.7rem;
+            color: var(--secondary);
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border: 1px solid var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* --- WEATHER CANVAS --- */
+        #weather-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 300;
+            opacity: 0.4;
+        }
+
+        /* --- SIDEBAR FEED --- */
         .sightings-panel {
             background: var(--bg-panel);
             border-left: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
+            z-index: 2;
         }
 
         .panel-header {
             padding: 20px;
             border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
+            background: rgba(20, 20, 20, 0.95);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron'; 
+            font-size: 1rem; 
+            color: var(--primary); 
+            display: flex; 
+            justify-content: space-between; 
             align-items: center;
         }
 
-        .panel-header h2 { font-family: 'Orbitron'; font-size: 1rem; color: var(--primary); }
+        .filter-bar {
+            display: flex;
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+        .filter-btn {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 5px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(230, 57, 70, 0.1);
+        }
 
         .feed-container {
             flex-grow: 1;
             overflow-y: auto;
             padding: 10px;
+            background: rgba(0,0,0,0.2);
         }
 
         .sighting-card {
-            background: #0d0d0d;
+            background: var(--bg-card);
             border: 1px solid var(--border);
             padding: 15px;
             margin-bottom: 10px;
             cursor: pointer;
             transition: 0.2s;
             position: relative;
+            overflow: hidden;
         }
 
-        .sighting-card:hover { border-color: var(--primary); background: #111; }
-        .sighting-card.active { border-color: var(--primary); border-left: 4px solid var(--primary); }
+        .sighting-card:hover { 
+            border-color: var(--primary); 
+            background: rgba(255,255,255,0.02); 
+            transform: translateX(5px);
+        }
+        
+        .sighting-card.active { 
+            border-color: var(--primary); 
+            border-left: 4px solid var(--primary); 
+            background: rgba(230, 57, 70, 0.05);
+        }
 
         .card-top { display: flex; gap: 12px; margin-bottom: 8px; }
+        
         .card-img {
             width: 60px; height: 60px;
             border: 1px solid #333;
             background-size: cover;
             background-position: center;
             flex-shrink: 0;
+            position: relative;
         }
 
-        .card-info h4 { font-size: 0.9rem; color: var(--primary); text-transform: uppercase; }
-        .card-info p { font-size: 0.7rem; color: var(--text-dim); }
-        .card-time { position: absolute; top: 15px; right: 15px; font-size: 0.6rem; color: #444; }
+        .card-img::after {
+            content: '';
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, rgba(0,0,0,0.5), transparent);
+        }
+
+        .card-info h4 { 
+            font-size: 0.85rem; 
+            color: var(--text-highlight); 
+            text-transform: uppercase; 
+            font-family: 'Orbitron';
+            margin-bottom: 4px;
+        }
+        
+        .card-info p { font-size: 0.7rem; color: var(--text-dim); display: flex; align-items: center; gap: 5px; }
+        
+        .card-time { 
+            position: absolute; top: 10px; right: 10px; 
+            font-size: 0.6rem; color: var(--primary); 
+            font-weight: bold;
+        }
+
+        .threat-badge {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 2px;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .threat-high { background: rgba(255, 0, 0, 0.2); color: #ff5555; border: 1px solid #ff5555; }
+        .threat-med { background: rgba(255, 165, 0, 0.2); color: #ffa500; border: 1px solid #ffa500; }
+        .threat-low { background: rgba(0, 255, 0, 0.2); color: #55ff55; border: 1px solid #55ff55; }
 
         .panel-actions {
             padding: 15px;
             border-top: 1px solid var(--border);
-            background: #050505;
+            background: rgba(10, 10, 10, 0.95);
         }
 
         .btn-action {
             width: 100%;
-            padding: 12px;
+            padding: 15px;
             background: var(--primary);
             color: white;
             border: none;
@@ -288,81 +527,210 @@
             font-weight: 700;
             cursor: pointer;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             letter-spacing: 1px;
             clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+            transition: 0.3s;
         }
 
-        .btn-action:hover { filter: brightness(1.2); box-shadow: 0 0 15px var(--primary-glow); }
-
-        /* --- Modals --- */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 5000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+        .btn-action:hover { 
+            background: #ff4d5a; 
+            box-shadow: 0 0 20px var(--primary-glow); 
+            transform: translateY(-2px);
         }
 
-        .modal-content {
-            background: #0a0a0a;
-            border: 1px solid var(--primary);
-            width: 100%;
-            max-width: 500px;
-            padding: 30px;
-            position: relative;
-            box-shadow: 0 0 40px rgba(230, 57, 70, 0.2);
+        /* --- SECURE CHAT (Sidebar Tab) --- */
+        .chat-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background: #050505;
+            display: none; /* Hidden by default */
         }
 
-        .modal-header { margin-bottom: 20px; font-family: 'Orbitron'; color: var(--primary); border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 5px; }
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%;
-            background: #000;
-            border: 1px solid #333;
-            color: #fff;
+        .chat-msg {
+            font-size: 0.75rem;
+            padding: 8px 12px;
+            border-radius: 4px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+
+        .chat-msg.system { color: var(--success); font-family: monospace; align-self: center; text-align: center; opacity: 0.8; }
+        .chat-msg.user { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #ccc; align-self: flex-start; }
+        .chat-msg.me { background: rgba(230, 57, 70, 0.1); border: 1px solid var(--primary); color: #fff; align-self: flex-end; }
+
+        .chat-input-area {
             padding: 10px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px;
             font-family: inherit;
             outline: none;
         }
 
-        .form-group input:focus { border-color: var(--primary); }
+        .chat-send {
+            background: var(--primary);
+            border: none;
+            color: #fff;
+            padding: 0 15px;
+            cursor: pointer;
+        }
 
-        .close-modal { position: absolute; top: 15px; right: 20px; color: var(--text-dim); cursor: pointer; font-size: 1.5rem; }
+        /* --- TABS --- */
+        .sidebar-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: #111;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid transparent;
+        }
+        .sidebar-tab.active {
+            background: #1a1a1a;
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
 
-        /* --- Overlay FX --- */
-        .overlay-fx {
+        /* --- MODALS --- */
+        .modal {
+            display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0.05;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
         }
 
-        /* --- Marker Customization --- */
-        .dino-marker {
-            background: var(--primary);
-            border: 2px solid #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--primary);
+        .modal-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--primary);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 0 50px rgba(230, 57, 70, 0.2);
+            animation: modal-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modal-pop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header { 
+            margin-bottom: 20px; 
+            font-family: 'Orbitron'; 
+            color: var(--primary); 
+            border-bottom: 1px solid var(--border); 
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { 
+            display: block; 
+            font-size: 0.7rem; 
+            color: var(--primary); 
+            margin-bottom: 8px; 
+            text-transform: uppercase;
+            font-weight: bold;
         }
         
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            background: #050505;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 12px;
+            font-family: inherit;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 10px rgba(230, 57, 70, 0.2);
+        }
+
+        .close-modal { 
+            color: var(--text-dim); 
+            cursor: pointer; 
+            font-size: 1.5rem; 
+            transition: 0.3s;
+        }
+        .close-modal:hover { color: #fff; }
+
+        /* --- PUSH NOTIFICATIONS --- */
+        .push-notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 6000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .push-alert {
+            background: rgba(10, 10, 10, 0.95);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            width: 300px;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* --- MARKER STYLES --- */
         .pulse {
             width: 20px; height: 20px;
             background: var(--primary);
             border-radius: 50%;
             position: relative;
+            box-shadow: 0 0 10px var(--primary);
         }
         .pulse::after {
             content: '';
             position: absolute;
+            top: 0; left: 0;
             width: 100%; height: 100%;
             border: 2px solid var(--primary);
             border-radius: 50%;
@@ -373,37 +741,89 @@
             100% { transform: scale(3); opacity: 0; }
         }
 
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
+            .menu-toggle { display: block; }
+            .tracker-container { grid-template-columns: 1fr; grid-template-rows: 1fr 400px; }
+            .sightings-panel { border-left: none; border-top: 1px solid var(--border); }
+        }
+
+        @media (max-width: 600px) {
+            .tracker-container { grid-template-rows: 1fr 300px; }
+            .hud-status { display: none; }
+        }
+
+        /* --- UTILS --- */
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
+        }
+        .glitch-text::before {
+            left: 2px; text-shadow: -1px 0 var(--secondary);
+            clip: rect(24px, 550px, 90px, 0);
+            animation: glitch-anim-1 2s infinite linear alternate-reverse;
+        }
+        .glitch-text::after {
+            left: -2px; text-shadow: -1px 0 var(--primary);
+            clip: rect(85px, 550px, 140px, 0);
+            animation: glitch-anim-2 2s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim-1 {
+            0% { clip: rect(10px, 9999px, 30px, 0); }
+            100% { clip: rect(80px, 9999px, 100px, 0); }
+        }
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(80px, 9999px, 100px, 0); }
+            100% { clip: rect(10px, 9999px, 30px, 0); }
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="overlay-fx"></div>
+    <!-- VISUAL OVERLAYS -->
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+    <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="push-notification-container" id="push-container"></div>
 
-    <!-- Mobile Navigation Sidebar -->
+    <!-- MOBILE SIDEBAR -->
     <aside class="mobile-sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo">
                 <img src="logo.png" alt="Logo">
-                <span>TERMINAL MENU</span>
+                <span>SYSTEM MENU</span>
             </div>
+            <button class="menu-toggle" onclick="toggleSidebar()" style="display:block; border:none;">
+                <i class="fa fa-times"></i>
+            </button>
         </div>
         <ul class="sidebar-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel Feed</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species DB</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agent Network</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> Private DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Secure Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Config</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Auth Terminal</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
         </ul>
-        <div class="sidebar-footer">
-            DARK JURASSIC OS v2.1.0<br>ENCRYPTED_SIGNAL_STABLE
+        <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
+            SECURE CONNECTION<br>V4.0.2 STABLE
         </div>
     </aside>
 
+    <!-- DESKTOP HEADER -->
     <header>
         <nav class="navbar">
             <a href="index.html" class="logo">
@@ -412,16 +832,17 @@
             </a>
 
             <ul class="nav-links">
-            <li><a href="index.html"><i class="fa fa-home"></i> Dashboard</a></li>
-            <li><a href="forum.html" class="fa fa-comments"></i> Intel Feed</a></li>
-            <li><a href="sightings.html"><i class="fa fa-crosshairs"></i> Live Tracker</a></li>
-            <li><a href="dinosaurs.html"><i class="fa fa-dna"></i> Species DB</a></li>
-            <li><a href="users.html"><i class="fa fa-user-secret"></i> Agent Network</a></li>
-            <li><a href="dms.html"><i class="fa fa-envelope"></i> Private DMs</a></li>
-            <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i> Black Market</a></li>
-            <li><a href="vault.html"><i class="fa fa-lock"></i> Secure Vault</a></li>
-            <li><a href="profile.html"><i class="fa fa-cog"></i> Config</a></li>
-            <li><a href="login.html"><i class="fa fa-sign-in-alt"></i> Auth Terminal</a></li>
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" class="active"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
             </ul>
 
             <button class="menu-toggle" onclick="toggleSidebar()">
@@ -430,74 +851,168 @@
         </nav>
     </header>
 
+    <!-- MAIN CONTENT -->
     <main>
         <div class="tracker-container">
-            <!-- Map Section -->
-            <div id="map"></div>
+            <!-- MAP SECTION -->
+            <div style="position: relative; width: 100%; height: 100%;">
+                <div id="map"></div>
+                <canvas id="weather-canvas"></canvas>
+                
+                <!-- HUD Overlay -->
+                <div class="map-hud">
+                    <div class="hud-corner hud-tl"></div>
+                    <div class="hud-corner hud-tr"></div>
+                    <div class="hud-corner hud-bl"></div>
+                    <div class="hud-corner hud-br"></div>
+                    
+                    <div class="hud-status">
+                        <div class="rec-dot"></div>
+                        <span>LIVE FEED // SAT-ECHO-7</span>
+                    </div>
 
-            <!-- Feed Section -->
+                    <div class="hud-coords">
+                        LAT: <span id="hud-lat">00.0000</span><br>
+                        LNG: <span id="hud-lng">00.0000</span><br>
+                        ZOOM: <span id="hud-zoom">3x</span>
+                    </div>
+
+                    <div class="hud-weather">
+                        <i class="fa fa-cloud-rain"></i>
+                        <span>STORM WARNING: SECTOR 4</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIDEBAR FEED -->
             <aside class="sightings-panel">
+                <div class="sidebar-tabs">
+                    <div class="sidebar-tab active" onclick="switchTab('feed')">ASSET FEED</div>
+                    <div class="sidebar-tab" onclick="switchTab('chat')">SECURE COMMS</div>
+                </div>
+
+                <!-- FEED TAB -->
+                <div id="tab-feed" style="display: flex; flex-direction: column; height: 100%;">
                 <div class="panel-header">
-                    <h2>LIVE ASSET FEED</h2>
-                    <span id="active-count" style="font-size: 0.7rem; color: var(--success);">0 ONLINE</span>
+                    <div class="panel-title">
+                        <span><i class="fa fa-satellite-dish"></i> ASSET FEED</span>
+                        <span id="active-count" style="font-size: 0.7rem; color: var(--success);">SCANNING...</span>
+                    </div>
+                    <div class="filter-bar">
+                        <button class="filter-btn active" onclick="filterFeed('all')">ALL</button>
+                        <button class="filter-btn" onclick="filterFeed('high')">HIGH THREAT</button>
+                        <button class="filter-btn" onclick="filterFeed('recent')">RECENT</button>
+                    </div>
                 </div>
                 
                 <div class="feed-container" id="sightings-list">
                     <!-- Cards injected via JS -->
-                    <div style="padding: 20px; color: #444; text-align: center;">Scanning for bio-signatures...</div>
+                    <div style="padding: 40px 20px; color: var(--text-dim); text-align: center;">
+                        <i class="fa fa-circle-notch fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
+                        ESTABLISHING UPLINK...
+                    </div>
                 </div>
 
                 <div class="panel-actions">
                     <button class="btn-action" onclick="openReportModal()">
-                        <i class="fa fa-plus-circle"></i> REPORT SIGHTING
+                        <i class="fa fa-plus-circle"></i> REPORT NEW SIGHTING
                     </button>
+                </div>
+                </div>
+
+                <!-- CHAT TAB -->
+                <div id="tab-chat" class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="chat-msg system">ENCRYPTED CHANNEL ESTABLISHED</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Broadcast to sector...">
+                        <button class="chat-send" onclick="sendChatMessage()"><i class="fa fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+                <!-- Terminal Log (Visual Filler) -->
+                <div style="height: 100px; background: #000; border-top: 1px solid var(--border); padding: 10px; font-size: 0.6rem; color: var(--success); overflow: hidden; font-family: monospace; opacity: 0.7;">
+                    <div id="terminal-log">
+                        > SYSTEM_INIT... OK<br>
+                        > CONNECTING TO INGEN DB... OK<br>
+                    </div>
                 </div>
             </aside>
         </div>
     </main>
 
-    <!-- Report Sighting Modal -->
+    <!-- REPORT MODAL -->
     <div class="modal" id="reportModal">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <div class="modal-header">INTEL REPORT: ASSET DETECTION</div>
+            <div class="modal-header">
+                <span><i class="fa fa-file-contract"></i> INTEL REPORT: ASSET DETECTION</span>
+                <span class="close-modal" onclick="closeModal()"><i class="fa fa-times"></i></span>
+            </div>
             
             <div class="form-group">
-                <label>ASSET DESIGNATION (Species)</label>
-                <input type="text" id="specName" placeholder="e.g. Velociraptor, T-Rex...">
+                <label>ASSET DESIGNATION (SPECIES)</label>
+                <select id="specName" onchange="autoFillThreat()">
+                    <option value="">-- SELECT SPECIES --</option>
+                    <option value="Tyrannosaurus Rex">Tyrannosaurus Rex</option>
+                    <option value="Velociraptor">Velociraptor</option>
+                    <option value="Spinosaurus">Spinosaurus</option>
+                    <option value="Triceratops">Triceratops</option>
+                    <option value="Brachiosaurus">Brachiosaurus</option>
+                    <option value="Pteranodon">Pteranodon</option>
+                    <option value="Mosasaurus">Mosasaurus</option>
+                    <option value="Dilophosaurus">Dilophosaurus</option>
+                    <option value="Compsognathus">Compsognathus</option>
+                    <option value="Unknown">Unknown / Hybrid</option>
+                </select>
             </div>
 
-            <div class="form-group">
-                <label>LOCATION DESCRIPTION</label>
-                <input type="text" id="specLoc" placeholder="e.g. Sector 4, Main Gate...">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>THREAT LEVEL</label>
+                    <select id="specThreat">
+                        <option value="low">LOW (Herbivore)</option>
+                        <option value="medium">MEDIUM (Small Carnivore)</option>
+                        <option value="high">HIGH (Apex Predator)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>LOCATION (SECTOR)</label>
+                    <input type="text" id="specLoc" placeholder="e.g. Sector 4, North">
+                </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="form-group">
                     <label>LATITUDE</label>
-                    <input type="number" step="any" id="specLat" placeholder="0.0000">
+                    <input type="number" step="any" id="specLat" placeholder="Click Map">
                 </div>
                 <div class="form-group">
                     <label>LONGITUDE</label>
-                    <input type="number" step="any" id="specLng" placeholder="0.0000">
+                    <input type="number" step="any" id="specLng" placeholder="Click Map">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>VISUAL DATA (Image URL)</label>
-                <input type="text" id="specImg" placeholder="https://...">
+                <label>VISUAL DATA (IMAGE URL)</label>
+                <input type="text" id="specImg" placeholder="https://example.com/image.jpg">
             </div>
 
-            <p style="font-size: 0.6rem; color: #555; margin-bottom: 15px;">
-                NOTE: False reports will result in immediate agent clearance revocation.
+            <div class="form-group">
+                <label>ADDITIONAL NOTES</label>
+                <textarea id="specNotes" rows="2" placeholder="Behavior, injuries, direction of travel..."></textarea>
+            </div>
+
+            <p style="font-size: 0.65rem; color: var(--text-dim); margin-bottom: 20px; border-left: 2px solid var(--warning); padding-left: 10px;">
+                WARNING: Submitting false intel is a violation of InGen protocols and will result in immediate termination.
             </p>
 
-            <button class="btn-action" id="submitSighting">SIGNAL TO HQ</button>
+            <button class="btn-action" id="submitSighting">TRANSMIT DATA</button>
         </div>
     </div>
 
     <script>
-        // --- Firebase Configuration ---
+        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
             authDomain: "dark-jurassic-378b5.firebaseapp.com",
@@ -508,151 +1023,412 @@
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
 
+        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
 
+        // --- GLOBAL VARIABLES ---
         let map, markers = {};
-        let currentUser = "ANONYMOUS_AGENT";
+        let currentUser = "GUEST_AGENT";
+        let allSightings = [];
+        let isSidebarOpen = false;
+        let weatherCanvas, weatherCtx;
 
-        // Initialize Map
+        // --- MAP INITIALIZATION ---
         function initMap() {
             map = L.map('map', {
-                center: [12.4939, -87.1695], // Default near Isla Nublar approx
+                center: [9.0, -84.0], // Costa Rica / Isla Nublar Region
                 zoom: 3,
                 zoomControl: false,
                 attributionControl: false
             });
 
+            // Dark Matter Tile Layer
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-            // Click on map to get coords
+            // Add Sector Polygons (Simulated)
+            const sectors = [
+                { coords: [[9.1, -84.1], [9.2, -84.0], [9.1, -83.9]], color: 'red', name: 'SECTOR 1 (RESTRICTED)' },
+                { coords: [[8.9, -84.2], [9.0, -84.1], [8.8, -84.0]], color: 'blue', name: 'SECTOR 2 (SAFE)' }
+            ];
+
+            sectors.forEach(s => {
+                L.polygon(s.coords, {
+                    color: s.color,
+                    fillColor: s.color,
+                    fillOpacity: 0.1,
+                    weight: 1,
+                    dashArray: '5, 10'
+                }).addTo(map).bindPopup(s.name);
+            });
+
+            // Map Events
             map.on('click', function(e) {
                 document.getElementById('specLat').value = e.latlng.lat.toFixed(5);
                 document.getElementById('specLng').value = e.latlng.lng.toFixed(5);
+                // If modal is open, update inputs, else maybe open modal?
+                // For now, just update inputs if user opens modal later
             });
+
+            map.on('move', updateHUD);
+            map.on('zoom', updateHUD);
         }
 
-        // Toggle Sidebar
+        function updateHUD() {
+            const center = map.getCenter();
+            document.getElementById('hud-lat').innerText = center.lat.toFixed(4);
+            document.getElementById('hud-lng').innerText = center.lng.toFixed(4);
+            document.getElementById('hud-zoom').innerText = map.getZoom() + "x";
+        }
+
+        // --- SIDEBAR LOGIC ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('open');
+            const overlay = document.getElementById('overlay');
+            isSidebarOpen = !isSidebarOpen;
+            
+            if (isSidebarOpen) {
+                sidebar.classList.add('open');
+                overlay.style.display = 'block';
+            } else {
+                sidebar.classList.remove('open');
+                overlay.style.display = 'none';
+            }
         }
 
-        // Handle Authentication
+        function switchTab(tab) {
+            document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('tab-feed').style.display = tab === 'feed' ? 'flex' : 'none';
+            document.getElementById('tab-chat').style.display = tab === 'chat' ? 'flex' : 'none';
+        }
+
+        // --- AUTHENTICATION ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                currentUser = user.email.split('@')[0];
+                currentUser = user.email.split('@')[0].replace(/\./g, '_').toUpperCase();
+                logToTerminal(`AGENT AUTHENTICATED: ${currentUser}`);
+
+                const username = user.email.split('@')[0].replace(/\./g, '_');
+                db.ref('users/' + username).once('value').then(snapshot => {
+                    const data = snapshot.val();
+                    if (data && data.role === 'admin') {
+                        document.getElementById('admin-nav').style.display = 'block';
+                        document.getElementById('admin-sidebar').style.display = 'block';
+                    }
+                });
             } else {
-                // Not logged in? Optional redirect or stay as anonymous
+                logToTerminal("WARNING: UNREGISTERED SESSION");
             }
         });
 
-        // Load Sightings from Firebase
+        // --- DATA HANDLING ---
         function loadSightings() {
-            const list = document.getElementById('sightings-list');
-            const countDisplay = document.getElementById('active-count');
-
             db.ref('sightings').on('value', snapshot => {
                 const data = snapshot.val();
-                list.innerHTML = "";
+                allSightings = [];
                 
                 // Clear existing markers
                 Object.values(markers).forEach(m => map.removeLayer(m));
                 markers = {};
 
-                if (!data) {
-                    list.innerHTML = '<div style="padding: 20px; color: #444; text-align: center;">No assets tracked.</div>';
-                    countDisplay.innerText = "0 ONLINE";
-                    return;
+                if (data) {
+                    Object.entries(data).forEach(([id, item]) => {
+                        allSightings.push({ id, ...item });
+                    });
+                    // Sort by timestamp descending
+                    allSightings.sort((a, b) => b.timestamp - a.timestamp);
                 }
 
-                const entries = Object.entries(data).reverse();
-                countDisplay.innerText = `${entries.length} ONLINE`;
-
-                entries.forEach(([id, item]) => {
-                    // Create Card
-                    const card = document.createElement('div');
-                    card.className = 'sighting-card';
-                    card.onclick = () => focusSighting(id, item.lat, item.lng);
-
-                    const timeStr = new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-                    card.innerHTML = `
-                        <div class="card-top">
-                            <div class="card-img" style="background-image: url('${item.image || 'https://via.placeholder.com/60?text=DNA'}')"></div>
-                            <div class="card-info">
-                                <h4>${item.name}</h4>
-                                <p><i class="fa fa-map-marker-alt"></i> ${item.location}</p>
-                                <p style="color: #444; margin-top: 4px;">Reported by: ${item.reportedBy}</p>
-                            </div>
-                        </div>
-                        <div class="card-time">${timeStr}</div>
-                    `;
-                    list.appendChild(card);
-
-                    // Add Map Marker
-                    const customIcon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div class="pulse"></div>`,
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
-                    });
-
-                    const marker = L.marker([item.lat, item.lng], { icon: customIcon }).addTo(map);
-                    marker.bindPopup(`
-                        <div style="font-family:'JetBrains Mono'; font-size: 11px;">
-                            <strong style="color:var(--primary)">${item.name.toUpperCase()}</strong><br>
-                            LOC: ${item.location}<br>
-                            AGENT: ${item.reportedBy}
-                        </div>
-                    `);
-                    markers[id] = marker;
-                });
+                renderFeed(allSightings);
+                renderMarkers(allSightings);
+                
+                document.getElementById('active-count').innerText = `${allSightings.length} ACTIVE SIGNALS`;
+                logToTerminal("DATA SYNC COMPLETE");
             });
         }
 
-        function focusSighting(id, lat, lng) {
-            map.flyTo([lat, lng], 13);
-            markers[id].openPopup();
-            
-            // Highlight card
-            document.querySelectorAll('.sighting-card').forEach(c => c.classList.remove('active'));
-            // Finding the exact card logic here if needed
-        }
+        function renderFeed(sightings) {
+            const list = document.getElementById('sightings-list');
+            list.innerHTML = "";
 
-        // Modal Controls
-        function openReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('reportModal').style.display = 'none'; }
-
-        // Form Submission
-        document.getElementById('submitSighting').onclick = function() {
-            const name = document.getElementById('specName').value.trim();
-            const loc = document.getElementById('specLoc').value.trim();
-            const lat = parseFloat(document.getElementById('specLat').value);
-            const lng = parseFloat(document.getElementById('specLng').value);
-            const img = document.getElementById('specImg').value.trim();
-
-            if (!name || !loc || isNaN(lat) || isNaN(lng)) {
-                alert("CRITICAL ERROR: MISSING DATA FIELDS");
+            if (sightings.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; color: #444; text-align: center;">No assets tracked in this sector.</div>';
                 return;
             }
 
-            db.ref('sightings').push({
-                name, location: loc, lat, lng, image: img || "https://images.unsplash.com/photo-1517926967795-31943e805dae?q=80&w=400",
+            sightings.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'sighting-card';
+                card.id = `card-${item.id}`;
+                card.onclick = () => focusSighting(item.id, item.lat, item.lng);
+
+                const timeStr = new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const threatClass = item.threat === 'high' ? 'threat-high' : (item.threat === 'medium' ? 'threat-med' : 'threat-low');
+                const threatLabel = item.threat ? item.threat.toUpperCase() : 'UNKNOWN';
+
+                card.innerHTML = `
+                    <div class="card-top">
+                        <div class="card-img" style="background-image: url('${item.image || 'https://via.placeholder.com/60?text=NO_IMG'}')"></div>
+                        <div class="card-info">
+                            <h4>${item.name}</h4>
+                            <p><i class="fa fa-map-marker-alt"></i> ${item.location}</p>
+                            <span class="threat-badge ${threatClass}">${threatLabel} THREAT</span>
+                        </div>
+                    </div>
+                    <div class="card-time">${timeStr}</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function renderMarkers(sightings) {
+            sightings.forEach(item => {
+                const customIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div class="pulse" style="background:${getThreatColor(item.threat)}"></div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                });
+
+                const marker = L.marker([item.lat, item.lng], { icon: customIcon }).addTo(map);
+                marker.bindPopup(`
+                    <div style="font-family:'JetBrains Mono'; font-size: 11px; line-height:1.4;">
+                        <strong style="color:var(--primary)">${item.name.toUpperCase()}</strong><br>
+                        LOC: ${item.location}<br>
+                        THREAT: ${item.threat ? item.threat.toUpperCase() : 'N/A'}<br>
+                        AGENT: ${item.reportedBy}
+                    </div>
+                `);
+                markers[item.id] = marker;
+            });
+        }
+
+        function getThreatColor(threat) {
+            if(threat === 'high') return '#ff0000';
+            if(threat === 'medium') return '#ffa500';
+            return '#00ff00';
+        }
+
+        function focusSighting(id, lat, lng) {
+            map.flyTo([lat, lng], 10, {
+                animate: true,
+                duration: 1.5
+            });
+            
+            if(markers[id]) markers[id].openPopup();
+            
+            // Highlight card
+            document.querySelectorAll('.sighting-card').forEach(c => c.classList.remove('active'));
+            const card = document.getElementById(`card-${id}`);
+            if(card) {
+                card.classList.add('active');
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function filterFeed(type) {
+            // Update buttons
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (type === 'all') {
+                renderFeed(allSightings);
+            } else if (type === 'high') {
+                const filtered = allSightings.filter(s => s.threat === 'high');
+                renderFeed(filtered);
+            } else if (type === 'recent') {
+                // Just show top 5
+                renderFeed(allSightings.slice(0, 5));
+            }
+        }
+
+        // --- REPORTING LOGIC ---
+        function openReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('reportModal').style.display = 'none'; }
+
+        function autoFillThreat() {
+            const species = document.getElementById('specName').value;
+            const threatSelect = document.getElementById('specThreat');
+            
+            const highThreats = ['Tyrannosaurus Rex', 'Spinosaurus', 'Mosasaurus', 'Unknown'];
+            const medThreats = ['Velociraptor', 'Dilophosaurus'];
+            
+            if (highThreats.includes(species)) threatSelect.value = 'high';
+            else if (medThreats.includes(species)) threatSelect.value = 'medium';
+            else threatSelect.value = 'low';
+        }
+
+        document.getElementById('submitSighting').onclick = function() {
+            const name = document.getElementById('specName').value;
+            const loc = document.getElementById('specLoc').value.trim();
+            const threat = document.getElementById('specThreat').value;
+            const lat = parseFloat(document.getElementById('specLat').value);
+            const lng = parseFloat(document.getElementById('specLng').value);
+            const img = document.getElementById('specImg').value.trim();
+            const notes = document.getElementById('specNotes').value.trim();
+
+            if (!name || !loc || isNaN(lat) || isNaN(lng)) {
+                alert("ERROR: INCOMPLETE DATA. COORDINATES AND SPECIES REQUIRED.");
+                return;
+            }
+
+            const newSighting = {
+                name, 
+                location: loc, 
+                threat,
+                lat, 
+                lng, 
+                image: img || "",
+                notes,
                 reportedBy: currentUser,
                 timestamp: Date.now()
-            }).then(() => {
+            };
+
+            db.ref('sightings').push(newSighting).then(() => {
                 closeModal();
+                logToTerminal("TRANSMISSION SENT. DATA UPLOADED.");
+                showPushNotification("INTEL UPLOADED", "Asset location confirmed and logged.", "success");
+                
+                // Also push to alerts if high threat
+                if(threat === 'high') {
+                    db.ref('alerts').push({
+                        title: "HIGH THREAT DETECTED",
+                        message: `${name} spotted at ${loc}. Caution advised.`,
+                        type: "warn",
+                        timestamp: Date.now()
+                    });
+                }
+
                 // Clear form
-                ['specName', 'specLoc', 'specLat', 'specLng', 'specImg'].forEach(id => document.getElementById(id).value = "");
+                document.getElementById('specName').value = "";
+                document.getElementById('specLoc').value = "";
+                document.getElementById('specLat').value = "";
+                document.getElementById('specLng').value = "";
+                document.getElementById('specImg').value = "";
+                document.getElementById('specNotes').value = "";
             });
         };
 
-        // Initialize On Load
+        // --- CHAT LOGIC ---
+        function initChat() {
+            db.ref('global_chat').limitToLast(20).on('child_added', snap => {
+                const msg = snap.val();
+                const div = document.createElement('div');
+                const isMe = msg.user === currentUser;
+                div.className = `chat-msg ${isMe ? 'me' : 'user'}`;
+                div.innerHTML = `<strong>${msg.user}</strong>: ${msg.text}`;
+                
+                const container = document.getElementById('chat-messages');
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if(text) {
+                db.ref('global_chat').push({
+                    user: currentUser,
+                    text: text,
+                    timestamp: Date.now()
+                });
+                input.value = "";
+            }
+        }
+
+        // --- WEATHER SIMULATION ---
+        function initWeather() {
+            weatherCanvas = document.getElementById('weather-canvas');
+            weatherCtx = weatherCanvas.getContext('2d');
+            resizeWeather();
+            window.addEventListener('resize', resizeWeather);
+            requestAnimationFrame(drawWeather);
+        }
+
+        function resizeWeather() {
+            weatherCanvas.width = weatherCanvas.offsetWidth;
+            weatherCanvas.height = weatherCanvas.offsetHeight;
+        }
+
+        const rainDrops = [];
+        for(let i=0; i<100; i++) rainDrops.push({
+            x: Math.random() * 2000, 
+            y: Math.random() * 1000, 
+            l: Math.random() * 20 + 10, 
+            v: Math.random() * 10 + 10
+        });
+
+        function drawWeather() {
+            weatherCtx.clearRect(0, 0, weatherCanvas.width, weatherCanvas.height);
+            weatherCtx.strokeStyle = 'rgba(174, 194, 224, 0.5)';
+            weatherCtx.lineWidth = 1;
+            weatherCtx.beginPath();
+            
+            rainDrops.forEach(d => {
+                weatherCtx.moveTo(d.x, d.y);
+                weatherCtx.lineTo(d.x + 2, d.y + d.l);
+                d.x += 2;
+                d.y += d.v;
+                if(d.y > weatherCanvas.height) {
+                    d.y = -20;
+                    d.x = Math.random() * weatherCanvas.width;
+                }
+            });
+            weatherCtx.stroke();
+            requestAnimationFrame(drawWeather);
+        }
+
+        // --- UTILITIES ---
+        function logToTerminal(msg) {
+            const term = document.getElementById('terminal-log');
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+            term.innerHTML += `> [${time}] ${msg}<br>`;
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function showPushNotification(title, message, type = 'info') {
+            const container = document.getElementById('push-container');
+            const alert = document.createElement('div');
+            alert.className = 'push-alert';
+            
+            let color = 'var(--primary)';
+            if (type === 'success') color = 'var(--success)';
+            if (type === 'warn') color = 'var(--warning)';
+            
+            alert.style.borderLeftColor = color;
+            alert.innerHTML = `
+                <div style="color:${color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">
+                    ${title}
+                </div>
+                <div style="font-size:0.75rem; color:#ccc;">${message}</div>
+            `;
+            
+            container.appendChild(alert);
+            setTimeout(() => {
+                alert.style.animation = 'slideInRight 0.4s reverse forwards';
+                setTimeout(() => alert.remove(), 400);
+            }, 5000);
+        }
+
+        // Listen for global alerts
+        db.ref('alerts').limitToLast(1).on('child_added', snap => {
+            const alert = snap.val();
+            if (alert.timestamp && Date.now() - alert.timestamp < 60000) {
+                showPushNotification(alert.title, alert.message, alert.type);
+            }
+        });
+
+        // --- INITIALIZATION ---
         window.onload = () => {
             initMap();
             loadSightings();
+            initChat();
+            initWeather();
+            logToTerminal("SYSTEM ONLINE");
         };
 
     </script>
