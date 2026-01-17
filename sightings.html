@@ -17,6 +17,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Heatmap Plugin -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
     <style>
         /* --- CORE VARIABLES --- */
@@ -355,6 +357,18 @@
             animation: blink 1s infinite;
         }
 
+        .hud-agent-status {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 5px 15px;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 0.7rem;
+        }
+
         .hud-coords {
             position: absolute;
             bottom: 20px; left: 80px;
@@ -374,6 +388,32 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        /* --- MAP CONTROLS --- */
+        .map-controls {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            z-index: 401;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .map-control-btn {
+            width: 40px; height: 40px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+
+        .map-control-btn:hover, .map-control-btn.active {
+            background: var(--primary); color: #fff; border-color: var(--primary);
         }
 
         /* --- WEATHER CANVAS --- */
@@ -498,6 +538,14 @@
             font-weight: bold;
         }
 
+        .card-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 8px;
+        }
+
         .threat-badge {
             font-size: 0.6rem;
             padding: 2px 6px;
@@ -510,6 +558,29 @@
         .threat-high { background: rgba(255, 0, 0, 0.2); color: #ff5555; border: 1px solid #ff5555; }
         .threat-med { background: rgba(255, 165, 0, 0.2); color: #ffa500; border: 1px solid #ffa500; }
         .threat-low { background: rgba(0, 255, 0, 0.2); color: #55ff55; border: 1px solid #55ff55; }
+
+        .btn-card-action {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #333;
+            color: #888;
+            font-size: 0.6rem;
+            padding: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-card-action:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* --- SATELLITE SWEEP --- */
+        .satellite-sweep {
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(to right, transparent, var(--accent-blue), transparent);
+            z-index: 402;
+            animation: sweep-anim 8s ease-in-out infinite;
+        }
 
         .panel-actions {
             padding: 15px;
@@ -714,6 +785,110 @@
             animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
+        /* --- DRONE VIEW MODAL --- */
+        .drone-view-modal .modal-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            padding: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+        }
+        .drone-video-container {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            background: #111 url('https://i.gifer.com/763.gif') center/cover;
+        }
+        .drone-hud {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+        }
+        .telemetry-data {
+            position: absolute;
+            bottom: 20px; left: 20px;
+            font-family: 'Orbitron';
+            color: var(--success);
+            text-shadow: 0 0 5px #000;
+            font-size: 0.8rem;
+        }
+        .drone-footer {
+            background: var(--bg-panel);
+            padding: 10px 20px;
+            border-top: 1px solid var(--primary);
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        /* --- DETAILS PANEL --- */
+        .details-panel {
+            position: absolute;
+            top: 0; right: -100%;
+            width: 400px;
+            height: 100%;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            z-index: 500;
+            border-left: 1px solid var(--primary);
+            transition: right 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        .details-panel.open {
+            right: 0;
+        }
+        .details-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .details-body {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .details-body h3 {
+            font-family: 'Orbitron';
+            color: var(--primary);
+        }
+        .details-body p {
+            font-size: 0.8rem;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+
+        .push-notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 6000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .push-alert {
+            background: rgba(10, 10, 10, 0.95);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            width: 300px;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes sweep-anim {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(calc(100vh - var(--nav-height))); }
+        }
+
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -881,6 +1056,12 @@
                         <i class="fa fa-cloud-rain"></i>
                         <span>STORM WARNING: SECTOR 4</span>
                     </div>
+                </div>
+
+                <div class="map-controls">
+                    <button class="map-control-btn" title="Toggle Heatmap" onclick="toggleHeatmap()"><i class="fa fa-fire"></i></button>
+                    <button class="map-control-btn" title="Center on HQ" onclick="centerMap()"><i class="fa fa-compress-arrows-alt"></i></button>
+                    <button class="map-control-btn" title="Run Satellite Sweep" onclick="runSatelliteSweep()"><i class="fa fa-satellite"></i></button>
                 </div>
             </div>
 
@@ -1129,6 +1310,26 @@
         </div>
     </div>
 
+    <!-- DRONE VIEW MODAL -->
+    <div class="modal drone-view-modal" id="droneViewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span><i class="fa fa-video"></i> DRONE FEED: <span id="drone-target-name">TARGET</span></span>
+                <span class="close-modal" onclick="closeModal('droneViewModal')"><i class="fa fa-times"></i></span>
+            </div>
+            <div class="drone-video-container">
+                <div class="drone-hud"></div>
+                <div class="telemetry-data" id="telemetry-data">
+                    ALT: 150m<br>
+                    SPEED: 25km/h<br>
+                    SIGNAL: 98%<br>
+                    TARGET_VITAL: STABLE
+                </div>
+            </div>
+            <div class="drone-footer">LIVE FEED FROM MQ-9 REAPER DRONE</div>
+        </div>
+    </div>
+
     <script>
         // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
@@ -1151,6 +1352,7 @@
         let currentUser = "GUEST_AGENT";
         let allSightings = [];
         let isSidebarOpen = false;
+        let heatmapLayer;
         let weatherCanvas, weatherCtx;
 
         // --- MAP INITIALIZATION ---
@@ -1164,6 +1366,11 @@
 
             // Dark Matter Tile Layer
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+            // Initialize heatmap layer (but don't add it yet)
+            heatmapLayer = L.heatLayer([], {
+                radius: 25, blur: 15, maxZoom: 12, gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'}
+            });
 
             // Add Sector Polygons (Simulated)
             const sectors = [
@@ -1199,6 +1406,23 @@
             document.getElementById('hud-lng').innerText = center.lng.toFixed(4);
             document.getElementById('hud-zoom').innerText = map.getZoom() + "x";
         }
+
+        function toggleHeatmap() {
+            const btn = document.querySelector('.map-control-btn[title="Toggle Heatmap"]');
+            if (map.hasLayer(heatmapLayer)) {
+                map.removeLayer(heatmapLayer);
+                btn.classList.remove('active');
+            } else {
+                map.addLayer(heatmapLayer);
+                btn.classList.add('active');
+            }
+        }
+
+        function centerMap() {
+            map.flyTo([9.0, -84.0], 3);
+        }
+
+        function runSatelliteSweep() { /* Visual only, handled by CSS */ }
 
         // --- SIDEBAR LOGIC ---
         function toggleSidebar() {
@@ -1252,6 +1476,10 @@
                 Object.values(markers).forEach(m => map.removeLayer(m));
                 markers = {};
 
+                // Clear heatmap
+                const heatPoints = [];
+
+
                 if (data) {
                     Object.entries(data).forEach(([id, item]) => {
                         allSightings.push({ id, ...item });
@@ -1259,10 +1487,14 @@
                     // Sort by timestamp descending
                     allSightings.sort((a, b) => b.timestamp - a.timestamp);
                 }
+                
+                allSightings.forEach(s => heatPoints.push([s.lat, s.lng, 0.5]));
+                heatmapLayer.setLatLngs(heatPoints);
 
                 renderFeed(allSightings);
                 renderMarkers(allSightings);
                 
+
                 document.getElementById('active-count').innerText = `${allSightings.length} ACTIVE SIGNALS`;
                 logToTerminal("DATA SYNC COMPLETE");
             });
@@ -1295,6 +1527,10 @@
                             <p><i class="fa fa-map-marker-alt"></i> ${item.location}</p>
                             <span class="threat-badge ${threatClass}">${threatLabel} THREAT</span>
                         </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-card-action" onclick="focusSighting('${item.id}', ${item.lat}, ${item.lng})"><i class="fa fa-crosshairs"></i> LOCATE</button>
+                        <button class="btn-card-action" onclick="launchDroneView('${item.name}')"><i class="fa fa-video"></i> DRONE</button>
                     </div>
                     <div class="card-time">${timeStr}</div>
                 `;
@@ -1380,7 +1616,7 @@
         }
 
         document.getElementById('submitSighting').onclick = function() {
-            const name = document.getElementById('specName').value;
+            const name = document.getElementById('specName').value.trim();
             const loc = document.getElementById('specLoc').value.trim();
             const threat = document.getElementById('specThreat').value;
             const lat = parseFloat(document.getElementById('specLat').value);
@@ -1456,6 +1692,25 @@
                 });
                 input.value = "";
             }
+        }
+
+        // --- DRONE VIEW ---
+        function launchDroneView(targetName) {
+            document.getElementById('drone-target-name').innerText = targetName.toUpperCase();
+            const modal = document.getElementById('droneViewModal');
+            modal.style.display = 'flex';
+
+            // Simulate telemetry
+            const telemetryEl = document.getElementById('telemetry-data');
+            const interval = setInterval(() => {
+                telemetryEl.innerHTML = `
+                    ALT: ${(140 + Math.random() * 20).toFixed(0)}m<br>
+                    SPEED: ${(20 + Math.random() * 10).toFixed(0)}km/h<br>
+                    SIGNAL: ${(95 + Math.random() * 4).toFixed(1)}%<br>
+                    TARGET_VITAL: STABLE
+                `;
+            }, 1000);
+            modal.dataset.intervalId = interval;
         }
 
         // --- WEATHER SIMULATION ---
@@ -1543,6 +1798,11 @@
         // --- INITIALIZATION ---
         window.onload = () => {
             initMap();
+            // Add satellite sweep div
+            const sweep = document.createElement('div');
+            sweep.className = 'satellite-sweep';
+            document.getElementById('map').appendChild(sweep);
+
             loadSightings();
             initChat();
             initWeather();

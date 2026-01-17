@@ -397,6 +397,8 @@
         .filter-group {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .filter-btn {
@@ -454,7 +456,7 @@
 
         .auction-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
         }
 
@@ -571,6 +573,8 @@
             border-top: 1px solid #222;
             padding-top: 15px;
             margin-top: auto;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .xp-val {
@@ -637,6 +641,8 @@
         .mining-stats {
             display: flex;
             gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .hash-rate {
@@ -676,6 +682,7 @@
             align-items: center;
             padding: 15px;
             border-bottom: 1px solid #222;
+            flex-wrap: wrap;
             transition: 0.2s;
         }
 
@@ -816,11 +823,15 @@
 
         /* --- Responsive Adjustments --- */
         @media (max-width: 600px) {
+            main { padding: 20px 10px; }
             .hero h1 { font-size: 1.8rem; }
             .market-grid { grid-template-columns: 1fr; }
             .upload-section { padding: 20px; }
             .mining-rig { flex-direction: column; gap: 15px; text-align: center; }
+            .mining-stats { gap: 15px; }
             .auction-grid { grid-template-columns: 1fr; }
+            .market-controls { flex-direction: column; align-items: stretch; }
+            .search-box { max-width: 100%; }
         }
 
     </style>

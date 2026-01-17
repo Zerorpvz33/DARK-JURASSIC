@@ -64,7 +64,6 @@
             height: 100dvh;
             display: flex;
             flex-direction: column;
-    padding-top: var(--nav-height);
             font-size: 14px;
         }
 
@@ -167,11 +166,12 @@
             height: var(--nav-height);
             background: rgba(5, 5, 5, 0.95);
             border-bottom: 1px solid var(--border);
-            position: fixed;
-            top: 0; width: 100%;
+            width: 100%;
             z-index: 1000;
             backdrop-filter: blur(10px);
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+            position: relative;
         }
 
         .navbar { 
@@ -278,6 +278,7 @@
             border-bottom: 1px solid var(--border);
             text-align: center;
             position: relative;
+            flex-shrink: 0;
         }
 
         .glitch-text {
@@ -355,7 +356,8 @@
         /* --- DM Layout --- */
         .dm-container {
             flex: 1;
-            display: block;
+            display: grid;
+            grid-template-columns: 320px 1fr;
             overflow: hidden;
             position: relative;
             min-height: 0;
@@ -368,8 +370,6 @@
             display: flex;
             flex-direction: column;
             z-index: 10;
-            width: 100%;
-            height: 100%;
         }
 
         .contacts-header {
@@ -378,6 +378,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .btn-new-squad {
+            background: transparent; border: 1px solid var(--primary); color: var(--primary);
+            padding: 4px 8px; font-size: 0.6rem; cursor: pointer; transition: 0.2s;
+        }
+        .btn-new-squad:hover {
+            background: var(--primary); color: #fff;
         }
 
         .contacts-tabs {
@@ -502,14 +510,9 @@
             display: flex;
             flex-direction: column;
             background: var(--bg-dark);
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-            height: 100%;
+            position: relative;
             min-height: 0;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 20;
+            /* Mobile styles will handle transforms */
         }
 
         .chat-panel.active {
@@ -539,6 +542,16 @@
             background-size: 20px 20px;
         }
 
+        .date-separator {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            background: var(--bg-panel);
+            padding: 2px 10px;
+            border-radius: 10px;
+            align-self: center;
+        }
+
         .msg-row { display: flex; width: 100%; }
         .msg-row.sent { justify-content: flex-end; }
         .msg-row.received { justify-content: flex-start; }
@@ -553,6 +566,30 @@
             word-wrap: break-word;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
+        
+        .bubble-reply {
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            margin-bottom: 8px;
+            border-left: 2px solid var(--secondary);
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        .bubble-reply strong { color: var(--secondary); }
+
+        .bubble-reactions {
+            position: absolute;
+            bottom: -15px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2px 5px;
+            font-size: 0.7rem;
+            display: flex;
+            gap: 5px;
+        }
+        .sent .bubble-reactions { right: 10px; }
+        .received .bubble-reactions { left: 10px; }
 
         .sent .bubble {
             background: var(--primary);
@@ -583,6 +620,20 @@
             cursor: pointer;
         }
 
+        .typing-indicator {
+            padding: 5px 15px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            display: none; /* Hidden by default */
+        }
+        .typing-indicator span {
+            display: inline-block;
+            width: 4px; height: 4px;
+            background: var(--text-dim);
+            border-radius: 50%;
+            animation: typing-pulse 1s infinite;
+        }
+
         .input-area {
             padding: 20px 20px max(20px, env(safe-area-inset-bottom)) 20px;
             background: var(--bg-panel);
@@ -591,6 +642,21 @@
             gap: 15px;
             align-items: center;
             flex-shrink: 0; /* Prevent shrinking */
+            position: relative;
+        }
+
+        .reply-banner {
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+            transform: translateY(-100%);
+            background: var(--bg-card);
+            padding: 8px 20px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
         }
 
         .input-area input {
@@ -634,6 +700,16 @@
             justify-content: center;
             font-size: 1.2rem;
             transition: 0.3s;
+        }
+
+        .scroll-to-bottom {
+            position: absolute;
+            bottom: 120px; right: 20px;
+            width: 35px; height: 35px;
+            background: var(--primary); color: #fff;
+            border-radius: 50%;
+            display: none; /* Hidden by default */
+            align-items: center; justify-content: center; cursor: pointer;
         }
 
         .btn-send:hover { transform: scale(1.05); filter: brightness(1.2); }
@@ -740,9 +816,19 @@
 
         /* --- Mobile Responsive Rules --- */
         @media (max-width: 900px) {
-            .nav-links { display: none; }
-            .menu-toggle { display: block; }
-            
+            .dm-container {
+                grid-template-columns: 1fr;
+            }
+            .contacts-panel {
+                /* Full width by default on mobile */
+            }
+            .chat-panel {
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                transform: translateX(100%);
+                z-index: 20;
+            }
+            .chat-panel.active { transform: translateX(0); }
             .bubble { max-width: 85%; }
         }
 
@@ -751,6 +837,98 @@
             cursor: pointer; 
             margin-right: 20px; 
             font-size: 1.2rem; 
+        }
+
+        @keyframes typing-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.5); opacity: 0.5; }
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* --- NEW FEATURES CSS --- */
+        
+        /* Voice Recorder */
+        .voice-recorder {
+            display: none; align-items: center; gap: 15px; flex: 1;
+            background: var(--bg-panel); padding: 10px; border-radius: 4px;
+            border: 1px solid var(--danger); position: absolute;
+            bottom: 20px; left: 20px; right: 80px; z-index: 10;
+        }
+        .recording-dot {
+            width: 12px; height: 12px; background: var(--danger); border-radius: 50%;
+            animation: pulse-red 1s infinite;
+        }
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .recording-time { font-family: 'Orbitron'; color: var(--danger); font-size: 0.9rem; }
+
+        /* Message Actions */
+        .msg-row { position: relative; }
+        .msg-actions {
+            position: absolute; top: -20px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 4px 10px; display: none; gap: 8px;
+            z-index: 5; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .msg-row:hover .msg-actions { display: flex; }
+        .msg-row.sent .msg-actions { right: 10px; }
+        .msg-row.received .msg-actions { left: 10px; }
+        
+        .action-btn-mini {
+            font-size: 0.8rem; color: var(--text-dim); cursor: pointer; transition: 0.2s;
+        }
+        .action-btn-mini:hover { color: var(--primary); transform: scale(1.2); }
+
+        /* Reactions */
+        .reactions-row {
+            display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap;
+        }
+        .msg-row.sent .reactions-row { justify-content: flex-end; }
+        
+        .reaction-pill {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            border-radius: 10px; padding: 2px 6px; font-size: 0.7rem;
+            cursor: pointer; display: flex; align-items: center; gap: 3px;
+        }
+        .reaction-pill:hover { border-color: var(--primary); }
+
+        /* Search Bar in Chat */
+        .chat-search-bar {
+            position: absolute; top: 70px; right: 20px; width: 300px;
+            background: var(--bg-panel); border: 1px solid var(--border);
+            padding: 10px; z-index: 50; display: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Squad Details */
+        .squad-member-list {
+            max-height: 250px; overflow-y: auto; margin-top: 15px;
+            border: 1px solid var(--border); background: #000;
+        }
+        .squad-member {
+            padding: 10px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .squad-member:last-child { border-bottom: none; }
+
+        /* Audio Message */
+        .audio-msg {
+            display: flex; align-items: center; gap: 10px; min-width: 200px;
+        }
+        .play-btn {
+            width: 30px; height: 30px; background: var(--text-main); color: var(--bg-dark);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .audio-wave {
+            flex: 1; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; position: relative;
+        }
+        .audio-progress { height: 100%; background: var(--primary); width: 0%; }
+
+        /* Decryption Animation */
+        .decrypt-span { display: inline-block; width: 1ch; text-align: center; }
         }
 
     </style>
@@ -833,11 +1011,11 @@
         <aside class="contacts-panel" id="contacts-panel">
             <div class="contacts-header">
                 <span style="font-family:'Orbitron'; color:var(--primary);">ACTIVE NODES</span>
-                <i class="fa fa-sync-alt" style="cursor:pointer; font-size:0.8rem; color:var(--text-dim);" onclick="loadUsers()"></i>
+                <button class="btn-new-squad" onclick="openCreateSquadModal()"><i class="fa fa-plus"></i> NEW SQUAD</button>
             </div>
             <div class="contacts-tabs">
                 <div class="contact-tab active" onclick="filterTab('direct')">DIRECT</div>
-                <div class="contact-tab" onclick="filterTab('squad')">SQUAD</div>
+                <div class="contact-tab" onclick="filterTab('squads')">SQUADS</div>
             </div>
             <div class="search-box">
                 <input type="text" placeholder="Search Agent ID..." id="userSearch" oninput="filterUsers()">
@@ -860,28 +1038,59 @@
             <div class="chat-header">
                 <div class="chat-user-title">
                     <i class="fa fa-arrow-left back-btn" onclick="closeChatMobile()"></i>
-                    <div class="avatar" id="active-avatar">?</div>
-                    <div>
+                    <div class="avatar" id="active-avatar" onclick="openChatDetails()">?</div>
+                    <div onclick="openChatDetails()" style="cursor: pointer;">
                         <span class="user-name" id="active-name">SECURE_CHANNEL</span>
                         <span class="user-status" id="active-status">Waiting for uplink...</span>
                     </div>
                 </div>
                 <div class="chat-actions">
+                    <i class="fa fa-search" style="cursor: pointer; margin-right: 15px;" onclick="toggleChatSearch()" title="Search Chat"></i>
                     <i class="fa fa-user-circle" style="cursor: pointer; margin-right: 15px;" onclick="viewProfile()" title="View Profile"></i>
                     <i class="fa fa-trash-alt" style="cursor: pointer; color: var(--danger);" onclick="clearChat()" title="Burn History"></i>
                 </div>
+            </div>
+
+            <!-- Chat Search Bar -->
+            <div class="chat-search-bar" id="chatSearchBar">
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="chatSearchInput" placeholder="Search history..." style="flex: 1; padding: 8px; background: #000; border: 1px solid var(--border); color: #fff;">
+                    <button class="btn-icon" onclick="performChatSearch()"><i class="fa fa-search"></i></button>
+                    <button class="btn-icon" onclick="toggleChatSearch()"><i class="fa fa-times"></i></button>
+                </div>
+                <div id="search-results-count" style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;"></div>
             </div>
 
             <div class="messages-window" id="messages-window">
                 <!-- Messages populate here -->
             </div>
 
+            <div class="typing-indicator" id="typing-indicator">
+                <span id="typing-user-name">Agent</span> is typing <span></span><span></span><span></span>
+            </div>
+
             <div class="input-area">
+                <div class="reply-banner" id="reply-banner" style="display: none;"></div>
+
+                <!-- Voice Recorder UI -->
+                <div class="voice-recorder" id="voiceRecorder">
+                    <div class="recording-dot"></div>
+                    <div class="recording-time" id="recordingTime">00:00</div>
+                    <div style="flex: 1;"></div>
+                    <button class="btn-icon" style="color: var(--danger); border-color: var(--danger);" onclick="cancelRecording()">CANCEL</button>
+                    <button class="btn-icon" style="color: var(--success); border-color: var(--success);" onclick="stopRecording()"><i class="fa fa-paper-plane"></i></button>
+                </div>
+
                 <button class="btn-icon" onclick="triggerFileUpload()"><i class="fa fa-paperclip"></i></button>
+                <button class="btn-icon" onclick="startRecording()"><i class="fa fa-microphone"></i></button>
                 <input type="file" id="fileInput" style="display: none;" onchange="handleFileUpload(event)">
                 <input type="text" placeholder="Type encrypted message..." id="msgInput">
                 <button class="btn-send" onclick="sendMessage()"><i class="fa fa-location-arrow"></i></button>
             </div>
+        </div>
+
+        <div class="scroll-to-bottom" id="scroll-to-bottom" onclick="scrollToBottom()">
+            <i class="fa fa-arrow-down"></i>
         </div>
 
     </section>
@@ -907,6 +1116,38 @@
         <img class="image-preview" id="preview-img" src="">
     </div>
 
+    <!-- Create Squad Modal -->
+    <div class="modal" id="squadModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('squadModal')">&times;</span>
+            <h2 style="font-family: 'Orbitron'; color: var(--primary); margin-bottom: 20px;">CREATE NEW SQUAD</h2>
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="squadNameInput" placeholder="Enter Squad Name..." style="padding: 12px 15px; width: 100%;">
+            </div>
+            <button class="btn-send" style="width: 100%; border-radius: 4px;" onclick="createSquad()">CREATE & DEPLOY</button>
+        </div>
+    </div>
+
+    <!-- Squad Details Modal -->
+    <div class="modal" id="squadDetailsModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('squadDetailsModal')">&times;</span>
+            <h2 style="font-family: 'Orbitron'; color: var(--primary); margin-bottom: 10px;" id="squad-detail-name">SQUAD</h2>
+            <p style="color: var(--text-dim); font-size: 0.8rem;">ENCRYPTED GROUP CHANNEL</p>
+            
+            <div class="squad-member-list" id="squad-members">
+                <!-- Members -->
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <input type="text" id="addMemberInput" placeholder="Add Agent ID..." style="flex: 1; padding: 10px; background: #000; border: 1px solid var(--border); color: #fff;">
+                <button class="btn-send" style="width: auto; padding: 0 15px; font-size: 0.8rem;" onclick="addSquadMember()">ADD</button>
+            </div>
+            
+            <button class="btn-send" style="width: 100%; margin-top: 15px; background: var(--danger);" onclick="leaveSquad()">LEAVE SQUAD</button>
+        </div>
+    </div>
+
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -919,23 +1160,33 @@
             appId: "1:144100722100:web:be3b4690724a7a117fdee1"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.database();
 
         let myUsername = "";
         let selectedUser = null;
         let allUsers = [];
+        let allSquads = [];
         let currentTab = 'direct';
+        let activeChatListener = null;
+        let activeTypingListener = null;
+        let replyTo = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordingTimer = null;
 
         // --- Auth Observer ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                myUsername = user.email.split('@')[0].replace(/\./g, '_').toUpperCase();
+                myUsername = user.email.split('@')[0].replace(/\./g, '_').toLowerCase();
                 document.getElementById('agent-display').innerText = `AGENT: @${myUsername.toUpperCase()}`;
                 loadUsers();
 
-                db.ref('users/' + myUsername).once('value').then(snapshot => {
+                const userKey = myUsername;
+                db.ref('users/' + userKey).once('value').then(snapshot => {
                     const data = snapshot.val();
                     if (data && data.role === 'admin') {
                         document.getElementById('admin-nav').style.display = 'block';
@@ -969,6 +1220,7 @@
 
         function closeChatMobile() {
             document.getElementById('chat-panel').classList.remove('active');
+            selectedUser = null;
         }
 
         function filterTab(tab) {
@@ -976,11 +1228,26 @@
             document.querySelectorAll('.contact-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
             // For now, just reload users, but you could filter by group/direct logic here
-            displayUsers(allUsers);
+            if (tab === 'direct') {
+                displayUsers(allUsers);
+            } else if (tab === 'squads') {
+                displaySquads(allSquads);
+            }
         }
 
         // --- Load User List ---
         function loadUsers() {
+            // Load Squads
+            db.ref('squads').on('value', snapshot => {
+                allSquads = [];
+                const squadsData = snapshot.val() || {};
+                for (const id in squadsData) {
+                    if (squadsData[id].members && squadsData[id].members[myUsername]) {
+                        allSquads.push({ id, ...squadsData[id], isSquad: true });
+                    }
+                }
+            });
+
             db.ref('users').on('value', snapshot => {
                 const data = snapshot.val();
                 const list = document.getElementById('user-list');
@@ -988,7 +1255,7 @@
                 allUsers = [];
 
                 if (data) {
-                    Object.keys(data).forEach(uid => {
+                    Object.keys(data).forEach(uid => { // uid is lowercase here
                         if (uid !== myUsername) {
                             allUsers.push({ id: uid, ...data[uid] });
                         }
@@ -1006,12 +1273,12 @@
         }
 
         function displayUsers(users) {
-            const list = document.getElementById('user-list'); // Corrected variable name
+            const list = document.getElementById('user-list');
             list.innerHTML = users.length ? "" : "<div class='p-20 text-dim'>No agents found.</div>";
             
             users.forEach(user => {
                 const item = document.createElement('div');
-                item.className = `user-item ${selectedUser === user.id ? 'active' : ''}`;
+                item.className = `user-item ${selectedUser && selectedUser.id === user.id && !selectedUser.isSquad ? 'active' : ''}`;
                 item.onclick = () => selectChat(user.id);
                 
                 const avatarUrl = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.id}`;
@@ -1034,76 +1301,165 @@
             });
         }
 
+        function displaySquads(squads) {
+            const list = document.getElementById('user-list');
+            list.innerHTML = squads.length ? "" : "<div style='padding:20px; color:var(--text-dim); font-size:0.8rem;'>You are not part of any squad.</div>";
+
+            squads.forEach(squad => {
+                const item = document.createElement('div');
+                item.className = `user-item ${selectedUser && selectedUser.id === squad.id && selectedUser.isSquad ? 'active' : ''}`;
+                item.onclick = () => selectChat(squad.id, true);
+
+                item.innerHTML = `
+                    <div class="avatar">
+                        <i class="fa fa-users"></i>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">
+                            <span>${squad.name}</span>
+                        </div>
+                        <span class="user-status">${Object.keys(squad.members).length} Members</span>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
         function filterUsers() {
             const q = document.getElementById('userSearch').value.toLowerCase();
-            const filtered = allUsers.filter(u => u.id.toLowerCase().includes(q));
-            displayUsers(filtered);
+            if (currentTab === 'direct') {
+                const filtered = allUsers.filter(u => (u.displayName || u.id).toLowerCase().includes(q));
+                displayUsers(filtered);
+            } else {
+                const filtered = allSquads.filter(s => s.name.toLowerCase().includes(q));
+                displaySquads(filtered);
+            }
         }
 
         // --- Chat Logic ---
-        function selectChat(userId) {
-            selectedUser = userId;
-            document.getElementById('empty-state').style.display = 'none'; // Corrected ID
-            document.getElementById('active-name').innerText = `@${userId.toUpperCase()}`;
+        function selectChat(userId, isSquad = false) {
+            selectedUser = isSquad ? { id: userId, isSquad: true } : { id: userId, isSquad: false };
             
-            const avatarUrl = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${userId}`;
-            document.getElementById('active-avatar').innerHTML = `<img src="${avatarUrl}" style="width:100%; height:100%; border-radius:50%;">`;
+            let displayName = userId;
+            if (isSquad) {
+                const squad = allSquads.find(s => s.id === userId);
+                if (squad) displayName = squad.name;
+            } else {
+                const u = allUsers.find(u => u.id === userId);
+                if (u) displayName = u.displayName || u.id;
+            }
+
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('active-name').innerText = isSquad ? displayName : `@${displayName.toUpperCase()}`;
+
+            const avatarUrl = isSquad ? '' : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${userId}`;
+            document.getElementById('active-avatar').innerHTML = isSquad ? '<i class="fa fa-users"></i>' : `<img src="${avatarUrl}" style="width:100%; height:100%; border-radius:50%;">`;
             
             document.getElementById('active-status').innerText = "ENCRYPTED_UPLINK_STABLE";
             document.getElementById('active-status').style.color = "var(--success)";
 
-            // UI feedback
-            const items = document.querySelectorAll('.user-item');
-            items.forEach(i => i.classList.remove('active'));
-            // Re-render to show active state
-            displayUsers(allUsers); // Refresh to update active class logic in displayUsers if needed, or just toggle class manually
+            // Re-render lists to show active selection
+            displayUsers(allUsers);
+            displaySquads(allSquads);
 
-            // Slide chat view in (now for all devices)
             document.getElementById('chat-panel').classList.add('active');
-
             loadMessages(userId);
         }
 
         function loadMessages(targetUid) {
-            const chatId = [myUsername, targetUid].sort().join('_');
+            const chatId = selectedUser.isSquad ? targetUid : [myUsername, targetUid].sort().join('_');
             const win = document.getElementById('messages-window');
+            const msgRef = db.ref(`direct_messages/${chatId}`);
 
-            db.ref(`direct_messages/${chatId}`).off(); // Kill previous listeners
-            db.ref(`direct_messages/${chatId}`).limitToLast(50).on('value', snapshot => {
+            if (activeChatListener) activeChatListener.off(); // Kill previous listeners
+
+            activeChatListener = msgRef.limitToLast(50);
+            activeChatListener.on('value', snapshot => {
                 win.innerHTML = "";
+                let lastDate = "";
                 const msgs = snapshot.val();
                 if (msgs) {
-                    Object.values(msgs).forEach(m => {
+                    Object.entries(msgs).forEach(([key, m]) => {
                         const isMe = m.sender === myUsername;
                         const date = new Date(m.timestamp);
+                        const dateStr = date.toLocaleDateString();
                         const timeStr = date.getHours().toString().padStart(2, '0') + ":" + 
                                       date.getMinutes().toString().padStart(2, '0');
 
                         const row = document.createElement('div');
                         row.className = `msg-row ${isMe ? 'sent' : 'received'}`;
+                        row.id = `msg-${key}`;
                         
                         let content = m.text;
+                        let replyBlock = "";
+
+                        if (m.replyTo) {
+                            replyBlock = `
+                                <div class="bubble-reply">
+                                    <strong>Replying to message...</strong><br>
+                                    <span style="font-style:italic; font-size:0.7rem;">Click to view context</span>
+                                </div>
+                            `;
+                        }
+
                         // Check if image
                         if(m.type === 'image') {
                             content = `<img src="${m.text}" class="msg-image" onclick="openImage('${m.text}')">`;
+                        } else if (m.type === 'audio') {
+                            content = `
+                                <div class="audio-msg">
+                                    <div class="play-btn" onclick="playAudio(this, '${m.text}')"><i class="fa fa-play"></i></div>
+                                    <div class="audio-wave"><div class="audio-progress"></div></div>
+                                    <span style="font-size:0.7rem;">VOICE_DATA</span>
+                                </div>
+                            `;
                         } else {
-                            // Decryption effect for text
-                            // We'll just render it directly for now, but could add animation class
+                            // Decryption effect logic could go here
+                            // For now, just render
+                        }
+
+                        // Reactions
+                        let reactionsHtml = "";
+                        if (m.reactions) {
+                            reactionsHtml = `<div class="reactions-row">`;
+                            for (let r in m.reactions) {
+                                reactionsHtml += `<div class="reaction-pill">${m.reactions[r]}</div>`;
+                            }
+                            reactionsHtml += `</div>`;
+                        }
+
+                        // Add date separator
+                        if (dateStr !== lastDate) {
+                            win.innerHTML += `<div class="date-separator">${dateStr}</div>`;
+                            lastDate = dateStr;
                         }
 
                         row.innerHTML = `
+                            <div class="msg-actions">
+                                <i class="fa fa-reply action-btn-mini" onclick="initReply('${key}', '${m.sender}')"></i>
+                                <i class="fa fa-smile action-btn-mini" onclick="toggleReactionPicker('${key}', '${chatId}')"></i>
+                                ${isMe ? `<i class="fa fa-trash action-btn-mini" onclick="deleteMessage('${chatId}', '${key}')"></i>` : ''}
+                            </div>
                             <div class="bubble">
+                                ${replyBlock}
                                 ${content}
+                                ${reactionsHtml}
                                 <span class="msg-time">${timeStr}</span>
                             </div>
                         `;
                         win.appendChild(row);
+                        
+                        // Apply decryption effect to text messages if new
+                        if (m.type === 'text' && !isMe) {
+                            // animateDecrypt(row.querySelector('.bubble'), m.text);
+                        }
                     });
                     win.scrollTop = win.scrollHeight;
                 } else {
                     win.innerHTML = `<div style="text-align:center; margin-top:50px; opacity:0.3; font-size:0.8rem;">[START_OF_LOG]</div>`;
                 }
             });
+            setupTypingIndicator(chatId);
         }
 
         function sendMessage() {
@@ -1111,19 +1467,163 @@
             const text = input.value.trim();
             
             if (text && selectedUser) {
-                const chatId = [myUsername, selectedUser].sort().join('_');
+                const chatId = selectedUser.isSquad ? selectedUser.id : [myUsername, selectedUser.id].sort().join('_');
                 db.ref(`direct_messages/${chatId}`).push({
                     sender: myUsername,
                     text: text,
                     type: 'text',
+                    replyTo: replyTo ? replyTo.id : null,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
                 input.value = "";
+                cancelReply();
                 // Slight delay for scroll to catch up with render
                 setTimeout(() => {
                     const win = document.getElementById('messages-window');
                     win.scrollTo({ top: win.scrollHeight, behavior: 'smooth' });
                 }, 100);
+            }
+        }
+
+        // --- Reply System ---
+        function initReply(msgId, sender) {
+            replyTo = { id: msgId, sender: sender };
+            const banner = document.getElementById('reply-banner');
+            banner.innerHTML = `
+                <span>Replying to <strong>@${sender}</strong></span>
+                <i class="fa fa-times" style="cursor:pointer;" onclick="cancelReply()"></i>
+            `;
+            banner.style.display = 'flex';
+            document.getElementById('msgInput').focus();
+        }
+
+        function cancelReply() {
+            replyTo = null;
+            document.getElementById('reply-banner').style.display = 'none';
+        }
+
+        // --- Reactions ---
+        function toggleReactionPicker(msgId, chatId) {
+            const emojis = ['👍', '❤️', '😂', '😮', '🦖'];
+            const reaction = emojis[Math.floor(Math.random() * emojis.length)]; // Simplified for demo
+            // In real app, show a picker UI
+            db.ref(`direct_messages/${chatId}/${msgId}/reactions`).push(reaction);
+        }
+
+        function deleteMessage(chatId, msgId) {
+            if(confirm("Delete this classified transmission?")) {
+                db.ref(`direct_messages/${chatId}/${msgId}`).remove();
+            }
+        }
+
+        // --- Voice Recording ---
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+                    audioChunks = [];
+
+                    document.getElementById('voiceRecorder').style.display = 'flex';
+                    
+                    let seconds = 0;
+                    recordingTimer = setInterval(() => {
+                        seconds++;
+                        const m = Math.floor(seconds / 60).toString().padStart(2,'0');
+                        const s = (seconds % 60).toString().padStart(2,'0');
+                        document.getElementById('recordingTime').innerText = `${m}:${s}`;
+                    }, 1000);
+
+                    mediaRecorder.addEventListener("dataavailable", event => {
+                        audioChunks.push(event.data);
+                    });
+
+                    mediaRecorder.addEventListener("stop", () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' }); // Simplified type
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob); 
+                        reader.onloadend = () => {
+                            const base64data = reader.result;
+                            sendAudioMessage(base64data);
+                        }
+                    });
+                });
+        }
+
+        function stopRecording() {
+            if(mediaRecorder) {
+                mediaRecorder.stop();
+                clearInterval(recordingTimer);
+                document.getElementById('voiceRecorder').style.display = 'none';
+                document.getElementById('recordingTime').innerText = "00:00";
+            }
+        }
+
+        function cancelRecording() {
+            if(mediaRecorder) {
+                mediaRecorder.stop();
+                clearInterval(recordingTimer);
+                document.getElementById('voiceRecorder').style.display = 'none';
+                audioChunks = []; // Clear chunks
+            }
+        }
+
+        function sendAudioMessage(base64) {
+            if (!selectedUser) return;
+            const chatId = selectedUser.isSquad ? selectedUser.id : [myUsername, selectedUser.id].sort().join('_');
+            db.ref(`direct_messages/${chatId}`).push({
+                sender: myUsername,
+                text: base64,
+                type: 'audio',
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+
+        function playAudio(btn, src) {
+            const audio = new Audio(src);
+            audio.play();
+            const icon = btn.querySelector('i');
+            icon.className = "fa fa-pause";
+            audio.onended = () => icon.className = "fa fa-play";
+        }
+
+        function setupTypingIndicator(chatId) {
+            const typingRef = db.ref(`typing_indicators/${chatId}`);
+            const indicatorEl = document.getElementById('typing-indicator');
+            const typingUserEl = document.getElementById('typing-user-name');
+
+            if (activeTypingListener) activeTypingListener.off();
+
+            activeTypingListener = typingRef;
+            activeTypingListener.on('value', snap => {
+                const data = snap.val();
+                let isTyping = false;
+                if (data) {
+                    for (const user in data) {
+                        if (user !== myUsername && data[user]) {
+                            typingUserEl.innerText = user.toUpperCase();
+                            isTyping = true;
+                            break;
+                        }
+                    }
+                }
+                indicatorEl.style.display = isTyping ? 'block' : 'none';
+            });
+        }
+
+        let typingTimeout;
+        function updateTypingIndicator(isTyping) {
+            if (!selectedUser) return;
+            const chatId = selectedUser.isSquad ? selectedUser.id : [myUsername, selectedUser.id].sort().join('_');
+            const myTypingRef = db.ref(`typing_indicators/${chatId}/${myUsername}`);
+            
+            if (isTyping) {
+                myTypingRef.set(true);
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => myTypingRef.remove(), 3000);
+            } else {
+                clearTimeout(typingTimeout);
+                myTypingRef.remove();
             }
         }
 
@@ -1140,7 +1640,7 @@
             // Here we simulate by using FileReader for base64 (limited size)
             const reader = new FileReader();
             reader.onload = function(e) {
-                const chatId = [myUsername, selectedUser].sort().join('_');
+                const chatId = selectedUser.isSquad ? selectedUser.id : [myUsername, selectedUser.id].sort().join('_');
                 db.ref(`direct_messages/${chatId}`).push({
                     sender: myUsername,
                     text: e.target.result, // Base64 string
@@ -1154,7 +1654,11 @@
         // --- Profile & Modals ---
         function viewProfile() {
             if(!selectedUser) return;
-            const user = allUsers.find(u => u.id === selectedUser);
+            if(selectedUser.isSquad) {
+                openChatDetails();
+                return;
+            }
+            const user = allUsers.find(u => u.id === selectedUser.id);
             if(user) {
                 document.getElementById('modal-avatar').src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.id}`;
                 document.getElementById('modal-username').innerText = user.displayName || user.id;
@@ -1171,6 +1675,78 @@
 
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
+        }
+
+        function openCreateSquadModal() {
+            document.getElementById('squadModal').style.display = 'flex';
+        }
+
+        function createSquad() {
+            const name = document.getElementById('squadNameInput').value.trim();
+            if (name.length < 3) {
+                showNotification("Squad name must be at least 3 characters.", "error");
+                return;
+            }
+
+            const newSquadRef = db.ref('squads').push();
+            newSquadRef.set({
+                name: name,
+                owner: myUsername,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                members: { [myUsername]: true }
+            });
+            closeModal('squadModal');
+            showNotification(`Squad "${name}" created.`, "success");
+        }
+
+        // --- Squad Details ---
+        function openChatDetails() {
+            if (!selectedUser || !selectedUser.isSquad) return;
+            
+            const squad = allSquads.find(s => s.id === selectedUser.id);
+            if (!squad) return;
+
+            document.getElementById('squad-detail-name').innerText = squad.name;
+            const list = document.getElementById('squad-members');
+            list.innerHTML = "";
+
+            for (let memberId in squad.members) {
+                list.innerHTML += `
+                    <div class="squad-member">
+                        <span>@${memberId.toUpperCase()}</span>
+                        ${memberId === squad.owner ? '<i class="fa fa-crown" style="color:var(--warning)"></i>' : ''}
+                    </div>
+                `;
+            }
+            document.getElementById('squadDetailsModal').style.display = 'flex';
+        }
+
+        function addSquadMember() {
+            const newMember = document.getElementById('addMemberInput').value.trim().toLowerCase();
+            if (!newMember || !selectedUser.isSquad) return;
+
+            db.ref(`squads/${selectedUser.id}/members/${newMember}`).set(true)
+                .then(() => {
+                    showNotification("Agent added to squad.", "success");
+                    document.getElementById('addMemberInput').value = "";
+                    openChatDetails(); // Refresh
+                })
+                .catch(() => showNotification("Failed to add agent.", "error"));
+        }
+
+        function leaveSquad() {
+            if (!selectedUser.isSquad) return;
+            if (confirm("Disconnect from this squad channel?")) {
+                db.ref(`squads/${selectedUser.id}/members/${myUsername}`).remove()
+                    .then(() => {
+                        closeModal('squadDetailsModal');
+                        selectedUser = null;
+                        document.getElementById('chat-panel').classList.remove('active');
+                        document.getElementById('empty-state').style.display = 'flex';
+                        loadUsers(); // Refresh list
+                        showNotification("Disconnected from squad.", "info");
+                    });
+            }
         }
 
         function clearChat() {
@@ -1198,6 +1774,7 @@
 
         // --- Event Listeners ---
         document.getElementById('msgInput').addEventListener('keypress', (e) => {
+            updateTypingIndicator(true);
             if(e.key === 'Enter') sendMessage();
         });
 
@@ -1217,6 +1794,38 @@
                 showNotification(alert.title + ": " + alert.message);
             }
         });
+
+        // --- Chat Search ---
+        function toggleChatSearch() {
+            const bar = document.getElementById('chatSearchBar');
+            bar.style.display = bar.style.display === 'block' ? 'none' : 'block';
+            if(bar.style.display === 'block') document.getElementById('chatSearchInput').focus();
+        }
+
+        function performChatSearch() {
+            const query = document.getElementById('chatSearchInput').value.toLowerCase();
+            const msgs = document.querySelectorAll('.bubble');
+            let count = 0;
+            msgs.forEach(m => {
+                if(m.innerText.toLowerCase().includes(query)) {
+                    m.style.border = "2px solid var(--warning)";
+                    m.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    count++;
+                } else {
+                    m.style.border = "none";
+                }
+            });
+            document.getElementById('search-results-count').innerText = `${count} matches found.`;
+        }
+
+        // Scroll to bottom button logic
+        const msgWindow = document.getElementById('messages-window');
+        const scrollBtn = document.getElementById('scroll-to-bottom');
+        msgWindow.addEventListener('scroll', () => {
+            const isScrolled = msgWindow.scrollHeight - msgWindow.scrollTop > msgWindow.clientHeight + 100;
+            scrollBtn.style.display = isScrolled ? 'flex' : 'none';
+        });
+        function scrollToBottom() { msgWindow.scrollTo({ top: msgWindow.scrollHeight, behavior: 'smooth' }); }
 
     </script>
 </body>

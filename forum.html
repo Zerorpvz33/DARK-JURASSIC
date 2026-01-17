@@ -14,6 +14,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-storage-compat.js"></script>
+
+    <!-- Markdown & Sanitizer -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
     <style>
         /* --- CORE VARIABLES --- */
@@ -522,6 +527,10 @@
             text-shadow: 0 0 5px var(--primary-glow);
         }
 
+        .thread-author-link {
+            cursor: pointer;
+        }
+
         .thread-preview {
             color: var(--text-dim);
             font-size: 0.85rem;
@@ -529,6 +538,13 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+
+        .thread-preview blockquote {
+            border-left: 2px solid var(--border);
+            padding-left: 10px;
+            margin-left: 5px;
+            font-style: italic;
         }
 
         .thread-stats {
@@ -617,6 +633,20 @@
             border: 1px solid #333;
         }
 
+        .hot-thread-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .hot-thread-item:hover {
+            color: var(--primary);
+        }
+        .hot-thread-item .hot-score {
+            color: var(--text-dim); font-size: 0.65rem;
+        }
+
         /* --- SYSTEM LOG --- */
         .system-log-container {
             background: #000;
@@ -674,6 +704,15 @@
             line-height: 1.7;
             font-size: 0.95rem;
             color: #ccc;
+        }
+
+        .thread-attachment {
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+        .thread-attachment img {
+            max-width: 100%; border-radius: 4px; border: 1px solid var(--border);
         }
 
         .thread-actions {
@@ -831,6 +870,14 @@
             font-family: inherit;
         }
 
+        #attachment-preview-container {
+            display: none;
+            margin-bottom: 15px;
+        }
+        #attachment-preview {
+            max-width: 100px; max-height: 100px; border: 1px solid var(--border);
+        }
+
         .modal-footer {
             display: flex;
             justify-content: flex-end;
@@ -874,6 +921,104 @@
             animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
+        /* --- SKELETON LOADER --- */
+        .skeleton-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: 50px 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+        .skeleton-avatar {
+            width: 40px; height: 40px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            animation: pulse-bg 1.5s infinite;
+        }
+        .skeleton-line {
+            height: 1em;
+            background: #1a1a1a;
+            border-radius: 2px;
+            animation: pulse-bg 1.5s infinite;
+        }
+        @keyframes pulse-bg {
+            0% { background-color: #1a1a1a; }
+            50% { background-color: #2a2a2a; }
+            100% { background-color: #1a1a1a; }
+        }
+
+        /* --- PROFILE MODAL --- */
+        .profile-modal-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--primary);
+            padding: 30px;
+            width: 90%; max-width: 500px;
+            text-align: center;
+        }
+        .profile-modal-avatar {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            margin: 0 auto 15px;
+        }
+        .profile-modal-name {
+            font-family: 'Orbitron'; font-size: 1.5rem; color: var(--primary);
+        }
+        .profile-modal-rank {
+            font-size: 0.8rem; color: var(--secondary); text-transform: uppercase;
+        }
+        .profile-modal-stats {
+            display: flex; justify-content: space-around; margin-top: 20px;
+            border-top: 1px solid var(--border); padding-top: 20px;
+        }
+
+        /* --- MARKDOWN STYLES --- */
+        .full-thread-body blockquote {
+            border-left: 3px solid var(--primary);
+            padding-left: 15px;
+            margin: 10px 0;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+        .full-thread-body pre {
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            overflow-x: auto;
+            font-size: 0.8rem;
+            color: var(--success);
+        }
+        .full-thread-body code {
+            background: rgba(230, 57, 70, 0.2);
+            color: var(--primary);
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-size: 0.85em;
+        }
+        .full-thread-body pre code {
+            background: none; padding: 0;
+        }
+
+        /* --- REACTION BUTTONS --- */
+        .reactions-container {
+            display: flex; gap: 8px;
+        }
+        .reaction-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .reaction-btn:hover {
+            transform: scale(1.1); border-color: var(--primary);
+        }
+
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -893,7 +1038,7 @@
         /* --- Media Queries --- */
         @media (max-width: 1200px) {
             main { grid-template-columns: 1fr; }
-            .forum-sidebar { display: none; } /* Hide sidebar on smaller screens or move to bottom */
+            .forum-sidebar { grid-row: 2; }
             .system-log-container { display: none; }
         }
 
@@ -994,9 +1139,20 @@
                 </div>
 
                 <div class="threads-container" id="threads-list">
-                    <!-- Threads populated via Firebase -->
-                    <div class="thread-card" style="cursor: default;">
-                        <p style="text-align:center; color: var(--text-dim);">Scanning local server for intel packets...</p>
+                    <!-- Skeleton Loaders -->
+                    <div class="skeleton-card">
+                        <div class="skeleton-avatar"></div>
+                        <div>
+                            <div class="skeleton-line" style="width: 70%;"></div>
+                            <div class="skeleton-line" style="width: 40%; margin-top: 10px;"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-avatar"></div>
+                        <div>
+                            <div class="skeleton-line" style="width: 60%;"></div>
+                            <div class="skeleton-line" style="width: 50%; margin-top: 10px;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1009,6 +1165,7 @@
                 
                 <div id="active-thread-content" class="active-thread-container">
                     <!-- Populated via JS -->
+                    <div class="thread-attachment" id="thread-attachment-container"></div>
                 </div>
 
                 <div class="comments-section">
@@ -1058,6 +1215,16 @@
                 </div>
             </div>
 
+            <!-- Hot Threads -->
+            <div class="widget-card">
+                <div class="widget-title">
+                    <span><i class="fa fa-fire"></i> HOT THREADS</span>
+                </div>
+                <div id="hot-threads-list">
+                    <div style="color: var(--text-dim); font-size: 0.7rem;">Calculating heat signatures...</div>
+                </div>
+            </div>
+
             <!-- System Status -->
             <div class="widget-card">
                 <div class="widget-title">
@@ -1091,10 +1258,39 @@
                 <option value="tech">TECH SUPPORT</option>
                 <option value="sighting">ASSET SIGHTING</option>
             </select>
+            <div class="form-group" style="margin-top: 15px;">
+                <label style="font-size: 0.7rem; color: var(--text-dim);">ATTACH VISUAL DATA (OPTIONAL)</label>
+                <input type="file" id="newAttachment" accept="image/*" onchange="previewAttachment(event)">
+                <div id="attachment-preview-container">
+                    <img id="attachment-preview" src="">
+                    <span style="font-size: 0.7rem; color: var(--text-dim); cursor: pointer;" onclick="clearAttachment()">Clear</span>
+                </div>
+            </div>
             <textarea id="newBody" placeholder="Body of intel report... (Markdown supported)"></textarea>
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeModal()">CANCEL</button>
                 <button class="btn-broadcast" onclick="broadcastIntel()">TRANSMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="profile-modal-content">
+            <span class="close-modal" style="top: 15px; right: 15px;" onclick="closeProfileModal()">&times;</span>
+            <img id="profile-modal-avatar" src="" class="profile-modal-avatar">
+            <h2 id="profile-modal-name" class="profile-modal-name">AGENT</h2>
+            <p id="profile-modal-rank" class="profile-modal-rank">RANK</p>
+            <p id="profile-modal-bio" style="font-size: 0.8rem; color: #ccc; margin-top: 15px;"></p>
+            <div class="profile-modal-stats">
+                <div>
+                    <span id="profile-modal-xp" class="user-stat-val">0</span>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">XP</div>
+                </div>
+                <div>
+                    <span id="profile-modal-posts" class="user-stat-val">0</span>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">POSTS</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1114,12 +1310,14 @@
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
+        const storage = firebase.storage();
 
         let currentAgent = "Guest_Agent";
         let currentUid = null;
         let activeThreadId = null;
         let allThreads = [];
         let activeFilter = 'all';
+        let allUsers = {};
 
         // Auth Listener
         auth.onAuthStateChanged(user => {
@@ -1129,15 +1327,10 @@
                 document.getElementById('agent-display').innerText = `AGENT VERIFIED: ${currentAgent}`;
                 addLog(`Authentication successful for ${currentAgent}.`);
 
-                const username = user.email.split('@')[0].replace(/\./g, '_');
-                db.ref('users/' + username).once('value').then(snapshot => {
+                db.ref('users/' + currentAgent.toLowerCase()).once('value').then(snapshot => {
                     const data = snapshot.val();
                     if (data) {
                         document.getElementById('user-rep').innerText = data.xp || 0;
-                        // Count posts
-                        const posts = allThreads.filter(t => t.author === currentAgent).length;
-                        document.getElementById('user-posts').innerText = posts;
-
                         if (data.role === 'admin') {
                             document.getElementById('admin-nav').style.display = 'block';
                             document.getElementById('admin-sidebar').style.display = 'block';
@@ -1153,6 +1346,11 @@
         // Initialize Forum Data
         function initForum() {
             addLog("Initializing Forum Module...");
+            // Pre-fetch all users for profile lookups
+            db.ref('users').once('value', snap => {
+                allUsers = snap.val() || {};
+            });
+
             const threadsRef = db.ref('forum_threads');
             threadsRef.on('value', snapshot => {
                 const data = snapshot.val();
@@ -1165,12 +1363,15 @@
                 }
                 filterThreads(activeFilter);
                 updateTopAgents();
+                updateUserPostCount();
                 addLog(`Synced ${allThreads.length} intel packets.`);
             });
         }
 
         function displayThreads(threads) {
             const list = document.getElementById('threads-list');
+            list.innerHTML = ''; // Clear skeletons
+
             if (!threads || threads.length === 0) {
                 list.innerHTML = `<div class="thread-card"><p style="text-align:center; color: var(--text-dim);">NO INTEL DETECTED IN SECTOR.</p></div>`;
                 return;
@@ -1183,7 +1384,10 @@
                 if(t.category === 'tech') { icon = 'fa-microchip'; tagClass = 'tech'; }
                 if(t.category === 'sighting') { icon = 'fa-eye'; tagClass = 'intel'; }
 
-                const votes = (t.upvotes || 0) - (t.downvotes || 0);
+                let totalReactions = 0;
+                if (t.reactions) {
+                    totalReactions = Object.values(t.reactions).reduce((sum, count) => sum + count, 0);
+                }
 
                 return `
                 <div class="thread-card" onclick="viewThread('${t.id}')">
@@ -1193,14 +1397,14 @@
                             <h3 class="thread-title">${t.title}</h3>
                         </div>
                         <div class="thread-meta">
-                            <span><i class="fa fa-user"></i> ${t.author || 'UNKNOWN'}</span>
+                            <span class="thread-author-link" onclick="openProfileModal('${t.author}', event)"><i class="fa fa-user"></i> ${t.author || 'UNKNOWN'}</span>
                             <span><i class="fa fa-clock"></i> ${new Date(t.timestamp).toLocaleDateString()}</span>
                             <span class="tag ${tagClass}">${t.category || 'INTEL'}</span>
                         </div>
                         <div class="thread-preview">${t.body.substring(0, 150)}...</div>
                     </div>
                     <div class="thread-stats">
-                        <div class="stat-item"><i class="fa fa-arrow-up"></i> ${votes}</div>
+                        <div class="stat-item"><i class="fa fa-thumbs-up"></i> ${totalReactions}</div>
                         <div class="stat-item"><i class="fa fa-comment"></i> ${t.commentCount || 0}</div>
                     </div>
                 </div>
@@ -1244,16 +1448,31 @@
             document.getElementById('single-thread-view').style.display = 'block';
             window.scrollTo(0, 0);
             
-            const votes = (thread.upvotes || 0) - (thread.downvotes || 0);
+            const reactions = thread.reactions || {};
+            const reactionButtons = ['👍', '❤️', '💀', '🔥'].map(emoji => 
+                `<button class="reaction-btn" onclick="addReaction('${id}', '${emoji}')">${emoji} ${reactions[emoji] || 0}</button>`
+            ).join('');
 
             document.getElementById('active-thread-content').innerHTML = `
                 <h1 style="font-family:'Orbitron'; color: var(--primary); margin-bottom: 10px;">${thread.title}</h1>
-                <div class="thread-meta">TRANSMITTED BY: @${thread.author} | TIMESTAMP: ${new Date(thread.timestamp).toLocaleString()}</div>
-                <div class="full-thread-body">${thread.body.replace(/\n/g, '<br>')}</div>
+                <div class="thread-meta">TRANSMITTED BY: <span class="thread-author-link" onclick="openProfileModal('${thread.author}', event)">@${thread.author}</span> | TIMESTAMP: ${new Date(thread.timestamp).toLocaleString()}</div>
+                <div class="full-thread-body">${DOMPurify.sanitize(marked.parse(thread.body))}</div>
+                ${thread.attachmentURL ? `
+                    <div class="thread-attachment">
+                        <h4 style="color: var(--text-dim); font-size: 0.7rem; margin-bottom: 10px;">ATTACHED VISUAL DATA</h4>
+                        <img src="${thread.attachmentURL}" alt="Attachment">
+                    </div>
+                ` : ''}
                 <div class="thread-actions">
-                    <button class="action-btn" onclick="voteThread('${id}', 1)"><i class="fa fa-arrow-up"></i> UPVOTE (${thread.upvotes || 0})</button>
-                    <button class="action-btn" onclick="voteThread('${id}', -1)"><i class="fa fa-arrow-down"></i> DOWNVOTE (${thread.downvotes || 0})</button>
+                    <div class="reactions-container">
+                        ${reactionButtons}
+                    </div>
                     <button class="action-btn"><i class="fa fa-share-alt"></i> SHARE</button>
+                    ${thread.author === currentAgent ? `
+                        <button class="action-btn" style="margin-left: auto; color: var(--danger); border-color: var(--danger);" onclick="deleteThread('${id}')">
+                            <i class="fa fa-trash"></i> DELETE
+                        </button>
+                    ` : ''}
                 </div>
             `;
 
@@ -1274,7 +1493,7 @@
                         div.innerHTML = `
                             <div class="comment-avatar">${c.user.charAt(0)}</div>
                             <div class="comment-body">
-                                <div class="comment-meta">@${c.user} - ${new Date(c.timestamp).toLocaleString()}</div>
+                                <div class="comment-meta"><span class="thread-author-link" onclick="openProfileModal('${c.user}', event)">@${c.user}</span> - ${new Date(c.timestamp).toLocaleString()}</div>
                                 <div class="comment-text">${c.text}</div>
                             </div>
                         `;
@@ -1322,29 +1541,63 @@
             }
         }
 
-        function broadcastIntel() {
+        async function broadcastIntel() {
             const title = document.getElementById('newTitle').value.trim();
             const body = document.getElementById('newBody').value.trim();
             const category = document.getElementById('newCategory').value;
-            
+            const file = document.getElementById('newAttachment').files[0];
+
             if (title && body) {
                 if (currentAgent === "Guest_Agent") {
                     showNotification("ERROR: LOGIN REQUIRED", "error");
                     return;
                 }
+
+                let attachmentURL = null;
+                if (file) {
+                    if (file.size === 0) {
+                        showNotification("ERROR: FILE IS EMPTY", "error");
+                        return;
+                    }
+
+                    const uploadNotificationId = `notif-upload-${Date.now()}`;
+                    try {
+                        showNotification("UPLOADING ATTACHMENT... 0%", "info", uploadNotificationId, false);
+                        
+                        const onProgress = (progress) => {
+                            showNotification(`UPLOADING ATTACHMENT... ${Math.round(progress)}%`, "info", uploadNotificationId, false);
+                        };
+
+                        attachmentURL = await uploadAttachment(file, onProgress);
+                        
+                        // On success, remove the progress one and show a success message
+                        const progressNotification = document.getElementById(uploadNotificationId);
+                        if (progressNotification) progressNotification.remove();
+                        showNotification("ATTACHMENT UPLOADED", "success");
+
+                    } catch (error) {
+                        showNotification(`UPLOAD FAILED: ${error.message || error.code || 'Unknown Error'}`, "error");
+                    console.error("Firebase Storage Upload Error:", error);
+                        const progressNotification = document.getElementById(uploadNotificationId);
+                        if (progressNotification) progressNotification.remove();
+                        return;
+                    }
+                }
+
                 db.ref('forum_threads').push().set({
                     title: title,
                     body: body,
                     category: category,
+                    attachmentURL: attachmentURL,
                     author: currentAgent,
-                    upvotes: 0,
-                    downvotes: 0,
+                    reactions: {},
                     commentCount: 0,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 }).then(() => {
                     closeModal();
                     document.getElementById('newTitle').value = "";
                     document.getElementById('newBody').value = "";
+                    clearAttachment();
                     showNotification("INTEL BROADCAST SUCCESSFUL", "success");
                     awardXP(30);
                     addLog(`Broadcasting new intel: ${title}`);
@@ -1352,23 +1605,60 @@
             }
         }
 
-        function voteThread(id, val) {
+        async function uploadAttachment(file, onProgress) {
+            if (!currentUid) throw new Error("Authentication missing. Please refresh.");
+            const filePath = `forum_attachments/${currentUid}/${Date.now()}_${file.name}`;
+            const fileRef = storage.ref(filePath);
+            const uploadTask = fileRef.put(file);
+
+            return new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        if (onProgress) {
+                            onProgress(progress);
+                        }
+                    }, 
+                    (error) => {
+                        console.error("Upload Task Error:", error);
+                        reject(error);
+                    }, 
+                    () => {
+                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                            resolve(downloadURL);
+                        });
+                    }
+                );
+            });
+        }
+
+        function previewAttachment(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('attachment-preview').src = e.target.result;
+                    document.getElementById('attachment-preview-container').style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearAttachment() {
+            document.getElementById('newAttachment').value = '';
+            document.getElementById('attachment-preview-container').style.display = 'none';
+            document.getElementById('attachment-preview').src = '';
+        }
+
+        function addReaction(id, reaction) {
             if (currentAgent === "Guest_Agent") {
                 showNotification("ERROR: LOGIN REQUIRED", "error");
                 return;
             }
 
-            const threadRef = db.ref('forum_threads/' + id);
-            threadRef.transaction(t => {
-                if (t) {
-                    if (val === 1) t.upvotes = (t.upvotes || 0) + 1;
-                    if (val === -1) t.downvotes = (t.downvotes || 0) + 1;
-                }
-                return t;
-            }).then(() => {
-                // Refresh view if active
-                if(activeThreadId === id) viewThread(id);
-            });
+            const reactionRef = db.ref(`forum_threads/${id}/reactions/${reaction}`);
+            reactionRef.transaction(currentCount => (currentCount || 0) + 1);
+            awardXP(2);
         }
 
         function awardXP(amount) {
@@ -1381,6 +1671,12 @@
             
             // Simple XP increment simulation
             // In a real app, use transaction on user record
+            db.ref('users/' + userKey).transaction(user => {
+                if (user) {
+                    user.xp = (user.xp || 0) + amount;
+                }
+                return user;
+            });
             addLog(`XP Update: +${amount}`);
         }
 
@@ -1394,15 +1690,39 @@
             const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 5);
             
             const list = document.getElementById('top-agents-list');
-            list.innerHTML = sorted.map(([name, count]) => `
-                <div class="top-agent-item">
-                    <div class="agent-avatar-small">${name.charAt(0)}</div>
-                    <div style="flex:1;">
-                        <div style="font-size:0.8rem; font-weight:bold;">${name}</div>
-                        <div style="font-size:0.65rem; color:var(--text-dim);">${count} INTEL DROPS</div>
+            list.innerHTML = sorted.map(([name, count]) => {
+                const user = allUsers[name.toLowerCase()] || {};
+                return `
+                    <div class="top-agent-item" onclick="openProfileModal('${name}', event)">
+                        <div class="agent-avatar-small">${name.charAt(0)}</div>
+                        <div style="flex:1;">
+                            <div style="font-size:0.8rem; font-weight:bold;">${name}</div>
+                            <div style="font-size:0.65rem; color:var(--text-dim);">${user.xp || 0} XP</div>
+                        </div>
                     </div>
+                `;
+            }).join('');
+        }
+
+        function updateHotThreads() {
+            const hot = allThreads.map(t => {
+                const reactions = t.reactions ? Object.values(t.reactions).reduce((s, c) => s + c, 0) : 0;
+                const score = (t.commentCount || 0) * 2 + reactions;
+                return { ...t, score };
+            }).sort((a, b) => b.score - a.score).slice(0, 3);
+
+            const list = document.getElementById('hot-threads-list');
+            list.innerHTML = hot.map(t => `
+                <div class="hot-thread-item" onclick="viewThread('${t.id}')">
+                    <div>${t.title}</div>
+                    <div class="hot-score">${t.score} HEAT | ${t.commentCount || 0} REPLIES</div>
                 </div>
             `).join('');
+        }
+
+        function updateUserPostCount() {
+            const posts = allThreads.filter(t => t.author === currentAgent).length;
+            document.getElementById('user-posts').innerText = posts;
         }
 
         function addLog(msg) {
@@ -1437,6 +1757,31 @@
             document.getElementById('single-thread-view').style.display = 'none';
             activeThreadId = null;
         }
+
+        function deleteThread(id) {
+            if (confirm("WARNING: This will permanently delete this intel packet. Proceed?")) {
+                db.ref('forum_threads/' + id).remove();
+                db.ref('forum_comments/' + id).remove();
+                closeThread();
+                showNotification("Intel packet purged.", "success");
+            }
+        }
+
+        function openProfileModal(authorName, event) {
+            if(event) event.stopPropagation();
+            const userKey = authorName.toLowerCase();
+            const user = allUsers[userKey];
+            if (!user) return;
+
+            document.getElementById('profile-modal-avatar').src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${userKey}`;
+            document.getElementById('profile-modal-name').innerText = user.displayName || authorName;
+            document.getElementById('profile-modal-rank').innerText = user.role || 'Field Agent';
+            document.getElementById('profile-modal-bio').innerText = user.bio || 'No public bio on file.';
+            document.getElementById('profile-modal-xp').innerText = user.xp || 0;
+            document.getElementById('profile-modal-posts').innerText = allThreads.filter(t => t.author === authorName).length;
+            document.getElementById('profileModal').style.display = 'flex';
+        }
+        function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 
         // Utils
         function toggleSidebar() {

@@ -14,6 +14,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
         /* --- CORE VARIABLES --- */
@@ -39,6 +43,7 @@
             --nav-height: 70px;
             --scanline-color: rgba(0, 0, 0, 0.5);
             --glass: rgba(20, 20, 20, 0.6);
+            --terminal-bg: #0c0c0c;
         }
 
         /* --- GLOBAL RESET & SCROLLBAR --- */
@@ -267,6 +272,39 @@
             gap: 20px;
             flex: 1;
         }
+        
+        /* --- NEWS TICKER --- */
+        .news-ticker {
+            grid-column: 1 / -1;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            height: 30px;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            display: flex;
+            align-items: center;
+            font-family: 'Orbitron';
+            font-size: 0.7rem;
+            color: var(--warning);
+        }
+        
+        .ticker-track {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker-scroll 40s linear infinite;
+            padding-left: 100%;
+        }
+        
+        .ticker-item {
+            display: inline-block;
+            padding: 0 20px;
+        }
+        
+        @keyframes ticker-scroll {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
 
         /* --- WIDGET / PANEL STYLES --- */
         .terminal-panel {
@@ -432,6 +470,25 @@
         .log-msg-success { color: var(--success); }
         .log-msg-warn { color: var(--warning); }
         .log-msg-danger { color: var(--danger); font-weight: bold; }
+        
+        .terminal-input-line {
+            display: flex;
+            border-top: 1px solid #222;
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+        
+        .terminal-prompt { color: var(--success); margin-right: 5px; }
+        
+        #cmd-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'JetBrains+Mono', monospace;
+            font-size: 0.75rem;
+            outline: none;
+        }
 
         /* --- STAT CARDS --- */
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -489,6 +546,160 @@
         .agent-details { flex: 1; margin-left: 10px; }
         .agent-name { font-size: 0.8rem; font-weight: bold; display: block; }
         .agent-status { font-size: 0.65rem; color: var(--success); }
+
+        /* --- AUDIO PLAYER WIDGET --- */
+        .audio-visualizer {
+            width: 100%;
+            height: 60px;
+            background: #000;
+            border: 1px solid #222;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .audio-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn-audio {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        
+        .btn-audio:hover { color: var(--primary); border-color: var(--primary); }
+        .btn-audio.active { color: var(--success); border-color: var(--success); box-shadow: 0 0 10px var(--success); }
+
+        /* --- OBJECTIVES LIST --- */
+        .task-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.75rem;
+            color: #ccc;
+            transition: 0.2s;
+        }
+        
+        .task-item:hover { background: rgba(255,255,255,0.02); }
+        
+        .task-checkbox {
+            width: 14px; height: 14px;
+            border: 1px solid var(--primary);
+            margin-right: 10px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        .task-checkbox.checked::after {
+            content: '✓';
+            font-size: 10px;
+            color: var(--primary);
+        }
+        
+        .task-item.completed { text-decoration: line-through; opacity: 0.5; }
+
+        /* --- MINI GAME (DECRYPT) --- */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .game-cell {
+            aspect-ratio: 1;
+            background: #111;
+            border: 1px solid #333;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Orbitron';
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            transition: 0.2s;
+        }
+        
+        .game-cell:hover { background: #222; color: #fff; }
+        .game-cell.active { background: var(--primary); color: #fff; box-shadow: 0 0 10px var(--primary); }
+        .game-cell.success { background: var(--success); border-color: var(--success); }
+        
+        /* --- BOTTOM NAVIGATION (MOBILE) --- */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            height: 60px;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            z-index: 4000;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.6rem;
+            gap: 4px;
+            width: 100%; height: 100%;
+        }
+        
+        .nav-item i { font-size: 1.2rem; margin-bottom: 2px; }
+        .nav-item.active { color: var(--primary); }
+        
+        /* --- SETTINGS MODAL --- */
+        .modal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 6000;
+            align-items: center; justify-content: center;
+        }
+        
+        .modal-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--primary);
+            padding: 30px;
+            width: 90%; max-width: 500px;
+            box-shadow: 0 0 30px rgba(230, 57, 70, 0.2);
+        }
+        
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 10px;
+        }
+        
+        .toggle-switch {
+            width: 40px; height: 20px; background: #333; border-radius: 10px;
+            position: relative; cursor: pointer;
+        }
+        
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; background: #fff; border-radius: 50%;
+            transition: 0.3s;
+        }
+        
+        .toggle-switch.active { background: var(--success); }
+        .toggle-switch.active::after { left: 22px; }
 
         /* --- CANVAS VISUALIZERS --- */
         canvas {
@@ -570,11 +781,13 @@
             main { 
                 grid-template-columns: 1fr 1fr; 
                 grid-template-rows: auto auto auto;
+                padding-bottom: 80px; /* Space for bottom nav */
             }
             .hero { grid-column: 1 / -1; }
             .side-module-left { grid-column: 1; }
             .side-module-right { grid-column: 2; }
             .main-module { grid-column: 1 / -1; grid-row: 3; }
+            .bottom-nav { display: flex; }
         }
 
         @media (max-width: 900px) {
@@ -583,6 +796,7 @@
             .menu-toggle { display: block; }
             .hero h1 { font-size: 1.8rem; }
             .navbar { padding: 0 15px; }
+            .news-ticker { display: none; } /* Hide ticker on very small screens to save space */
         }
 
         @keyframes pulse {
@@ -668,6 +882,17 @@
 
     <!-- MAIN CONTENT GRID -->
     <main>
+        <!-- NEWS TICKER -->
+        <div class="news-ticker">
+            <div class="ticker-track">
+                <span class="ticker-item">/// SYSTEM ALERT: SECTOR 4 CONTAINMENT BREACH CONFIRMED ///</span>
+                <span class="ticker-item">/// WEATHER WARNING: HURRICANE 'ISABELLA' APPROACHING ISLA SORNA ///</span>
+                <span class="ticker-item">/// MARKET UPDATE: BIOSYN STOCK DOWN 14.2% ///</span>
+                <span class="ticker-item">/// NEW BOUNTY: VELOCIRAPTOR 'BLUE' - 50,000 XP ///</span>
+                <span class="ticker-item">/// INGEN SECURITY PROTOCOL: LEVEL 5 LOCKDOWN IN EFFECT ///</span>
+            </div>
+        </div>
+
         <!-- HERO SECTION -->
         <section class="hero">
             <h1 class="glitch-text" data-text="GLOBAL COMMAND TERMINAL">GLOBAL COMMAND TERMINAL</h1>
@@ -709,6 +934,18 @@
                 </div>
             </div>
 
+            <!-- OBJECTIVES WIDGET -->
+            <div class="terminal-panel" style="margin-top: 20px;">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="fa fa-tasks"></i> DAILY OBJECTIVES</span>
+                    <span style="font-size: 0.6rem; color: var(--text-dim);">RESET: 04:00</span>
+                </div>
+                <ul class="task-list" id="task-list">
+                    <!-- Populated by JS -->
+                </ul>
+                <button onclick="resetTasks()" style="margin-top: 10px; background: transparent; border: 1px solid var(--border); color: var(--text-dim); font-size: 0.6rem; cursor: pointer; padding: 5px;">RESET LOGS</button>
+            </div>
+
             <!-- Hardware Status -->
             <div class="terminal-panel" style="margin-top: 20px;">
                 <div class="panel-header">
@@ -743,25 +980,10 @@
             <!-- Live Map Placeholder -->
             <div class="terminal-panel">
                 <div class="panel-header">
-                    <span class="panel-title"><i class="fa fa-globe"></i> GLOBAL ASSET TRACKING</span>
+                    <span class="panel-title"><i class="fa fa-globe"></i> LIVE SATELLITE FEED</span>
                     <span style="font-size: 0.6rem; color: var(--primary);">LIVE FEED</span>
                 </div>
-                <div style="height: 200px; background: #000; position: relative; overflow: hidden; border: 1px solid #222;">
-                    <!-- Simple CSS Map Representation -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 80%; border: 1px dashed #333; border-radius: 50%;"></div>
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40%; height: 40%; border: 1px dashed #333; border-radius: 50%;"></div>
-                    <div style="position: absolute; top: 0; left: 50%; width: 1px; height: 100%; background: rgba(255,255,255,0.05);"></div>
-                    <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: rgba(255,255,255,0.05);"></div>
-                    
-                    <!-- Animated Dots -->
-                    <div class="status-dot" style="position: absolute; top: 30%; left: 40%; animation-duration: 2s;"></div>
-                    <div class="status-dot" style="position: absolute; top: 60%; left: 70%; animation-duration: 3s; background: var(--warning); box-shadow: 0 0 10px var(--warning);"></div>
-                    <div class="status-dot" style="position: absolute; top: 45%; left: 20%; animation-duration: 4s; background: var(--accent-blue); box-shadow: 0 0 10px var(--accent-blue);"></div>
-                    
-                    <div style="position: absolute; bottom: 10px; left: 10px; font-size: 0.6rem; color: var(--text-dim);">
-                        LAT: <span id="map-lat">0.00</span> | LNG: <span id="map-lng">0.00</span>
-                    </div>
-                </div>
+                <div id="dashboard-map" style="height: 300px; width: 100%; background: #000; border: 1px solid #222;"></div>
             </div>
 
             <!-- Main Terminal Logs -->
@@ -776,6 +998,10 @@
                 </div>
                 <div class="log-container" id="terminal-logs">
                     <!-- JS Injected Logs -->
+                </div>
+                <div class="terminal-input-line">
+                    <span class="terminal-prompt">root@dj-sys:~#</span>
+                    <input type="text" id="cmd-input" placeholder="Enter command..." autocomplete="off">
                 </div>
             </div>
         </div>
@@ -793,6 +1019,23 @@
                 </div>
             </div>
 
+            <!-- COMMS INTERCEPT (Audio) -->
+            <div class="terminal-panel" style="margin-top: 20px;">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="fa fa-headphones"></i> COMMS INTERCEPT</span>
+                    <span style="font-size: 0.6rem; color: var(--danger);">ENCRYPTED</span>
+                </div>
+                <canvas id="audioVisualizer" class="audio-visualizer"></canvas>
+                <div class="audio-controls">
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">FREQ: 104.5 MHz</div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-audio" onclick="toggleAudio()"><i class="fa fa-play" id="audio-icon"></i></button>
+                        <button class="btn-audio" onclick="scanFreq()"><i class="fa fa-sync"></i></button>
+                        <button class="btn-audio" onclick="openSettings()"><i class="fa fa-cog"></i></button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Security Alert -->
             <div class="terminal-panel" style="margin-top: 20px;">
                 <div class="panel-header">
@@ -806,6 +1049,18 @@
                         Unauthorized biological signatures detected in Sector 4. All personnel advised to maintain radio silence.
                     </p>
                 </div>
+            </div>
+
+            <!-- MINI GAME: DECRYPT -->
+            <div class="terminal-panel" style="margin-top: 20px;">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="fa fa-gamepad"></i> SYSTEM OVERRIDE</span>
+                </div>
+                <div style="font-size: 0.7rem; color: var(--text-dim); text-align: center;">MATCH THE SEQUENCE</div>
+                <div class="game-grid" id="game-grid">
+                    <!-- Generated by JS -->
+                </div>
+                <button onclick="startGame()" style="width: 100%; margin-top: 10px; background: var(--primary); border: none; color: #fff; padding: 5px; cursor: pointer; font-family: 'Orbitron';">INITIATE HACK</button>
             </div>
 
             <!-- Quick Links -->
@@ -831,6 +1086,38 @@
 
         </div>
     </main>
+
+    <!-- BOTTOM NAVIGATION (MOBILE) -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item active"><i class="fa fa-home"></i><span>HOME</span></a>
+        <a href="sightings.html" class="nav-item"><i class="fa fa-crosshairs"></i><span>MAP</span></a>
+        <a href="forum.html" class="nav-item"><i class="fa fa-comments"></i><span>INTEL</span></a>
+        <a href="dms.html" class="nav-item"><i class="fa fa-envelope"></i><span>COMMS</span></a>
+        <a href="profile.html" class="nav-item"><i class="fa fa-user"></i><span>ID</span></a>
+    </nav>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="panel-header">
+                <span class="panel-title">SYSTEM CONFIGURATION</span>
+                <i class="fa fa-times" style="cursor: pointer;" onclick="closeSettings()"></i>
+            </div>
+            <div class="setting-row">
+                <span>AUDIO FEEDBACK</span>
+                <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+            </div>
+            <div class="setting-row">
+                <span>HIGH CONTRAST MODE</span>
+                <div class="toggle-switch" onclick="toggleSetting(this)"></div>
+            </div>
+            <div class="setting-row">
+                <span>PUSH NOTIFICATIONS</span>
+                <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+            </div>
+            <button onclick="closeSettings()" style="width: 100%; padding: 10px; background: var(--primary); border: none; color: #fff; font-family: 'Orbitron'; cursor: pointer;">SAVE & EXIT</button>
+        </div>
+    </div>
 
     <footer>
         <p>&copy; 2024 DARK JURASSIC NETWORK. UNAUTHORIZED USE IS A VIOLATION OF INGEN PROTOCOLS.</p>
@@ -860,6 +1147,10 @@
         let currentAgent = "GUEST_USER";
         let myUsername = "";
         let isSidebarOpen = false;
+        let map;
+        let audioContext, analyser, dataArray, canvasCtx, audioAnimationId;
+        let isAudioPlaying = false;
+        let gameSequence = [], playerSequence = [];
 
         // --- AUTHENTICATION HANDLER ---
         auth.onAuthStateChanged(user => {
@@ -996,6 +1287,156 @@
             if(logBox.children.length > 60) logBox.removeChild(logBox.lastChild);
         }
 
+        // --- TERMINAL INPUT ---
+        document.getElementById('cmd-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const cmd = this.value.trim().toLowerCase();
+                addLog(`root@dj-sys:~# ${cmd}`, "dim");
+                processCommand(cmd);
+                this.value = '';
+            }
+        });
+
+        function processCommand(cmd) {
+            switch(cmd) {
+                case 'help':
+                    addLog("AVAILABLE COMMANDS: HELP, CLEAR, SCAN, STATUS, REBOOT, WHOAMI", "info");
+                    break;
+                case 'clear':
+                    document.getElementById('terminal-logs').innerHTML = '';
+                    break;
+                case 'scan':
+                    addLog("INITIATING DEEP SCAN...", "warn");
+                    setTimeout(() => addLog("SCAN COMPLETE. 0 THREATS FOUND.", "success"), 2000);
+                    break;
+                case 'status':
+                    addLog("SYSTEM INTEGRITY: 98%. ALL SYSTEMS NOMINAL.", "success");
+                    break;
+                case 'reboot':
+                    location.reload();
+                    break;
+                case 'whoami':
+                    addLog(`CURRENT USER: ${currentAgent}`, "info");
+                    break;
+                default:
+                    addLog(`COMMAND NOT FOUND: ${cmd}`, "danger");
+            }
+        }
+
+        // --- LEAFLET MAP ---
+        function initMap() {
+            if(document.getElementById('dashboard-map')) {
+                map = L.map('dashboard-map', {
+                    center: [9.0, -84.0], // Costa Rica approx
+                    zoom: 6,
+                    zoomControl: false,
+                    attributionControl: false
+                });
+
+                // Dark Matter Tiles
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19
+                }).addTo(map);
+
+                // Add some fake markers
+                const locations = [
+                    { lat: 9.1, lng: -84.1, type: 'danger' },
+                    { lat: 8.9, lng: -83.8, type: 'warning' },
+                    { lat: 9.2, lng: -84.2, type: 'success' }
+                ];
+
+                locations.forEach(loc => {
+                    const color = loc.type === 'danger' ? '#ff0000' : (loc.type === 'warning' ? '#f1c40f' : '#2ecc71');
+                    L.circleMarker([loc.lat, loc.lng], {
+                        radius: 5,
+                        fillColor: color,
+                        color: color,
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map);
+                });
+            }
+        }
+
+        // --- AUDIO VISUALIZER (Simulated) ---
+        function initAudio() {
+            const canvas = document.getElementById('audioVisualizer');
+            canvasCtx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            drawVisualizer();
+        }
+
+        function drawVisualizer() {
+            const width = document.getElementById('audioVisualizer').width;
+            const height = document.getElementById('audioVisualizer').height;
+            canvasCtx.clearRect(0, 0, width, height);
+            
+            const bars = 30;
+            const barWidth = width / bars;
+            
+            for(let i=0; i<bars; i++) {
+                const barHeight = isAudioPlaying ? Math.random() * height : 2;
+                const x = i * barWidth;
+                const y = height - barHeight;
+                
+                canvasCtx.fillStyle = isAudioPlaying ? '#00d4ff' : '#333';
+                canvasCtx.fillRect(x, y, barWidth - 2, barHeight);
+            }
+            
+            if(isAudioPlaying) requestAnimationFrame(drawVisualizer);
+        }
+
+        function toggleAudio() {
+            isAudioPlaying = !isAudioPlaying;
+            const icon = document.getElementById('audio-icon');
+            icon.className = isAudioPlaying ? 'fa fa-pause' : 'fa fa-play';
+            if(isAudioPlaying) drawVisualizer();
+            else drawVisualizer(); // Draw once to reset to flat
+        }
+
+        function scanFreq() {
+            addLog("SCANNING FREQUENCIES...", "info");
+            setTimeout(() => addLog("SIGNAL LOCKED: 104.5 MHz (ENCRYPTED)", "success"), 1500);
+        }
+
+        // --- OBJECTIVES SYSTEM ---
+        const tasks = [
+            "Review Sector 7 Surveillance Logs",
+            "Update Agent Profile Bio",
+            "Check Black Market for new items",
+            "Verify encryption keys"
+        ];
+
+        function initTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = "";
+            tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.className = 'task-item';
+                li.innerHTML = `
+                    <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                    <span>${task}</span>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function toggleTask(el) {
+            el.classList.toggle('checked');
+            el.parentElement.classList.toggle('completed');
+            if(el.classList.contains('checked')) {
+                addLog("OBJECTIVE COMPLETED", "success");
+            }
+        }
+
+        function resetTasks() {
+            initTasks();
+            addLog("DAILY OBJECTIVES RESET", "info");
+        }
+
         // --- PUSH NOTIFICATION UI ---
         function showPushNotification(title, message, type = 'info') {
             const container = document.getElementById('push-container');
@@ -1092,6 +1533,61 @@
         }
         drawChart();
 
+        // --- MINI GAME LOGIC ---
+        function initGame() {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = "";
+            for(let i=0; i<16; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'game-cell';
+                cell.id = `cell-${i}`;
+                cell.onclick = () => handleGameClick(i);
+                grid.appendChild(cell);
+            }
+        }
+
+        function startGame() {
+            gameSequence = [];
+            playerSequence = [];
+            addLog("GAME STARTED: MEMORIZE PATTERN", "warn");
+            nextRound();
+        }
+
+        function nextRound() {
+            const next = Math.floor(Math.random() * 16);
+            gameSequence.push(next);
+            playSequence();
+        }
+
+        function playSequence() {
+            let i = 0;
+            const interval = setInterval(() => {
+                const id = gameSequence[i];
+                const cell = document.getElementById(`cell-${id}`);
+                cell.classList.add('active');
+                setTimeout(() => cell.classList.remove('active'), 300);
+                i++;
+                if(i >= gameSequence.length) clearInterval(interval);
+            }, 600);
+        }
+
+        function handleGameClick(id) {
+            const cell = document.getElementById(`cell-${id}`);
+            cell.classList.add('success');
+            setTimeout(() => cell.classList.remove('success'), 200);
+            
+            // Simplified logic for demo (just visual feedback)
+            addLog(`INPUT RECEIVED: CELL ${id}`, "dim");
+        }
+
+        // --- SETTINGS ---
+        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+        function toggleSetting(el) { 
+            el.classList.toggle('active'); 
+            addLog("SETTING UPDATED", "info");
+        }
+
         // --- SIMULATION LOOPS ---
         
         // 1. Integrity Bar Fluctuation
@@ -1114,13 +1610,6 @@
             }
         }, 2000);
 
-        // 2. Map Coordinates Simulator
-        setInterval(() => {
-            const lat = (Math.random() * 180 - 90).toFixed(4);
-            const lng = (Math.random() * 360 - 180).toFixed(4);
-            document.getElementById('map-lat').innerText = lat;
-            document.getElementById('map-lng').innerText = lng;
-        }, 1000);
 
         // 3. Random Ambient Logs
         const ambientLogs = [
@@ -1146,6 +1635,11 @@
             setTimeout(() => addLog("Loading InGen Security Protocols...", "info"), 500);
             setTimeout(() => addLog("Connecting to Firebase Realtime Database...", "info"), 1000);
             setTimeout(() => addLog("System Ready. Waiting for input.", "success"), 1500);
+            
+            initMap();
+            initAudio();
+            initTasks();
+            initGame();
             
             // Simulate a welcome push notification
             setTimeout(() => {
