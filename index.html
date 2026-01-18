@@ -914,17 +914,15 @@
         }
 
         /* --- RESPONSIVE QUERIES --- */
-        @media (max-width: 1400px) {
+        @media (max-width: 1200px) {
             main { 
                 grid-template-columns: 1fr 1fr; 
                 grid-template-rows: auto auto auto;
-                padding-bottom: 80px; /* Space for bottom nav */
             }
             .hero { grid-column: 1 / -1; }
             .side-module-left { grid-column: 1; }
             .side-module-right { grid-column: 2; }
             .main-module { grid-column: 1 / -1; grid-row: 3; }
-            .bottom-nav { display: flex; }
         }
 
         @media (max-width: 900px) {
@@ -934,6 +932,8 @@
             .hero h1 { font-size: 1.8rem; }
             .navbar { padding: 0 15px; }
             .news-ticker { display: none; } /* Hide ticker on very small screens to save space */
+            .bottom-nav { display: flex; }
+            main { padding-bottom: 80px; }
         }
 
         @keyframes pulse {
@@ -1589,12 +1589,15 @@
                     center: [9.0, -84.0], // Costa Rica approx
                     zoom: 6,
                     zoomControl: false,
-                    attributionControl: false
+                    attributionControl: false,
+                    maxBounds: [[-90, -180], [90, 180]],
+                    maxBoundsViscosity: 1.0
                 });
 
                 // Dark Matter Tiles
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19
+                    maxZoom: 19,
+                    noWrap: true
                 }).addTo(map);
 
                 // Add some fake markers

@@ -64,6 +64,7 @@
             font-family: 'JetBrains+Mono', monospace;
             overflow-x: hidden;
             height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             font-size: 14px;
@@ -285,6 +286,7 @@
             flex-direction: column;
             position: relative;
             height: calc(100vh - var(--nav-height));
+            height: calc(100dvh - var(--nav-height));
         }
 
         .tracker-container {
@@ -1009,7 +1011,7 @@
         }
 
         @media (max-width: 600px) {
-            .tracker-container { grid-template-rows: 1fr 300px; }
+            .tracker-container { display: block; }
             .hud-status { display: none; }
             .sightings-panel { display: none; height: 100%; width: 100%; border-left: none; }
             .sightings-panel.mobile-active { display: flex; }
@@ -1161,7 +1163,7 @@
             </div>
 
             <!-- SIDEBAR FEED -->
-            <aside class="sightings-panel">
+            <aside class="sightings-panel" id="sightingsPanel">
                 <div class="sidebar-tabs">
                     <div class="sidebar-tab active" onclick="switchTab('feed')">FEED</div>
                     <div class="sidebar-tab" onclick="switchTab('chat')">COMMS</div>
@@ -1525,11 +1527,15 @@
                 center: [9.0, -84.0], // Costa Rica / Isla Nublar Region
                 zoom: 3,
                 zoomControl: false,
-                attributionControl: false
+                attributionControl: false,
+                maxBounds: [[-90, -180], [90, 180]],
+                maxBoundsViscosity: 1.0
             });
 
             // Dark Matter Tile Layer
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                noWrap: true
+            }).addTo(map);
 
             // Initialize heatmap layer (but don't add it yet)
             heatmapLayer = L.heatLayer([], {
@@ -1630,7 +1636,8 @@
             
             // Update nav active state
             document.querySelectorAll('.bottom-nav .nav-item').forEach(i => i.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            const target = event.currentTarget || event.target.closest('.nav-item');
+            if(target) target.classList.add('active');
 
             if (view === 'map') {
                 mapContainer.classList.remove('mobile-hidden');
