@@ -223,7 +223,7 @@
             height: 100%;
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 768px) {
             .nav-links { display: none; }
         }
 
@@ -274,7 +274,7 @@
             color: #fff;
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 768px) {
             .menu-toggle { display: block; }
         }
 
@@ -1003,7 +1003,7 @@
         .nav-item i { font-size: 1.2rem; }
 
         /* --- RESPONSIVE --- */
-        @media (max-width: 1024px) {
+        @media (max-width: 768px) {
             .nav-links { display: none; }
             .menu-toggle { display: block; }
             .tracker-container { grid-template-columns: 1fr; grid-template-rows: 1fr 400px; }
@@ -1165,15 +1165,15 @@
             <!-- SIDEBAR FEED -->
             <aside class="sightings-panel" id="sightingsPanel">
                 <div class="sidebar-tabs">
-                    <div class="sidebar-tab active" onclick="switchTab('feed')">FEED</div>
-                    <div class="sidebar-tab" onclick="switchTab('chat')">COMMS</div>
-                    <div class="sidebar-tab" onclick="switchTab('missions')">OPS</div>
-                    <div class="sidebar-tab" onclick="switchTab('db')">DB</div>
-                    <div class="sidebar-tab" onclick="switchTab('settings')">CFG</div>
+                    <div class="sidebar-tab active" onclick="switchTab('feed', this)">FEED</div>
+                    <div class="sidebar-tab" onclick="switchTab('chat', this)">COMMS</div>
+                    <div class="sidebar-tab" onclick="switchTab('missions', this)">OPS</div>
+                    <div class="sidebar-tab" onclick="switchTab('db', this)">DB</div>
+                    <div class="sidebar-tab" onclick="switchTab('settings', this)">CFG</div>
                 </div>
 
                 <!-- FEED TAB -->
-                <div id="tab-feed" style="display: flex; flex-direction: column; height: 100%;">
+                <div id="tab-feed" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
                 <div class="panel-header">
                     <div class="panel-title">
                         <span><i class="fa fa-satellite-dish"></i> ASSET FEED</span>
@@ -1213,7 +1213,7 @@
                 </div>
 
                 <!-- MISSIONS TAB -->
-                <div id="tab-missions" style="display: none; flex-direction: column; height: 100%; padding: 20px; overflow-y: auto;">
+                <div id="tab-missions" style="display: none; flex-direction: column; flex: 1; min-height: 0; padding: 20px; overflow-y: auto;">
                     <div class="panel-header" style="padding: 0 0 20px 0; background: transparent;">
                         <div class="panel-title"><span><i class="fa fa-tasks"></i> ACTIVE CONTRACTS</span></div>
                     </div>
@@ -1223,7 +1223,7 @@
                 </div>
 
                 <!-- DATABASE TAB -->
-                <div id="tab-db" style="display: none; flex-direction: column; height: 100%; padding: 0; overflow-y: auto;">
+                <div id="tab-db" style="display: none; flex-direction: column; flex: 1; min-height: 0; padding: 0; overflow-y: auto;">
                     <div class="panel-header">
                         <div class="panel-title"><span><i class="fa fa-database"></i> INGEN DATABASE</span></div>
                         <input type="text" placeholder="Search Species..." style="width: 100%; margin-top: 10px; background: #000; border: 1px solid var(--border); padding: 8px; color: #fff;" oninput="filterDB(this.value)">
@@ -1234,7 +1234,7 @@
                 </div>
 
                 <!-- SETTINGS TAB -->
-                <div id="tab-settings" style="display: none; flex-direction: column; height: 100%; padding: 20px; overflow-y: auto;">
+                <div id="tab-settings" style="display: none; flex-direction: column; flex: 1; min-height: 0; padding: 20px; overflow-y: auto;">
                     <div class="panel-header" style="padding: 0 0 20px 0; background: transparent;">
                         <div class="panel-title"><span><i class="fa fa-cogs"></i> SYSTEM CONFIG</span></div>
                     </div>
@@ -1618,9 +1618,15 @@
             }
         }
 
-        function switchTab(tab) {
+        function switchTab(tab, el) {
             document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            
+            if (el) {
+                el.classList.add('active');
+            } else {
+                const tabBtn = document.querySelector(`.sidebar-tab[onclick*="'${tab}'"]`);
+                if(tabBtn) tabBtn.classList.add('active');
+            }
             
             document.getElementById('tab-feed').style.display = tab === 'feed' ? 'flex' : 'none';
             document.getElementById('tab-chat').style.display = tab === 'chat' ? 'flex' : 'none';
