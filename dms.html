@@ -505,6 +505,19 @@
             margin-left: 5px;
         }
 
+        .unread-dot {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            border: 2px solid var(--bg-panel);
+            z-index: 10;
+            box-shadow: 0 0 5px var(--primary);
+        }
+
         /* --- Chat Window --- */
         .chat-panel {
             display: flex;
@@ -1177,6 +1190,8 @@
         let mediaRecorder = null;
         let audioChunks = [];
         let recordingTimer = null;
+        let chatListeners = {};
+        let userChatData = {};
 
         // --- Auth Observer ---
         auth.onAuthStateChanged(user => {
@@ -1251,25 +1266,63 @@
             db.ref('users').on('value', snapshot => {
                 const data = snapshot.val();
                 const list = document.getElementById('user-list');
-                list.innerHTML = "";
-                allUsers = [];
+                // list.innerHTML = ""; // Don't clear immediately
+                const newUsers = [];
 
                 if (data) {
                     Object.keys(data).forEach(uid => { // uid is lowercase here
                         if (uid !== myUsername) {
-                            allUsers.push({ id: uid, ...data[uid] });
+                            newUsers.push({ id: uid, ...data[uid] });
+                            if (!chatListeners[uid]) setupChatListener(uid);
                         }
                     });
+                    allUsers = newUsers;
                     // Check online status
                     db.ref('status').once('value').then(snap => {
                         const statuses = snap.val() || {};
                         allUsers.forEach(u => {
                             u.online = statuses[u.id] === 'online';
                         });
-                        displayUsers(allUsers);
+                        sortAndDisplayUsers();
                     });
                 }
             });
+        }
+
+        function setupChatListener(targetUid) {
+            chatListeners[targetUid] = true;
+            const chatId = [myUsername, targetUid].sort().join('_');
+            db.ref(`direct_messages/${chatId}`).limitToLast(1).on('value', snap => {
+                const msgs = snap.val();
+                if (msgs) {
+                    const msg = Object.values(msgs)[0];
+                    if (!userChatData[targetUid]) userChatData[targetUid] = {};
+                    
+                    userChatData[targetUid].lastMsgTime = msg.timestamp;
+                    
+                    if (msg.sender !== myUsername) {
+                        if (!selectedUser || selectedUser.id !== targetUid) {
+                            userChatData[targetUid].unread = true;
+                        }
+                    }
+                    sortAndDisplayUsers();
+                }
+            });
+        }
+
+        function sortAndDisplayUsers() {
+            allUsers.forEach(u => {
+                const data = userChatData[u.id];
+                if (data) {
+                    u.lastMsgTime = data.lastMsgTime;
+                    u.unread = data.unread;
+                }
+            });
+            
+            if (currentTab === 'direct') {
+                allUsers.sort((a, b) => (b.lastMsgTime || 0) - (a.lastMsgTime || 0));
+                displayUsers(allUsers);
+            }
         }
 
         function displayUsers(users) {
@@ -1288,6 +1341,7 @@
                 item.innerHTML = `
                     <div class="avatar ${statusClass}">
                         <img src="${avatarUrl}" style="width:100%; height:100%; border-radius:50%;">
+                        ${user.unread ? '<div class="unread-dot"></div>' : ''}
                     </div>
                     <div class="user-info">
                         <div class="user-name">
@@ -1339,6 +1393,11 @@
         // --- Chat Logic ---
         function selectChat(userId, isSquad = false) {
             selectedUser = isSquad ? { id: userId, isSquad: true } : { id: userId, isSquad: false };
+            
+            if (!isSquad && userChatData[userId]) {
+                userChatData[userId].unread = false;
+                sortAndDisplayUsers();
+            }
             
             let displayName = userId;
             if (isSquad) {
