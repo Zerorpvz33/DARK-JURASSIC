@@ -44,6 +44,7 @@
             --scanline-color: rgba(0, 0, 0, 0.5);
             --glass: rgba(20, 20, 20, 0.6);
             --terminal-bg: #0c0c0c;
+            --radar-bg: rgba(0, 20, 0, 0.9);
         }
 
         /* --- GLOBAL RESET & SCROLLBAR --- */
@@ -271,6 +272,12 @@
             grid-template-rows: auto auto 1fr;
             gap: 20px;
             flex: 1;
+        }
+
+        @media (max-width: 1200px) {
+            main {
+                grid-template-columns: 1fr 1fr;
+            }
         }
         
         /* --- NEWS TICKER --- */
@@ -701,6 +708,130 @@
         .toggle-switch.active { background: var(--success); }
         .toggle-switch.active::after { left: 22px; }
 
+        /* --- RADAR WIDGET --- */
+        .radar-container {
+            width: 100%;
+            aspect-ratio: 1;
+            background: var(--radar-bg);
+            border-radius: 50%;
+            border: 2px solid var(--success);
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.2);
+            background-image: 
+                radial-gradient(transparent 30%, rgba(46, 204, 113, 0.3) 31%, transparent 32%),
+                radial-gradient(transparent 60%, rgba(46, 204, 113, 0.3) 61%, transparent 62%),
+                linear-gradient(0deg, transparent 49%, rgba(46, 204, 113, 0.3) 50%, transparent 51%),
+                linear-gradient(90deg, transparent 49%, rgba(46, 204, 113, 0.3) 50%, transparent 51%);
+        }
+
+        .radar-sweep {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(46, 204, 113, 0.5) 30deg, transparent 30.1deg);
+            animation: radar-spin 4s linear infinite;
+            pointer-events: none;
+        }
+
+        .radar-blip {
+            position: absolute;
+            width: 6px; height: 6px;
+            background: var(--danger);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--danger);
+            animation: blip-pulse 2s infinite;
+        }
+
+        @keyframes radar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes blip-pulse { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(2); } }
+
+        /* --- DRONE FEED --- */
+        .drone-panel {
+            display: grid;
+            grid-template-columns: 1fr 100px;
+            gap: 10px;
+            height: 200px;
+        }
+
+        .drone-view {
+            background: #000;
+            border: 1px solid #333;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drone-img {
+            width: 100%; height: 100%; object-fit: cover;
+            opacity: 0.8; filter: grayscale(0.5) contrast(1.2) sepia(0.2);
+        }
+
+        .drone-hud-overlay {
+            position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: none;
+        }
+
+        .drone-hud-overlay::before {
+            content: '+'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.5); font-size: 20px;
+        }
+
+        .drone-stats {
+            position: absolute; bottom: 5px; left: 5px;
+            font-family: monospace; font-size: 0.6rem; color: var(--success);
+            background: rgba(0,0,0,0.6); padding: 2px 5px;
+        }
+
+        .drone-controls {
+            display: flex; flex-direction: column; gap: 5px;
+        }
+
+        .drone-btn {
+            flex: 1; background: #111; border: 1px solid #333; color: #888;
+            font-size: 0.6rem; cursor: pointer; transition: 0.2s;
+        }
+        .drone-btn:hover, .drone-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* --- SECURITY KEYPAD --- */
+        .keypad-container {
+            background: #050505; padding: 15px; border-radius: 4px; border: 1px solid #333;
+        }
+        .keypad-display {
+            background: #000; border: 1px solid var(--border); color: var(--primary);
+            font-family: 'Orbitron'; font-size: 1.2rem; text-align: center; padding: 10px;
+            margin-bottom: 10px; letter-spacing: 5px; height: 45px;
+        }
+        .keypad-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+        }
+        .key-btn {
+            background: #151515; border: 1px solid #333; color: #fff; padding: 10px;
+            font-family: 'Orbitron'; cursor: pointer; transition: 0.2s;
+        }
+        .key-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .key-btn.clear { color: var(--warning); border-color: var(--warning); }
+        .key-btn.enter { color: var(--success); border-color: var(--success); }
+
+        /* --- NOTIFICATION DRAWER --- */
+        .notif-drawer {
+            position: fixed; top: 0; right: -350px; width: 320px; height: 100%;
+            background: rgba(10, 10, 10, 0.98); border-left: 1px solid var(--primary);
+            z-index: 6000; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px; display: flex; flex-direction: column;
+            box-shadow: -10px 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+        }
+        .notif-drawer.open { right: 0; }
+        .notif-list { flex: 1; overflow-y: auto; margin-top: 20px; }
+        .notif-item {
+            background: rgba(255,255,255,0.03); border-left: 3px solid var(--border);
+            padding: 10px; margin-bottom: 10px; font-size: 0.75rem; position: relative;
+        }
+        .notif-item.warn { border-color: var(--warning); }
+        .notif-item.danger { border-color: var(--danger); }
+        .notif-time { font-size: 0.6rem; color: var(--text-dim); display: block; margin-bottom: 3px; }
+
         /* --- CANVAS VISUALIZERS --- */
         canvas {
             width: 100%;
@@ -775,6 +906,12 @@
             color: var(--text-dim);
             background: #080808;
         }
+        
+        .drawer-toggle {
+            position: fixed; top: 80px; right: 0; background: var(--primary); color: #fff;
+            padding: 10px 15px; border-radius: 4px 0 0 4px; cursor: pointer; z-index: 4000;
+            font-size: 1.2rem; box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        }
 
         /* --- RESPONSIVE QUERIES --- */
         @media (max-width: 1400px) {
@@ -822,6 +959,11 @@
     <div class="noise"></div>
     <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
     <div class="push-notification-container" id="push-container"></div>
+
+    <!-- NOTIFICATION DRAWER TOGGLE -->
+    <div class="drawer-toggle" onclick="toggleDrawer()">
+        <i class="fa fa-bell"></i>
+    </div>
 
     <!-- MOBILE SIDEBAR -->
     <aside class="mobile-sidebar" id="sidebar">
@@ -958,6 +1100,18 @@
                 </div>
             </div>
 
+            <!-- TACTICAL RADAR -->
+            <div class="terminal-panel" style="margin-top: 20px;">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="fa fa-crosshairs"></i> PROXIMITY RADAR</span>
+                    <span style="font-size: 0.6rem; color: var(--danger);">RANGE: 5KM</span>
+                </div>
+                <div class="radar-container" id="radar-screen">
+                    <div class="radar-sweep"></div>
+                    <!-- Blips injected via JS -->
+                </div>
+            </div>
+
             <!-- Weather / Environment -->
             <div class="terminal-panel" style="margin-top: 20px;">
                 <div class="panel-header">
@@ -1002,6 +1156,27 @@
                 <div class="terminal-input-line">
                     <span class="terminal-prompt">root@dj-sys:~#</span>
                     <input type="text" id="cmd-input" placeholder="Enter command..." autocomplete="off">
+                </div>
+            </div>
+
+            <!-- DRONE CONTROL -->
+            <div class="terminal-panel" style="margin-top: 20px;">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="fa fa-plane"></i> DRONE SURVEILLANCE</span>
+                    <span style="font-size: 0.6rem; color: var(--success);">ONLINE</span>
+                </div>
+                <div class="drone-panel">
+                    <div class="drone-view">
+                        <img src="https://images.unsplash.com/photo-1473968512647-3e447244af8f?q=80&w=1000" class="drone-img" id="drone-feed-img">
+                        <div class="drone-hud-overlay"></div>
+                        <div class="drone-stats" id="drone-stats">BAT: 87% | ALT: 450ft | SIG: STRONG</div>
+                    </div>
+                    <div class="drone-controls">
+                        <button class="drone-btn active" onclick="switchDrone('ALPHA')">ALPHA</button>
+                        <button class="drone-btn" onclick="switchDrone('BRAVO')">BRAVO</button>
+                        <button class="drone-btn" onclick="switchDrone('CHARLIE')">CHARLIE</button>
+                        <button class="drone-btn" style="margin-top: auto; color: var(--danger); border-color: var(--danger);" onclick="rtbDrone()">R.T.B.</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1051,6 +1226,30 @@
                 </div>
             </div>
 
+            <!-- SECURITY KEYPAD -->
+            <div class="terminal-panel" style="margin-top: 20px;">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="fa fa-lock"></i> LEVEL 5 ACCESS</span>
+                </div>
+                <div class="keypad-container">
+                    <div class="keypad-display" id="keypad-display">----</div>
+                    <div class="keypad-grid">
+                        <button class="key-btn" onclick="keyPress(1)">1</button>
+                        <button class="key-btn" onclick="keyPress(2)">2</button>
+                        <button class="key-btn" onclick="keyPress(3)">3</button>
+                        <button class="key-btn" onclick="keyPress(4)">4</button>
+                        <button class="key-btn" onclick="keyPress(5)">5</button>
+                        <button class="key-btn" onclick="keyPress(6)">6</button>
+                        <button class="key-btn" onclick="keyPress(7)">7</button>
+                        <button class="key-btn" onclick="keyPress(8)">8</button>
+                        <button class="key-btn" onclick="keyPress(9)">9</button>
+                        <button class="key-btn clear" onclick="keyClear()">C</button>
+                        <button class="key-btn" onclick="keyPress(0)">0</button>
+                        <button class="key-btn enter" onclick="keyEnter()">E</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- MINI GAME: DECRYPT -->
             <div class="terminal-panel" style="margin-top: 20px;">
                 <div class="panel-header">
@@ -1086,6 +1285,18 @@
 
         </div>
     </main>
+
+    <!-- NOTIFICATION DRAWER -->
+    <div class="notif-drawer" id="notifDrawer">
+        <div class="panel-header">
+            <span class="panel-title">NOTIFICATION LOG</span>
+            <i class="fa fa-times" style="cursor: pointer;" onclick="toggleDrawer()"></i>
+        </div>
+        <div class="notif-list" id="notifList">
+            <!-- Populated by JS -->
+        </div>
+        <button onclick="clearNotifs()" style="margin-top: 10px; background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 8px; cursor: pointer;">CLEAR HISTORY</button>
+    </div>
 
     <!-- BOTTOM NAVIGATION (MOBILE) -->
     <nav class="bottom-nav">
@@ -1147,6 +1358,7 @@
         let currentAgent = "GUEST_USER";
         let myUsername = "";
         let isSidebarOpen = false;
+        let isDrawerOpen = false;
         let map;
         let audioContext, analyser, dataArray, canvasCtx, audioAnimationId;
         let isAudioPlaying = false;
@@ -1204,6 +1416,16 @@
             }
         }
 
+        function toggleDrawer() {
+            const drawer = document.getElementById('notifDrawer');
+            isDrawerOpen = !isDrawerOpen;
+            if (isDrawerOpen) {
+                drawer.classList.add('open');
+            } else {
+                drawer.classList.remove('open');
+            }
+        }
+
         // --- DATA LISTENERS ---
 
         // 1. Total Agent Count
@@ -1249,6 +1471,7 @@
             const now = Date.now();
             if (alert.timestamp && now - alert.timestamp < 60000) {
                 showPushNotification(alert.title, alert.message, alert.type);
+                addNotificationToDrawer(alert.title, alert.message, alert.type);
                 addLog(`ALERT RECEIVED: ${alert.title}`, "danger");
             }
         });
@@ -1260,6 +1483,7 @@
             if (Date.now() - thread.timestamp < 30000) {
                 addLog(`New Intel: "${thread.title}" uploaded by ${thread.author}`, "info");
                 showPushNotification("NEW INTEL", `Agent ${thread.author} posted: ${thread.title}`, "info");
+                addNotificationToDrawer("NEW INTEL", `Agent ${thread.author} posted: ${thread.title}`, "info");
             }
         });
 
@@ -1287,6 +1511,26 @@
             if(logBox.children.length > 60) logBox.removeChild(logBox.lastChild);
         }
 
+        // --- MOCK FILE SYSTEM FOR TERMINAL ---
+        const fileSystem = {
+            'root': {
+                'readme.txt': 'Welcome to Dark Jurassic OS v4.0. Unauthorized access is prohibited.',
+                'agents.list': 'ENCRYPTED. USE KEYPAD TO UNLOCK.',
+                'system.log': 'All systems nominal. Sector 4 sensors offline.',
+                'bin': {
+                    'nuke.exe': 'PERMISSION DENIED',
+                    'trace.exe': 'Tracing...'
+                }
+            }
+        };
+        let currentDir = fileSystem['root'];
+        let path = '/';
+
+        function resolvePath(cmd) {
+            // Simplified path resolution
+            return currentDir[cmd] || null;
+        }
+
         // --- TERMINAL INPUT ---
         document.getElementById('cmd-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
@@ -1298,9 +1542,10 @@
         });
 
         function processCommand(cmd) {
-            switch(cmd) {
+            const parts = cmd.split(' ');
+            switch(parts[0]) {
                 case 'help':
-                    addLog("AVAILABLE COMMANDS: HELP, CLEAR, SCAN, STATUS, REBOOT, WHOAMI", "info");
+                    addLog("AVAILABLE COMMANDS: HELP, CLEAR, SCAN, STATUS, REBOOT, WHOAMI, LS, CAT, DATE", "info");
                     break;
                 case 'clear':
                     document.getElementById('terminal-logs').innerHTML = '';
@@ -1318,8 +1563,22 @@
                 case 'whoami':
                     addLog(`CURRENT USER: ${currentAgent}`, "info");
                     break;
+                case 'ls':
+                    const files = Object.keys(currentDir).map(k => typeof currentDir[k] === 'object' ? k + '/' : k).join('  ');
+                    addLog(files, "info");
+                    break;
+                case 'cat':
+                    if (parts[1] && currentDir[parts[1]] && typeof currentDir[parts[1]] === 'string') {
+                        addLog(currentDir[parts[1]], "success");
+                    } else {
+                        addLog("FILE NOT FOUND OR IS A DIRECTORY", "danger");
+                    }
+                    break;
+                case 'date':
+                    addLog(new Date().toString(), "info");
+                    break;
                 default:
-                    addLog(`COMMAND NOT FOUND: ${cmd}`, "danger");
+                    addLog(`COMMAND NOT FOUND: ${parts[0]}`, "danger");
             }
         }
 
@@ -1470,6 +1729,23 @@
             }, 5000);
         }
 
+        function addNotificationToDrawer(title, message, type) {
+            const list = document.getElementById('notifList');
+            const item = document.createElement('div');
+            item.className = `notif-item ${type}`;
+            const time = new Date().toLocaleTimeString();
+            item.innerHTML = `
+                <span class="notif-time">${time}</span>
+                <div style="font-weight:bold; color:var(--primary); margin-bottom:2px;">${title}</div>
+                <div>${message}</div>
+            `;
+            list.prepend(item);
+        }
+
+        function clearNotifs() {
+            document.getElementById('notifList').innerHTML = '';
+        }
+
         // --- CANVAS VISUALIZER (Server Load) ---
         const canvas = document.getElementById('loadCanvas');
         const ctx = canvas.getContext('2d');
@@ -1580,6 +1856,75 @@
             addLog(`INPUT RECEIVED: CELL ${id}`, "dim");
         }
 
+        // --- RADAR LOGIC ---
+        function initRadar() {
+            const screen = document.getElementById('radar-screen');
+            setInterval(() => {
+                if (Math.random() > 0.7) {
+                    const blip = document.createElement('div');
+                    blip.className = 'radar-blip';
+                    // Random position within circle
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.random() * 40; // %
+                    const x = 50 + radius * Math.cos(angle);
+                    const y = 50 + radius * Math.sin(angle);
+                    
+                    blip.style.left = x + '%';
+                    blip.style.top = y + '%';
+                    screen.appendChild(blip);
+                    
+                    setTimeout(() => blip.remove(), 2000);
+                }
+            }, 1000);
+        }
+
+        // --- DRONE LOGIC ---
+        const droneFeeds = {
+            'ALPHA': 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?q=80&w=1000',
+            'BRAVO': 'https://images.unsplash.com/photo-1504280506541-1763299f5005?q=80&w=1000',
+            'CHARLIE': 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?q=80&w=1000'
+        };
+
+        function switchDrone(id) {
+            document.querySelectorAll('.drone-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const img = document.getElementById('drone-feed-img');
+            img.style.opacity = 0;
+            setTimeout(() => {
+                img.src = droneFeeds[id];
+                img.style.opacity = 0.8;
+                document.getElementById('drone-stats').innerText = `BAT: ${Math.floor(Math.random()*30+60)}% | ALT: ${Math.floor(Math.random()*200+300)}ft | SIG: STRONG`;
+                addLog(`DRONE FEED SWITCHED TO ${id}`, "info");
+            }, 200);
+        }
+
+        function rtbDrone() {
+            addLog("COMMAND SENT: RETURN TO BASE", "warn");
+        }
+
+        // --- KEYPAD LOGIC ---
+        let keyBuffer = "";
+        function keyPress(num) {
+            if (keyBuffer.length < 4) {
+                keyBuffer += num;
+                document.getElementById('keypad-display').innerText = keyBuffer.padEnd(4, '-');
+            }
+        }
+        function keyClear() {
+            keyBuffer = "";
+            document.getElementById('keypad-display').innerText = "----";
+        }
+        function keyEnter() {
+            if (keyBuffer === "1993") {
+                addLog("ACCESS GRANTED: LEVEL 5 UNLOCKED", "success");
+                showPushNotification("SECURITY", "Clearance Level 5 Authorized", "success");
+            } else {
+                addLog("ACCESS DENIED: INVALID CODE", "danger");
+                keyClear();
+            }
+        }
+
         // --- SETTINGS ---
         function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
         function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
@@ -1640,6 +1985,7 @@
             initAudio();
             initTasks();
             initGame();
+            initRadar();
             
             // Simulate a welcome push notification
             setTimeout(() => {

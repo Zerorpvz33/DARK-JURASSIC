@@ -885,6 +885,76 @@
             background: radial-gradient(circle, rgba(255,0,0,0.05) 0%, transparent 70%);
         }
 
+        /* --- BATTLE SIMULATOR --- */
+        .battle-arena {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+            height: 300px; position: relative; border: 1px solid var(--danger);
+            margin-bottom: 15px; overflow: hidden;
+        }
+        .fighter-card {
+            width: 40%; background: rgba(0,0,0,0.8); padding: 10px;
+            border: 1px solid var(--border); text-align: center; transition: 0.3s;
+            position: relative; z-index: 2;
+        }
+        .fighter-card.winner { border-color: var(--success); box-shadow: 0 0 20px var(--success); }
+        .fighter-card.loser { border-color: var(--danger); opacity: 0.5; filter: grayscale(1); }
+        .fighter-img { width: 100%; height: 150px; object-fit: cover; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+        .vs-badge {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            font-size: 3rem; font-weight: 900; color: var(--danger);
+            text-shadow: 0 0 20px #000; z-index: 1; font-family: 'Orbitron';
+        }
+        .battle-log {
+            height: 150px; overflow-y: auto; background: #000;
+            border: 1px solid var(--border); padding: 10px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+            color: #ccc;
+        }
+        .log-hit { color: var(--warning); }
+        .log-crit { color: var(--danger); font-weight: bold; }
+        .log-win { color: var(--success); font-weight: bold; border-top: 1px solid var(--success); padding-top: 5px; margin-top: 5px; }
+        .hp-bar { width: 100%; height: 6px; background: #333; margin-top: 5px; }
+        .hp-fill { height: 100%; background: var(--success); width: 100%; transition: width 0.2s; }
+
+        /* --- DNA LAB --- */
+        .dna-lab-container {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 300px;
+            background: #050505; padding: 20px; border: 1px solid var(--secondary);
+        }
+        .dna-strand {
+            height: 100%; background: rgba(0, 212, 255, 0.05);
+            border: 1px solid var(--secondary); position: relative; overflow-y: hidden;
+            display: flex; flex-direction: column;
+        }
+        .base-pair {
+            height: 20px; width: 100%; border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            display: flex; justify-content: space-between; padding: 0 10px;
+            align-items: center; font-family: monospace; color: var(--secondary); font-size: 0.7rem;
+        }
+        .base-pair.match { background: rgba(0, 212, 255, 0.2); color: #fff; }
+        .base-pair.error { background: rgba(255, 0, 0, 0.2); color: var(--danger); }
+        
+        /* --- AUDIO PLAYER --- */
+        .audio-interface {
+            display: flex; align-items: center; gap: 15px;
+            background: #0a0a0a; padding: 15px; border: 1px solid var(--border);
+            margin-top: 15px; border-radius: 4px;
+        }
+        .play-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #fff; transition: 0.2s; flex-shrink: 0;
+        }
+        .play-btn:hover { transform: scale(1.1); box-shadow: 0 0 10px var(--primary); }
+        .waveform-canvas { flex: 1; height: 40px; background: #000; border: 1px solid #333; width: 100%; }
+
+        /* --- HABITAT MAP --- */
+        .habitat-map-container {
+            height: 200px; width: 100%; background: #000;
+            border: 1px solid var(--border); margin-top: 15px;
+            position: relative; overflow: hidden;
+        }
 
     </style>
 </head>
@@ -977,6 +1047,12 @@
             <button class="btn-action" onclick="openModal()">
                 <i class="fa fa-plus-circle"></i> Index New Specimen
             </button>
+            <button class="btn-action" style="border-color: var(--danger); color: var(--danger);" onclick="openBattleSim()">
+                <i class="fa fa-fist-raised"></i> Battle Sim
+            </button>
+            <button class="btn-action" style="border-color: var(--secondary); color: var(--secondary);" onclick="openDNALab()">
+                <i class="fa fa-dna"></i> DNA Lab
+            </button>
         </section>
 
         <div id="dinoGrid" class="dino-grid">
@@ -1059,6 +1135,16 @@
                         <div class="dossier-stats">
                             <div class="stat-row"><span>DIET:</span> <span id="detail-diet"></span></div>
                             <div class="stat-row"><span>ERA:</span> <span id="detail-era">CRETACEOUS</span></div>
+                            <div class="stat-row"><span>HEIGHT:</span> <span id="detail-height">--</span></div>
+                            <div class="stat-row"><span>WEIGHT:</span> <span id="detail-weight">--</span></div>
+                        </div>
+                        
+                        <!-- Habitat Map -->
+                        <div class="habitat-map-container" id="habitatMap">
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png') no-repeat center; opacity: 0.5; filter: invert(1);"></div>
+                            <div style="position: absolute; bottom: 5px; left: 5px; font-size: 0.6rem; color: var(--success);">
+                                <i class="fa fa-satellite"></i> LIVE TRACKING: SECTOR <span id="detail-sector">7G</span>
+                            </div>
                         </div>
                         <canvas id="dna-canvas" style="margin-top: 20px; height: 150px;"></canvas>
                     </div>
@@ -1068,6 +1154,12 @@
                             <div class="threat-bar"><div id="detail-threat-fill"></div></div>
                         </div>
                         <p id="detail-desc" style="font-size: 0.9rem; color: #ccc; line-height: 1.6; margin-bottom: 20px;"></p>
+                        
+                        <!-- Audio Player -->
+                        <div class="audio-interface">
+                            <div class="play-btn" onclick="playDinoRoar()"><i class="fa fa-play" id="audio-icon"></i></div>
+                            <canvas id="audioVisualizer" class="waveform-canvas"></canvas>
+                        </div>
                         
                         <div class="dna-sequence-box">
                             <h4 style="color: var(--primary); margin-bottom: 5px;">GENETIC SEQUENCE FRAGMENT</h4>
@@ -1145,6 +1237,57 @@
         </div>
     </div>
 
+    <!-- Battle Simulator Modal -->
+    <div id="battleModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: var(--danger);">COMBAT SIMULATION</h2>
+                <button class="close-modal" onclick="closeBattleSim()">&times;</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <select id="fighter1-select" class="form-group" style="flex:1; background:#000; color:#fff; padding:10px; border:1px solid var(--border);" onchange="updateFighter(1)">
+                    <option value="">Select Challenger 1</option>
+                </select>
+                <select id="fighter2-select" class="form-group" style="flex:1; background:#000; color:#fff; padding:10px; border:1px solid var(--border);" onchange="updateFighter(2)">
+                    <option value="">Select Challenger 2</option>
+                </select>
+            </div>
+
+            <div class="battle-arena">
+                <div class="fighter-card" id="fighter1-card">
+                    <img src="" class="fighter-img" id="fighter1-img" onerror="this.style.display='none'">
+                    <h3 id="fighter1-name">EMPTY</h3>
+                    <div class="hp-bar"><div class="hp-fill" id="fighter1-hp"></div></div>
+                </div>
+                <div class="vs-badge">VS</div>
+                <div class="fighter-card" id="fighter2-card">
+                    <img src="" class="fighter-img" id="fighter2-img" onerror="this.style.display='none'">
+                    <h3 id="fighter2-name">EMPTY</h3>
+                    <div class="hp-bar"><div class="hp-fill" id="fighter2-hp"></div></div>
+                </div>
+            </div>
+
+            <button class="btn-action" style="width: 100%; background: var(--danger); color: #fff; border: none;" onclick="startBattle()">INITIATE COMBAT</button>
+            
+            <div class="battle-log" id="battleLog">
+                > WAITING FOR INPUT...
+            </div>
+        </div>
+    </div>
+
+    <!-- DNA Lab Modal -->
+    <div id="dnaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: var(--secondary);">GENETIC SEQUENCER</h2>
+                <button class="close-modal" onclick="closeDNALab()">&times;</button>
+            </div>
+            <div class="dna-lab-container" id="dnaLabGrid"></div>
+            <button class="btn-action" style="width: 100%; margin-top: 15px; border-color: var(--secondary); color: var(--secondary);" onclick="runSequencer()">RUN SEQUENCE ANALYSIS</button>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
@@ -1167,6 +1310,7 @@
         let currentDetailId = null;
         let activeThreatDino = null;
         let threatStats = { agg: 5, int: 5, spd: 5, siz: 5 };
+        let audioCtx, audioAnalyser, audioCanvasCtx;
 
         // --- Auth & Init ---
         auth.onAuthStateChanged((user) => {
@@ -1319,6 +1463,11 @@
             document.getElementById('detail-contributor').innerText = dino.contributor;
             document.getElementById('detail-dna').innerText = generateFakeDNA();
             
+            // Random Stats
+            document.getElementById('detail-height').innerText = (Math.random() * 5 + 2).toFixed(1) + " M";
+            document.getElementById('detail-weight').innerText = (Math.random() * 8000 + 500).toFixed(0) + " KG";
+            document.getElementById('detail-sector').innerText = Math.floor(Math.random() * 10) + String.fromCharCode(65 + Math.floor(Math.random() * 6));
+            
             // Random threat level
             const threat = (dino.threat !== undefined && dino.threat !== "") ? parseInt(dino.threat) : Math.floor(Math.random() * 100);
             const bar = document.getElementById('detail-threat-fill');
@@ -1327,6 +1476,7 @@
 
             document.getElementById('detailModal').style.display = 'flex';
             loadFieldNotes(id);
+            initAudioVisualizer();
         }
 
         function closeDetailModal() {
@@ -1478,6 +1628,171 @@
             showNotification("THREAT ASSESSMENT LOGGED", "success");
             closeThreatCalc();
             // In a real app, save to Firebase here
+        }
+
+        // --- BATTLE SIMULATOR ---
+        function openBattleSim() {
+            document.getElementById('battleModal').style.display = 'flex';
+            const s1 = document.getElementById('fighter1-select');
+            const s2 = document.getElementById('fighter2-select');
+            s1.innerHTML = '<option value="">Select Challenger 1</option>';
+            s2.innerHTML = '<option value="">Select Challenger 2</option>';
+            
+            allDinos.forEach(d => {
+                s1.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+                s2.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+            });
+        }
+
+        function closeBattleSim() { document.getElementById('battleModal').style.display = 'none'; }
+
+        function updateFighter(slot) {
+            const id = document.getElementById(`fighter${slot}-select`).value;
+            const dino = allDinos.find(d => d.id === id);
+            if(dino) {
+                document.getElementById(`fighter${slot}-img`).src = dino.image;
+                document.getElementById(`fighter${slot}-img`).style.display = 'block';
+                document.getElementById(`fighter${slot}-name`).innerText = dino.name;
+                document.getElementById(`fighter${slot}-hp`).style.width = '100%';
+                document.getElementById(`fighter${slot}-card`).className = 'fighter-card'; // Reset classes
+            }
+        }
+
+        function startBattle() {
+            const id1 = document.getElementById('fighter1-select').value;
+            const id2 = document.getElementById('fighter2-select').value;
+            if(!id1 || !id2 || id1 === id2) {
+                showNotification("SELECT TWO DIFFERENT FIGHTERS", "error");
+                return;
+            }
+
+            const d1 = allDinos.find(d => d.id === id1);
+            const d2 = allDinos.find(d => d.id === id2);
+            const log = document.getElementById('battleLog');
+            log.innerHTML = `> SIMULATION STARTED: ${d1.name} VS ${d2.name}<br>`;
+
+            let hp1 = 100, hp2 = 100;
+            
+            const interval = setInterval(() => {
+                // Turn 1
+                const dmg1 = Math.floor(Math.random() * 15) + 5;
+                const crit1 = Math.random() > 0.8;
+                const finalDmg1 = crit1 ? dmg1 * 2 : dmg1;
+                hp2 -= finalDmg1;
+                log.innerHTML += `> ${d1.name} attacks! ${crit1 ? '<span class="log-crit">CRITICAL HIT!</span>' : ''} <span class="log-hit">-${finalDmg1} HP</span><br>`;
+                document.getElementById('fighter2-hp').style.width = Math.max(0, hp2) + "%";
+
+                if(hp2 <= 0) {
+                    endBattle(d1, d2, 1, interval);
+                    return;
+                }
+
+                // Turn 2
+                const dmg2 = Math.floor(Math.random() * 15) + 5;
+                const crit2 = Math.random() > 0.8;
+                const finalDmg2 = crit2 ? dmg2 * 2 : dmg2;
+                hp1 -= finalDmg2;
+                log.innerHTML += `> ${d2.name} counters! ${crit2 ? '<span class="log-crit">CRITICAL HIT!</span>' : ''} <span class="log-hit">-${finalDmg2} HP</span><br>`;
+                document.getElementById('fighter1-hp').style.width = Math.max(0, hp1) + "%";
+
+                if(hp1 <= 0) {
+                    endBattle(d2, d1, 2, interval);
+                    return;
+                }
+                log.scrollTop = log.scrollHeight;
+            }, 1000);
+        }
+
+        function endBattle(winner, loser, winnerSlot, interval) {
+            clearInterval(interval);
+            const log = document.getElementById('battleLog');
+            log.innerHTML += `<div class="log-win">> WINNER: ${winner.name.toUpperCase()}</div>`;
+            log.scrollTop = log.scrollHeight;
+            
+            document.getElementById(`fighter${winnerSlot}-card`).classList.add('winner');
+            document.getElementById(`fighter${winnerSlot === 1 ? 2 : 1}-card`).classList.add('loser');
+        }
+
+        // --- DNA LAB ---
+        function openDNALab() {
+            document.getElementById('dnaModal').style.display = 'flex';
+            const grid = document.getElementById('dnaLabGrid');
+            grid.innerHTML = '';
+            
+            // Generate random strands
+            for(let i=0; i<2; i++) {
+                const strand = document.createElement('div');
+                strand.className = 'dna-strand';
+                for(let j=0; j<10; j++) {
+                    const bases = ['A', 'T', 'C', 'G'];
+                    const b1 = bases[Math.floor(Math.random()*4)];
+                    const b2 = bases[Math.floor(Math.random()*4)];
+                    strand.innerHTML += `
+                        <div class="base-pair">
+                            <span>${b1}</span>
+                            <span>--</span>
+                            <span>${b2}</span>
+                        </div>
+                    `;
+                }
+                grid.appendChild(strand);
+            }
+        }
+
+        function closeDNALab() { document.getElementById('dnaModal').style.display = 'none'; }
+
+        function runSequencer() {
+            const pairs = document.querySelectorAll('.base-pair');
+            pairs.forEach((p, i) => {
+                setTimeout(() => {
+                    if(Math.random() > 0.5) p.classList.add('match');
+                    else p.classList.add('error');
+                }, i * 100);
+            });
+            setTimeout(() => showNotification("SEQUENCE ANALYSIS COMPLETE", "success"), pairs.length * 100 + 500);
+        }
+
+        // --- AUDIO VISUALIZER ---
+        function initAudioVisualizer() {
+            const canvas = document.getElementById('audioVisualizer');
+            audioCanvasCtx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            drawSilence();
+        }
+
+        function drawSilence() {
+            audioCanvasCtx.fillStyle = '#000';
+            audioCanvasCtx.fillRect(0, 0, document.getElementById('audioVisualizer').width, document.getElementById('audioVisualizer').height);
+            audioCanvasCtx.strokeStyle = '#333';
+            audioCanvasCtx.beginPath();
+            audioCanvasCtx.moveTo(0, 20);
+            audioCanvasCtx.lineTo(300, 20);
+            audioCanvasCtx.stroke();
+        }
+
+        function playDinoRoar() {
+            const icon = document.getElementById('audio-icon');
+            if(icon.classList.contains('fa-pause')) {
+                icon.className = 'fa fa-play';
+                drawSilence();
+                return;
+            }
+            
+            icon.className = 'fa fa-pause';
+            let frame = 0;
+            const animate = () => {
+                if(icon.classList.contains('fa-play')) return;
+                audioCanvasCtx.fillStyle = 'rgba(0,0,0,0.1)';
+                audioCanvasCtx.fillRect(0, 0, 300, 40);
+                audioCanvasCtx.fillStyle = '#e63946';
+                const h = Math.random() * 30;
+                audioCanvasCtx.fillRect(frame % 300, 20 - h/2, 2, h);
+                frame += 2;
+                requestAnimationFrame(animate);
+            };
+            animate();
+            setTimeout(() => { icon.className = 'fa fa-play'; drawSilence(); }, 3000);
         }
 
         // --- Comparison Logic ---

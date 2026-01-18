@@ -44,6 +44,7 @@
             --sidebar-width: 280px;
             --scanline-color: rgba(0, 0, 0, 0.5);
             --glass: rgba(20, 20, 20, 0.6);
+            --gold: #ffd700;
         }
 
         /* --- GLOBAL RESET & SCROLLBAR --- */
@@ -126,6 +127,20 @@
             left: -2px;
             text-shadow: -2px 0 var(--primary), 2px 2px var(--secondary);
             animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+
+        /* --- MATRIX THEME OVERRIDE --- */
+        body.matrix-mode {
+            --primary: #00ff41;
+            --primary-dim: #003b00;
+            --primary-glow: rgba(0, 255, 65, 0.5);
+            --secondary: #008F11;
+            --secondary-glow: rgba(0, 143, 17, 0.3);
+            --bg-dark: #000000;
+            --bg-panel: #050505;
+            --text-main: #00ff41;
+            --text-dim: #008F11;
+            --text-highlight: #ccffcc;
         }
 
         @keyframes glitch-anim-1 {
@@ -527,6 +542,11 @@
             text-shadow: 0 0 5px var(--primary-glow);
         }
 
+        .thread-pinned {
+            border-left: 4px solid var(--warning);
+            background: rgba(241, 196, 15, 0.05);
+        }
+
         .thread-author-link {
             cursor: pointer;
         }
@@ -706,6 +726,42 @@
             color: #ccc;
         }
 
+        /* --- POLL STYLES --- */
+        .poll-container {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        .poll-question {
+            font-family: 'Orbitron';
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+        .poll-option {
+            margin-bottom: 10px;
+            cursor: pointer;
+            position: relative;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            transition: 0.2s;
+            overflow: hidden;
+        }
+        .poll-option:hover { border-color: var(--primary); }
+        .poll-bar {
+            position: absolute; top: 0; left: 0; height: 100%;
+            background: rgba(230, 57, 70, 0.2);
+            z-index: 0;
+            transition: width 0.5s ease-out;
+        }
+        .poll-text {
+            position: relative; z-index: 1;
+            display: flex; justify-content: space-between; font-size: 0.85rem;
+        }
+
         .thread-attachment {
             margin-top: 20px;
             border-top: 1px solid var(--border);
@@ -870,6 +926,17 @@
             font-family: inherit;
         }
 
+        /* --- EDITOR TOOLBAR --- */
+        .editor-toolbar {
+            display: flex; gap: 5px; margin-bottom: 5px; background: #000; padding: 8px; border: 1px solid var(--border); border-bottom: none;
+        }
+        .editor-btn {
+            background: transparent; border: 1px solid transparent; color: var(--text-dim);
+            padding: 4px 8px; cursor: pointer; font-size: 0.8rem; border-radius: 2px;
+        }
+        .editor-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+
         #attachment-preview-container {
             display: none;
             margin-bottom: 15px;
@@ -1018,6 +1085,23 @@
         .reaction-btn:hover {
             transform: scale(1.1); border-color: var(--primary);
         }
+
+        /* --- DAILY BONUS MODAL --- */
+        .bonus-content {
+            text-align: center;
+        }
+        .bonus-amount {
+            font-size: 4rem; color: var(--gold); font-family: 'Orbitron';
+            text-shadow: 0 0 30px var(--gold); margin: 20px 0;
+            animation: pulse 1s infinite;
+        }
+        .bonus-icon {
+            font-size: 3rem; color: var(--primary); margin-bottom: 10px;
+        }
+
+        /* --- THEME TOGGLE --- */
+        .theme-toggle { cursor: pointer; color: var(--text-dim); font-size: 0.8rem; margin-top: 20px; text-align: center; }
+        .theme-toggle:hover { color: var(--primary); }
 
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
@@ -1230,6 +1314,9 @@
                 <div class="widget-title">
                     <span><i class="fa fa-server"></i> NODE STATUS</span>
                 </div>
+                <div class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fa fa-adjust"></i> TOGGLE MATRIX MODE
+                </div>
                 <div style="font-size: 0.7rem; color: var(--text-dim); line-height: 1.6;">
                     <div style="display:flex; justify-content:space-between;"><span>UPLINK:</span> <span style="color:var(--success)">STABLE</span></div>
                     <div style="display:flex; justify-content:space-between;"><span>ENCRYPTION:</span> <span style="color:var(--success)">AES-256</span></div>
@@ -1258,6 +1345,14 @@
                 <option value="tech">TECH SUPPORT</option>
                 <option value="sighting">ASSET SIGHTING</option>
             </select>
+            
+            <!-- Poll Section -->
+            <div style="margin: 15px 0; border: 1px solid var(--border); padding: 10px;">
+                <label style="font-size: 0.7rem; color: var(--primary); display:block; margin-bottom:5px;">ADD POLL (OPTIONAL)</label>
+                <input type="text" id="pollQuestion" placeholder="Poll Question..." style="margin-bottom: 5px;">
+                <input type="text" id="pollOptions" placeholder="Options (comma separated: Yes,No,Maybe)">
+            </div>
+
             <div class="form-group" style="margin-top: 15px;">
                 <label style="font-size: 0.7rem; color: var(--text-dim);">ATTACH VISUAL DATA (OPTIONAL)</label>
                 <input type="file" id="newAttachment" accept="image/*" onchange="previewAttachment(event)">
@@ -1265,6 +1360,14 @@
                     <img id="attachment-preview" src="">
                     <span style="font-size: 0.7rem; color: var(--text-dim); cursor: pointer;" onclick="clearAttachment()">Clear</span>
                 </div>
+            </div>
+            
+            <div class="editor-toolbar">
+                <button class="editor-btn" onclick="insertMarkdown('**', '**')" title="Bold"><i class="fa fa-bold"></i></button>
+                <button class="editor-btn" onclick="insertMarkdown('*', '*')" title="Italic"><i class="fa fa-italic"></i></button>
+                <button class="editor-btn" onclick="insertMarkdown('`', '`')" title="Code"><i class="fa fa-code"></i></button>
+                <button class="editor-btn" onclick="insertMarkdown('> ', '')" title="Quote"><i class="fa fa-quote-right"></i></button>
+                <button class="editor-btn" onclick="insertMarkdown('', '')" title="Link"><i class="fa fa-link"></i></button>
             </div>
             <textarea id="newBody" placeholder="Body of intel report... (Markdown supported)"></textarea>
             <div class="modal-footer">
@@ -1295,6 +1398,17 @@
         </div>
     </div>
 
+    <!-- Daily Bonus Modal -->
+    <div class="modal-overlay" id="bonusModal">
+        <div class="modal-content bonus-content">
+            <div class="bonus-icon"><i class="fa fa-gift"></i></div>
+            <h2 style="border:none;">DAILY LOGIN REWARD</h2>
+            <p>You have successfully connected to the secure network.</p>
+            <div class="bonus-amount">+50 XP</div>
+            <button class="btn-broadcast" onclick="claimBonus()">CLAIM REWARD</button>
+        </div>
+    </div>
+
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -1318,6 +1432,7 @@
         let allThreads = [];
         let activeFilter = 'all';
         let allUsers = {};
+        let userBookmarks = [];
 
         // Auth Listener
         auth.onAuthStateChanged(user => {
@@ -1329,6 +1444,13 @@
 
                 db.ref('users/' + currentAgent.toLowerCase()).once('value').then(snapshot => {
                     const data = snapshot.val();
+                    
+                    // Check Daily Bonus
+                    checkDailyBonus(data);
+                    
+                    // Load Bookmarks
+                    if(data.bookmarks) userBookmarks = Object.keys(data.bookmarks);
+
                     if (data) {
                         document.getElementById('user-rep').innerText = data.xp || 0;
                         if (data.role === 'admin') {
@@ -1342,6 +1464,27 @@
                 addLog("Warning: Anonymous session detected.");
             }
         });
+
+        // --- Daily Bonus Logic ---
+        function checkDailyBonus(userData) {
+            const lastLogin = userData.lastLoginBonus || 0;
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            
+            if (now - lastLogin > oneDay) {
+                document.getElementById('bonusModal').style.display = 'flex';
+            }
+        }
+
+        function claimBonus() {
+            const userKey = currentAgent.toLowerCase();
+            db.ref('users/' + userKey).update({
+                xp: firebase.database.ServerValue.increment(50),
+                lastLoginBonus: firebase.database.ServerValue.TIMESTAMP
+            });
+            document.getElementById('bonusModal').style.display = 'none';
+            showNotification("DAILY BONUS CLAIMED: +50 XP", "success");
+        }
 
         // Initialize Forum Data
         function initForum() {
@@ -1384,13 +1527,14 @@
                 if(t.category === 'tech') { icon = 'fa-microchip'; tagClass = 'tech'; }
                 if(t.category === 'sighting') { icon = 'fa-eye'; tagClass = 'intel'; }
 
+                const isPinned = t.pinned ? 'thread-pinned' : '';
                 let totalReactions = 0;
                 if (t.reactions) {
                     totalReactions = Object.values(t.reactions).reduce((sum, count) => sum + count, 0);
                 }
 
                 return `
-                <div class="thread-card" onclick="viewThread('${t.id}')">
+                <div class="thread-card ${isPinned}" onclick="viewThread('${t.id}')">
                     <div class="thread-icon"><i class="fa ${icon}"></i></div>
                     <div class="thread-content">
                         <div class="thread-header">
@@ -1400,6 +1544,7 @@
                             <span class="thread-author-link" onclick="openProfileModal('${t.author}', event)"><i class="fa fa-user"></i> ${t.author || 'UNKNOWN'}</span>
                             <span><i class="fa fa-clock"></i> ${new Date(t.timestamp).toLocaleDateString()}</span>
                             <span class="tag ${tagClass}">${t.category || 'INTEL'}</span>
+                            ${t.pinned ? '<span class="tag alert"><i class="fa fa-thumbtack"></i> PINNED</span>' : ''}
                         </div>
                         <div class="thread-preview">${t.body.substring(0, 150)}...</div>
                     </div>
@@ -1412,6 +1557,11 @@
         }
 
         function filterThreads(category) {
+            if(category === 'bookmarks') {
+                const filtered = allThreads.filter(t => userBookmarks.includes(t.id));
+                displayThreads(filtered);
+                return;
+            }
             activeFilter = category;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             // Find button with onclick matching category and add active
@@ -1452,11 +1602,39 @@
             const reactionButtons = ['👍', '❤️', '💀', '🔥'].map(emoji => 
                 `<button class="reaction-btn" onclick="addReaction('${id}', '${emoji}')">${emoji} ${reactions[emoji] || 0}</button>`
             ).join('');
+            
+            const isBookmarked = userBookmarks.includes(id);
+            
+            // Poll Rendering
+            let pollHtml = '';
+            if (thread.poll) {
+                const totalVotes = thread.poll.options.reduce((acc, opt) => acc + (opt.votes || 0), 0);
+                const optionsHtml = thread.poll.options.map((opt, idx) => {
+                    const percent = totalVotes === 0 ? 0 : Math.round((opt.votes || 0) / totalVotes * 100);
+                    return `
+                        <div class="poll-option" onclick="votePoll('${id}', ${idx})">
+                            <div class="poll-bar" style="width: ${percent}%"></div>
+                            <div class="poll-text">
+                                <span>${opt.text}</span>
+                                <span>${percent}% (${opt.votes || 0})</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                pollHtml = `
+                    <div class="poll-container">
+                        <div class="poll-question"><i class="fa fa-poll"></i> ${thread.poll.question}</div>
+                        ${optionsHtml}
+                    </div>
+                `;
+            }
 
             document.getElementById('active-thread-content').innerHTML = `
                 <h1 style="font-family:'Orbitron'; color: var(--primary); margin-bottom: 10px;">${thread.title}</h1>
                 <div class="thread-meta">TRANSMITTED BY: <span class="thread-author-link" onclick="openProfileModal('${thread.author}', event)">@${thread.author}</span> | TIMESTAMP: ${new Date(thread.timestamp).toLocaleString()}</div>
                 <div class="full-thread-body">${DOMPurify.sanitize(marked.parse(thread.body))}</div>
+                ${pollHtml}
                 ${thread.attachmentURL ? `
                     <div class="thread-attachment">
                         <h4 style="color: var(--text-dim); font-size: 0.7rem; margin-bottom: 10px;">ATTACHED VISUAL DATA</h4>
@@ -1467,6 +1645,9 @@
                     <div class="reactions-container">
                         ${reactionButtons}
                     </div>
+                    <button class="action-btn ${isBookmarked ? 'active' : ''}" onclick="toggleBookmark('${id}')">
+                        <i class="fa ${isBookmarked ? 'fa-bookmark' : 'fa-bookmark-o'}"></i> ${isBookmarked ? 'SAVED' : 'SAVE'}
+                    </button>
                     <button class="action-btn"><i class="fa fa-share-alt"></i> SHARE</button>
                     ${thread.author === currentAgent ? `
                         <button class="action-btn" style="margin-left: auto; color: var(--danger); border-color: var(--danger);" onclick="deleteThread('${id}')">
@@ -1546,6 +1727,8 @@
             const body = document.getElementById('newBody').value.trim();
             const category = document.getElementById('newCategory').value;
             const file = document.getElementById('newAttachment').files[0];
+            const pollQ = document.getElementById('pollQuestion').value.trim();
+            const pollO = document.getElementById('pollOptions').value.trim();
 
             if (title && body) {
                 if (currentAgent === "Guest_Agent") {
@@ -1584,7 +1767,7 @@
                     }
                 }
 
-                db.ref('forum_threads').push().set({
+                const newThread = {
                     title: title,
                     body: body,
                     category: category,
@@ -1593,10 +1776,19 @@
                     reactions: {},
                     commentCount: 0,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
-                }).then(() => {
+                };
+
+                if (pollQ && pollO) {
+                    const opts = pollO.split(',').map(o => ({ text: o.trim(), votes: 0 }));
+                    newThread.poll = { question: pollQ, options: opts };
+                }
+
+                db.ref('forum_threads').push().set(newThread).then(() => {
                     closeModal();
                     document.getElementById('newTitle').value = "";
                     document.getElementById('newBody').value = "";
+                    document.getElementById('pollQuestion').value = "";
+                    document.getElementById('pollOptions').value = "";
                     clearAttachment();
                     showNotification("INTEL BROADCAST SUCCESSFUL", "success");
                     awardXP(30);
@@ -1659,6 +1851,38 @@
             const reactionRef = db.ref(`forum_threads/${id}/reactions/${reaction}`);
             reactionRef.transaction(currentCount => (currentCount || 0) + 1);
             awardXP(2);
+        }
+
+        function votePoll(threadId, optionIdx) {
+            if (currentAgent === "Guest_Agent") {
+                showNotification("ERROR: LOGIN REQUIRED", "error");
+                return;
+            }
+            // Simple vote increment (in real app, track user votes to prevent duplicates)
+            const voteRef = db.ref(`forum_threads/${threadId}/poll/options/${optionIdx}/votes`);
+            voteRef.transaction(votes => (votes || 0) + 1);
+            showNotification("VOTE RECORDED", "success");
+            viewThread(threadId); // Refresh view
+        }
+
+        function toggleBookmark(threadId) {
+            if (currentAgent === "Guest_Agent") return;
+            const userKey = currentAgent.toLowerCase();
+            const bookmarkRef = db.ref(`users/${userKey}/bookmarks/${threadId}`);
+            
+            if (userBookmarks.includes(threadId)) {
+                bookmarkRef.remove();
+                userBookmarks = userBookmarks.filter(id => id !== threadId);
+                showNotification("BOOKMARK REMOVED", "info");
+            } else {
+                bookmarkRef.set(true);
+                userBookmarks.push(threadId);
+                showNotification("THREAD SAVED TO ARCHIVE", "success");
+            }
+            // Refresh view if open
+            if (activeThreadId === threadId) {
+                viewThread(threadId);
+            }
         }
 
         function awardXP(amount) {
@@ -1782,6 +2006,27 @@
             document.getElementById('profileModal').style.display = 'flex';
         }
         function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+
+        // --- Editor Utils ---
+        function insertMarkdown(startTag, endTag) {
+            const textarea = document.getElementById('newBody');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            const before = text.substring(0, start);
+            const selected = text.substring(start, end);
+            const after = text.substring(end);
+            
+            textarea.value = before + startTag + selected + endTag + after;
+            textarea.focus();
+            textarea.selectionStart = start + startTag.length;
+            textarea.selectionEnd = end + startTag.length;
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('matrix-mode');
+            addLog("Visual Interface Updated.");
+        }
 
         // Utils
         function toggleSidebar() {

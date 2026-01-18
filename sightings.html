@@ -44,6 +44,9 @@
             --danger: #ff0000;
             --scanline-color: rgba(0, 0, 0, 0.5);
             --glass: rgba(10, 10, 10, 0.8);
+            --vision-thermal: sepia(1) hue-rotate(190deg) saturate(5) contrast(1.2);
+            --vision-night: grayscale(1) sepia(1) hue-rotate(90deg) brightness(0.8) contrast(1.2);
+            --vision-bio: invert(1) hue-rotate(180deg) contrast(1.5);
         }
 
         /* --- GLOBAL RESET & SCROLLBAR --- */
@@ -314,6 +317,11 @@
             box-shadow: 0 0 20px rgba(230, 57, 70, 0.3);
         }
         .leaflet-popup-tip { background: var(--primary); opacity: 0.8; }
+        
+        /* Vision Modes */
+        .vision-thermal .leaflet-tile-pane { filter: var(--vision-thermal); }
+        .vision-night .leaflet-tile-pane { filter: var(--vision-night); }
+        .vision-bio .leaflet-tile-pane { filter: var(--vision-bio); }
 
         /* --- MAP HUD OVERLAY --- */
         .map-hud {
@@ -415,6 +423,10 @@
         .map-control-btn:hover, .map-control-btn.active {
             background: var(--primary); color: #fff; border-color: var(--primary);
         }
+        
+        .vision-btn { font-size: 0.8rem; font-weight: bold; width: auto; padding: 0 10px; }
+        .vision-btn.thermal { color: #ffaa00; border-color: #ffaa00; }
+        .vision-btn.night { color: #00ff00; border-color: #00ff00; }
 
         /* --- WEATHER CANVAS --- */
         #weather-canvas {
@@ -669,6 +681,7 @@
         .sidebar-tabs {
             display: flex;
             border-bottom: 1px solid var(--border);
+            overflow-x: auto;
         }
         .sidebar-tab {
             flex: 1;
@@ -680,6 +693,7 @@
             font-size: 0.7rem;
             text-transform: uppercase;
             border-bottom: 2px solid transparent;
+            white-space: nowrap;
         }
         .sidebar-tab.active {
             background: #1a1a1a;
@@ -916,6 +930,76 @@
             100% { transform: scale(3); opacity: 0; }
         }
 
+        /* --- NEW FEATURES CSS --- */
+        
+        /* Missions Tab */
+        .mission-card {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            padding: 15px; margin-bottom: 10px; position: relative;
+        }
+        .mission-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .mission-title { color: var(--warning); font-family: 'Orbitron'; font-size: 0.8rem; }
+        .mission-reward { color: var(--success); font-size: 0.7rem; }
+        .mission-desc { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 10px; }
+        .mission-progress-bg { height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
+        .mission-progress-bar { height: 100%; background: var(--warning); width: 0%; transition: 1s; }
+        
+        /* Database Tab */
+        .db-list { display: flex; flex-direction: column; gap: 5px; }
+        .db-entry {
+            display: flex; align-items: center; gap: 10px; padding: 10px;
+            border: 1px solid var(--border); background: rgba(0,0,0,0.3);
+            cursor: pointer; transition: 0.2s;
+        }
+        .db-entry:hover { border-color: var(--secondary); background: rgba(0, 212, 255, 0.05); }
+        .db-icon { width: 30px; height: 30px; background: #222; display: flex; align-items: center; justify-content: center; color: var(--text-dim); }
+        .db-info h4 { font-size: 0.8rem; color: #fff; margin: 0; }
+        .db-info span { font-size: 0.65rem; color: var(--text-dim); }
+        
+        /* Settings Tab */
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border-bottom: 1px solid var(--border);
+        }
+        .setting-label { font-size: 0.8rem; color: #ccc; }
+        .toggle-switch {
+            width: 40px; height: 20px; background: #333; border-radius: 10px;
+            position: relative; cursor: pointer; transition: 0.3s;
+        }
+        .toggle-switch.active { background: var(--primary); }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; background: #fff; border-radius: 50%;
+            transition: 0.3s;
+        }
+        .toggle-switch.active::after { left: 22px; }
+        
+        /* Emergency Overlay */
+        .emergency-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 50%, rgba(255,0,0,0.5) 100%);
+            z-index: 9999; pointer-events: none; display: none;
+            animation: emergency-flash 1s infinite;
+            box-shadow: inset 0 0 100px var(--danger);
+        }
+        @keyframes emergency-flash { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+        
+        /* Mobile Bottom Nav */
+        .bottom-nav {
+            display: none;
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            height: 60px; background: #0a0a0a; border-top: 1px solid var(--border);
+            z-index: 5000; justify-content: space-around; align-items: center;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-item {
+            color: var(--text-dim); text-align: center; font-size: 0.6rem;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            cursor: pointer; width: 100%; padding: 8px 0;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 1.2rem; }
+
         /* --- RESPONSIVE --- */
         @media (max-width: 1024px) {
             .nav-links { display: none; }
@@ -927,6 +1011,13 @@
         @media (max-width: 600px) {
             .tracker-container { grid-template-rows: 1fr 300px; }
             .hud-status { display: none; }
+            .sightings-panel { display: none; height: 100%; width: 100%; border-left: none; }
+            .sightings-panel.mobile-active { display: flex; }
+            #map-container { height: 100%; display: block; }
+            #map-container.mobile-hidden { display: none; }
+            .bottom-nav { display: flex; }
+            .map-controls { top: 10px; right: 10px; }
+            .sidebar-tabs { display: none; } /* Hide top tabs on mobile, use bottom nav */
         }
 
         /* --- UTILS --- */
@@ -968,6 +1059,7 @@
     <div class="noise"></div>
     <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
     <div class="push-notification-container" id="push-container"></div>
+    <div class="emergency-overlay" id="emergencyOverlay"></div>
 
     <!-- MOBILE SIDEBAR -->
     <aside class="mobile-sidebar" id="sidebar">
@@ -1030,7 +1122,7 @@
     <main>
         <div class="tracker-container">
             <!-- MAP SECTION -->
-            <div style="position: relative; width: 100%; height: 100%;">
+            <div id="map-container" style="position: relative; width: 100%; height: 100%;">
                 <div id="map"></div>
                 <canvas id="weather-canvas"></canvas>
                 
@@ -1059,6 +1151,9 @@
                 </div>
 
                 <div class="map-controls">
+                    <button class="map-control-btn vision-btn thermal" onclick="setVisionMode('thermal')">THRM</button>
+                    <button class="map-control-btn vision-btn night" onclick="setVisionMode('night')">NVG</button>
+                    <button class="map-control-btn vision-btn" onclick="setVisionMode('normal')">STD</button>
                     <button class="map-control-btn" title="Toggle Heatmap" onclick="toggleHeatmap()"><i class="fa fa-fire"></i></button>
                     <button class="map-control-btn" title="Center on HQ" onclick="centerMap()"><i class="fa fa-compress-arrows-alt"></i></button>
                     <button class="map-control-btn" title="Run Satellite Sweep" onclick="runSatelliteSweep()"><i class="fa fa-satellite"></i></button>
@@ -1068,8 +1163,11 @@
             <!-- SIDEBAR FEED -->
             <aside class="sightings-panel">
                 <div class="sidebar-tabs">
-                    <div class="sidebar-tab active" onclick="switchTab('feed')">ASSET FEED</div>
-                    <div class="sidebar-tab" onclick="switchTab('chat')">SECURE COMMS</div>
+                    <div class="sidebar-tab active" onclick="switchTab('feed')">FEED</div>
+                    <div class="sidebar-tab" onclick="switchTab('chat')">COMMS</div>
+                    <div class="sidebar-tab" onclick="switchTab('missions')">OPS</div>
+                    <div class="sidebar-tab" onclick="switchTab('db')">DB</div>
+                    <div class="sidebar-tab" onclick="switchTab('settings')">CFG</div>
                 </div>
 
                 <!-- FEED TAB -->
@@ -1112,6 +1210,62 @@
                     </div>
                 </div>
 
+                <!-- MISSIONS TAB -->
+                <div id="tab-missions" style="display: none; flex-direction: column; height: 100%; padding: 20px; overflow-y: auto;">
+                    <div class="panel-header" style="padding: 0 0 20px 0; background: transparent;">
+                        <div class="panel-title"><span><i class="fa fa-tasks"></i> ACTIVE CONTRACTS</span></div>
+                    </div>
+                    <div id="missions-list">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- DATABASE TAB -->
+                <div id="tab-db" style="display: none; flex-direction: column; height: 100%; padding: 0; overflow-y: auto;">
+                    <div class="panel-header">
+                        <div class="panel-title"><span><i class="fa fa-database"></i> INGEN DATABASE</span></div>
+                        <input type="text" placeholder="Search Species..." style="width: 100%; margin-top: 10px; background: #000; border: 1px solid var(--border); padding: 8px; color: #fff;" oninput="filterDB(this.value)">
+                    </div>
+                    <div class="db-list" id="db-list">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- SETTINGS TAB -->
+                <div id="tab-settings" style="display: none; flex-direction: column; height: 100%; padding: 20px; overflow-y: auto;">
+                    <div class="panel-header" style="padding: 0 0 20px 0; background: transparent;">
+                        <div class="panel-title"><span><i class="fa fa-cogs"></i> SYSTEM CONFIG</span></div>
+                    </div>
+                    
+                    <div class="setting-row">
+                        <span class="setting-label">AUDIO FEEDBACK</span>
+                        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">HIGH CONTRAST MAP</span>
+                        <div class="toggle-switch" onclick="toggleSetting(this, 'contrast')"></div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">PUSH NOTIFICATIONS</span>
+                        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-label">AUTO-TRACKING</span>
+                        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <button class="btn-action" style="background: var(--danger); border: 1px solid var(--danger);" onclick="triggerEmergency()">
+                            <i class="fa fa-exclamation-triangle"></i> TRIGGER EMERGENCY PROTOCOL
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 20px; font-size: 0.7rem; color: var(--text-dim); text-align: center;">
+                        SYSTEM VERSION 5.0.1<br>
+                        BUILD: 2024-10-27-ALPHA
+                    </div>
+                </div>
+
                 <!-- Terminal Log (Visual Filler) -->
                 <div style="height: 100px; background: #000; border-top: 1px solid var(--border); padding: 10px; font-size: 0.6rem; color: var(--success); overflow: hidden; font-family: monospace; opacity: 0.7;">
                     <div id="terminal-log">
@@ -1122,6 +1276,15 @@
             </aside>
         </div>
     </main>
+    
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="mobileNav('map')"><i class="fa fa-map"></i><span>MAP</span></div>
+        <div class="nav-item" onclick="mobileNav('feed')"><i class="fa fa-list"></i><span>FEED</span></div>
+        <div class="nav-item" onclick="mobileNav('missions')"><i class="fa fa-tasks"></i><span>OPS</span></div>
+        <div class="nav-item" onclick="mobileNav('chat')"><i class="fa fa-comment-alt"></i><span>CHAT</span></div>
+        <div class="nav-item" onclick="mobileNav('settings')"><i class="fa fa-cog"></i><span>CFG</span></div>
+    </nav>
 
     <!-- REPORT MODAL -->
     <div class="modal" id="reportModal">
@@ -1354,6 +1517,7 @@
         let isSidebarOpen = false;
         let heatmapLayer;
         let weatherCanvas, weatherCtx;
+        let currentVisionMode = 'normal';
 
         // --- MAP INITIALIZATION ---
         function initMap() {
@@ -1424,6 +1588,15 @@
 
         function runSatelliteSweep() { /* Visual only, handled by CSS */ }
 
+        function setVisionMode(mode) {
+            currentVisionMode = mode;
+            const mapContainer = document.getElementById('map');
+            mapContainer.className = ''; // Reset
+            if (mode === 'thermal') mapContainer.classList.add('vision-thermal');
+            if (mode === 'night') mapContainer.classList.add('vision-night');
+            if (mode === 'bio') mapContainer.classList.add('vision-bio');
+        }
+
         // --- SIDEBAR LOGIC ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -1445,6 +1618,35 @@
             
             document.getElementById('tab-feed').style.display = tab === 'feed' ? 'flex' : 'none';
             document.getElementById('tab-chat').style.display = tab === 'chat' ? 'flex' : 'none';
+            document.getElementById('tab-missions').style.display = tab === 'missions' ? 'flex' : 'none';
+            document.getElementById('tab-db').style.display = tab === 'db' ? 'flex' : 'none';
+            document.getElementById('tab-settings').style.display = tab === 'settings' ? 'flex' : 'none';
+        }
+
+        // --- MOBILE NAV LOGIC ---
+        function mobileNav(view) {
+            const mapContainer = document.getElementById('map-container');
+            const panel = document.getElementById('sightingsPanel');
+            
+            // Update nav active state
+            document.querySelectorAll('.bottom-nav .nav-item').forEach(i => i.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            if (view === 'map') {
+                mapContainer.classList.remove('mobile-hidden');
+                panel.classList.remove('mobile-active');
+            } else {
+                mapContainer.classList.add('mobile-hidden');
+                panel.classList.add('mobile-active');
+                switchTab(view);
+            }
+        }
+
+        function toggleSetting(el, type) {
+            el.classList.toggle('active');
+            if (type === 'contrast') {
+                document.body.style.filter = el.classList.contains('active') ? 'contrast(1.2)' : 'none';
+            }
         }
 
         // --- AUTHENTICATION ---
@@ -1694,6 +1896,67 @@
             }
         }
 
+        // --- MOCK DATA GENERATORS ---
+        function loadMissions() {
+            const missions = [
+                { title: "LOCATE BLUE", reward: "50,000 XP", desc: "Track Velociraptor 'Blue' in Sector 4.", progress: 65 },
+                { title: "REPAIR COMMS TOWER", reward: "15,000 XP", desc: "North Ridge relay is offline.", progress: 20 },
+                { title: "EGG RECOVERY", reward: "30,000 XP", desc: "Secure Triceratops nest in Valley.", progress: 0 },
+                { title: "PATROL SECTOR 2", reward: "5,000 XP", desc: "Routine perimeter check.", progress: 100 }
+            ];
+            
+            const container = document.getElementById('missions-list');
+            container.innerHTML = missions.map(m => `
+                <div class="mission-card">
+                    <div class="mission-header">
+                        <span class="mission-title">${m.title}</span>
+                        <span class="mission-reward">${m.reward}</span>
+                    </div>
+                    <div class="mission-desc">${m.desc}</div>
+                    <div class="mission-progress-bg">
+                        <div class="mission-progress-bar" style="width: ${m.progress}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadDatabase() {
+            const dbData = [
+                { name: "Tyrannosaurus Rex", type: "Carnivore", threat: "EXTREME" },
+                { name: "Velociraptor", type: "Carnivore", threat: "HIGH" },
+                { name: "Triceratops", type: "Herbivore", threat: "MEDIUM" },
+                { name: "Brachiosaurus", type: "Herbivore", threat: "LOW" },
+                { name: "Dilophosaurus", type: "Carnivore", threat: "HIGH" },
+                { name: "Pteranodon", type: "Piscivore", threat: "MEDIUM" },
+                { name: "Mosasaurus", type: "Carnivore", threat: "EXTREME" },
+                { name: "Ankylosaurus", type: "Herbivore", threat: "MEDIUM" }
+            ];
+            
+            const container = document.getElementById('db-list');
+            container.innerHTML = dbData.map(d => `
+                <div class="db-entry">
+                    <div class="db-icon"><i class="fa fa-dna"></i></div>
+                    <div class="db-info">
+                        <h4>${d.name}</h4>
+                        <span>${d.type} | THREAT: ${d.threat}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterDB(query) {
+            const term = query.toLowerCase();
+            document.querySelectorAll('.db-entry').forEach(el => {
+                const text = el.innerText.toLowerCase();
+                el.style.display = text.includes(term) ? 'flex' : 'none';
+            });
+        }
+
+        function triggerEmergency() {
+            document.getElementById('emergencyOverlay').style.display = 'block';
+            setTimeout(() => document.getElementById('emergencyOverlay').style.display = 'none', 5000);
+        }
+
         // --- DRONE VIEW ---
         function launchDroneView(targetName) {
             document.getElementById('drone-target-name').innerText = targetName.toUpperCase();
@@ -1806,6 +2069,8 @@
             loadSightings();
             initChat();
             initWeather();
+            loadMissions();
+            loadDatabase();
             logToTerminal("SYSTEM ONLINE");
         };
 
