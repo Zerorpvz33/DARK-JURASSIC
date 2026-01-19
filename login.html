@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dark Jurassic | System Breach</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <!-- Firebase Legacy SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -13,10 +14,14 @@
 
     <style>
         :root {
-            --red: #ff0015;
+            --primary: #e63946;
+            --primary-dim: #8a232b;
             --white: #ffffff;
             --secondary: #00d4ff;
             --dark: #050505;
+            --panel-bg: rgba(10, 10, 10, 0.85);
+            --border: rgba(255, 255, 255, 0.1);
+            --red: #ff0015; /* Kept for glitch compatibility */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,73 +29,102 @@
         body {
             background-color: var(--dark);
             color: var(--white);
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'JetBrains Mono', monospace;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
             position: relative;
+            background-image: radial-gradient(circle at center, #1a0505 0%, #000000 100%);
         }
 
-        /* Subtiele scanlines over het hele scherm */
-       .scanlines {
-            position: absolute;
+        /* Background Grid */
+        .grid-bg {
+            position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
-            background-size: 100% 4px;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Scanlines */
+       .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
             z-index: 99;
             pointer-events: none;
-            opacity: 0.15;
+            opacity: 0.6;
         }
 
-        .glitch-container {
+        .vignette {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none;
+            z-index: 90;
+        }
+
+        .login-container {
             position: relative;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             z-index: 10;
+            padding: 20px;
         }
 
         .card {
-            background: rgba(10, 10, 10, 0.95);
-            border: 1px solid var(--white);
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
             padding: 40px;
             position: relative;
-            box-shadow: 0 0 40px rgba(255, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
         }
 
-        /* Border flash effect */
-       .card::before {
-            content: "";
+        /* Tech corners */
+        .card::after {
+            content: '';
             position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            border: 1px solid var(--red);
-            z-index: -1;
-            animation: border-flash 5s infinite;
-        }
-
-        @keyframes border-flash {
-            0%, 85%, 100% { opacity: 0; }
-            88%, 92% { opacity: 1; border-color: var(--white); }
-            90%, 95% { opacity: 1; border-color: var(--red); }
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: 
+                linear-gradient(to right, var(--primary) 2px, transparent 2px) 0 0,
+                linear-gradient(to bottom, var(--primary) 2px, transparent 2px) 0 0,
+                linear-gradient(to left, var(--primary) 2px, transparent 2px) 100% 0,
+                linear-gradient(to bottom, var(--primary) 2px, transparent 2px) 100% 0,
+                linear-gradient(to left, var(--primary) 2px, transparent 2px) 100% 100%,
+                linear-gradient(to top, var(--primary) 2px, transparent 2px) 100% 100%,
+                linear-gradient(to right, var(--primary) 2px, transparent 2px) 0 100%,
+                linear-gradient(to top, var(--primary) 2px, transparent 2px) 0 100%;
+            background-size: 10px 10px;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            opacity: 0.5;
         }
 
         .header-logo {
             text-align: center;
-            margin-bottom: 35px;
-            position: relative;
+            margin-bottom: 40px;
         }
 
-        /* Logo Glitch Effect */
         .logo-img {
-            height: 60px;
+            height: 70px;
             margin-bottom: 15px;
-            position: relative;
-            filter: grayscale(1) brightness(2);
+            filter: grayscale(1) brightness(2); /* Kept as requested */
+            opacity: 0.9;
         }
 
-        /* Glitch Title Logic */
+        /* Glitch Title Logic - Preserved */
         .glitch-title {
+            font-family: 'Orbitron', sans-serif;
             font-size: 2.2rem;
             font-weight: 900;
             text-transform: uppercase;
@@ -99,6 +133,7 @@
             color: var(--white);
             letter-spacing: 5px;
             line-height: 1;
+            margin-bottom: 10px;
         }
 
         .glitch-title::before, .glitch-title::after {
@@ -108,10 +143,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--dark);
+            background: var(--panel-bg); /* Updated to match card bg */
         }
 
-        /* De rode glitch laag */
         .glitch-title::before {
             left: 3px;
             text-shadow: -3px 0 var(--red);
@@ -119,7 +153,6 @@
             animation: glitch-anim 3s infinite linear alternate-reverse;
         }
 
-        /* De witte glitch laag */
         .glitch-title::after {
             left: -3px;
             text-shadow: -3px 0 var(--white);
@@ -149,73 +182,127 @@
 
         .input-group {
             margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-group::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; width: 0%; height: 2px;
+            background: var(--primary);
+            transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .input-group:focus-within::after { width: 100%; }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            transition: 0.3s;
         }
 
         input {
             width: 100%;
-            background: transparent;
-            border: 1px solid #222;
-            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            padding: 15px 15px 15px 45px;
             color: var(--white);
-            font-family: 'Courier New', monospace;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
             outline: none;
-            transition: all 0.2s;
-            border-radius: 0;
+            transition: all 0.3s;
+            border-radius: 4px;
         }
 
         input:focus {
-            border-color: var(--white);
-            background: rgba(255, 255, 255, 0.03);
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(230, 57, 70, 0.2);
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        input:focus + i {
+            color: var(--primary);
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
         }
 
         .btn {
-            width: 100%;
-            padding: 15px;
+            flex: 1;
+            padding: 12px;
             background: transparent;
-            border: 1px solid var(--white);
-            color: var(--white);
+            border: 1px solid var(--border);
+            color: #888;
             text-transform: uppercase;
-            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
             cursor: pointer;
-            position: relative;
             transition: 0.3s;
-            margin-top: 10px;
-            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .btn:hover {
-            background: var(--white);
-            color: var(--dark);
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: 0.5s;
         }
 
-        .btn-red {
-            border-color: var(--red);
-            color: var(--red);
+        .btn:hover::before {
+            left: 100%;
         }
 
-        .btn-red:hover {
-            background: var(--red);
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dim);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--white);
             color: var(--white);
         }
 
         #status {
             margin-top: 25px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             text-align: center;
-            height: 20px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            min-height: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #888;
+            letter-spacing: 1px;
+        }
+        
+        #status::after {
+            content: '_';
+            animation: blink 1s infinite;
         }
 
         .terminal-footer {
-            color: #333;
-            font-size: 0.55rem;
-            margin-top: 30px;
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
             text-align: center;
+            color: #444;
+            font-size: 0.6rem;
+            font-family: 'JetBrains Mono', monospace;
+            z-index: 5;
             letter-spacing: 1px;
-            border-top: 1px solid #111;
-            padding-top: 15px;
         }
 
         /* Flash overlay voor succes/fout */
@@ -227,42 +314,60 @@
             opacity: 0;
             mix-blend-mode: overlay;
         }
+        
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        #bg-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
 
     <div id="glitch-overlay"></div>
     <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="grid-bg"></div>
 
-    <div class="glitch-container">
+    <div class="login-container">
         <div class="card">
             <div class="header-logo">
                 <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
                 <br>
                 <div class="glitch-title" data-text="DARK JURASSIC">DARK JURASSIC</div>
-                <!-- Slogan toegevoegd hieronder -->
-                <p style="font-size: 0.65rem; color: var(--red); margin-top: 10px; letter-spacing: 3px; font-weight: bold; text-transform: uppercase;">
+                <p style="font-size: 0.65rem; color: var(--primary); margin-top: 5px; letter-spacing: 3px; font-weight: bold; text-transform: uppercase; font-family: 'Orbitron';">
                     Life found a way. Now, find yours.
                 </p>
             </div>
 
             <div class="input-group">
-                <input type="text" id="username" placeholder="> AGENT_ID" autocomplete="off">
+                <input type="text" id="username" placeholder="AGENT ID" autocomplete="off">
+                <i class="fa fa-user-secret"></i>
             </div>
 
             <div class="input-group">
-                <input type="password" id="password" placeholder="> SECURITY_KEY" autocomplete="off">
+                <input type="password" id="password" placeholder="ACCESS CODE" autocomplete="off">
+                <i class="fa fa-key"></i>
             </div>
 
-            <button class="btn" onclick="handleAuth('login')">INITIALIZE_LOGIN</button>
-            <button class="btn btn-red" onclick="handleAuth('register')">REGISTER_NEW_ASSET</button>
-
-            <div id="status"></div>
-
-            <div class="terminal-footer">
-                CORE: RED_WHITE_SYSTEM // NO_TRESPASSING // INGEN_SECURE
+            <div class="btn-container">
+                <button class="btn btn-primary" onclick="handleAuth('login')">
+                    <i class="fa fa-unlock"></i> LOGIN
+                </button>
+                <button class="btn btn-secondary" onclick="handleAuth('register')">
+                    <i class="fa fa-user-plus"></i> ENLIST
+                </button>
             </div>
+
+            <div id="status">WAITING FOR INPUT...</div>
         </div>
+    </div>
+
+    <div class="terminal-footer">
+        CORE: RED_WHITE_SYSTEM // NO_TRESPASSING // INGEN_SECURE
     </div>
 
     <script>
@@ -280,6 +385,43 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
+        // Particle System
+        const canvas = document.createElement('canvas');
+        canvas.id = 'bg-canvas';
+        document.body.insertBefore(canvas, document.querySelector('.login-container'));
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.2;
+                this.vy = (Math.random() - 0.5) * 0.2;
+                this.size = Math.random() * 1.5;
+                this.alpha = Math.random() * 0.3;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) this.reset();
+            }
+            draw() {
+                ctx.fillStyle = `rgba(230, 57, 70, ${this.alpha})`;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        for(let i=0; i<70; i++) particles.push(new Particle());
+        function animate() { ctx.clearRect(0,0,width,height); particles.forEach(p=>{p.update();p.draw()}); requestAnimationFrame(animate); }
+        animate();
+
         async function handleAuth(type) {
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value;
@@ -292,12 +434,12 @@
 
             const email = user.toLowerCase() + "@darkjurassic.com";
             status.style.color = "var(--white)";
-            status.innerText = "UPLOADING_CREDENTIALS...";
+            typeText(status, "UPLOADING_CREDENTIALS...", 30);
 
             try {
                 if(type === 'login') {
                     await auth.signInWithEmailAndPassword(email, pass);
-                    status.innerText = "ACCESS_GRANTED";
+                    typeText(status, "ACCESS_GRANTED", 20);
                     flash("white", 0.3);
                     setTimeout(() => window.location.href = "index.html", 800);
                 } else {
@@ -313,7 +455,7 @@
                         timestamp: firebase.database.ServerValue.TIMESTAMP
                     });
 
-                    status.innerText = "ASSET_CREATED";
+                    typeText(status, "ASSET_CREATED", 20);
                     flash("red", 0.3);
                     setTimeout(() => window.location.href = "index.html", 800);
                 }
@@ -325,8 +467,17 @@
         function showFeedback(msg, color) {
             const status = document.getElementById('status');
             status.style.color = color === "red" ? "var(--red)" : "var(--white)";
-            status.innerText = msg;
+            typeText(status, msg, 20);
             flash(color, 0.15);
+        }
+
+        function typeText(element, text, speed) {
+            element.innerText = "";
+            let i = 0;
+            const timer = setInterval(() => {
+                if(i < text.length) element.innerText += text.charAt(i++);
+                else clearInterval(timer);
+            }, speed);
         }
 
         function flash(color, intensity) {
