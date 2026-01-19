@@ -42,6 +42,7 @@
             --carnivore: #e63946;
             --omnivore: #f1c40f;
             --piscivore: #5dade2;
+            --insectivore: #9b59b6;
         }
 
         /* --- GLOBAL RESET & SCROLLBAR --- */
@@ -68,6 +69,11 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-attachment: fixed;
         }
 
         /* --- BACKGROUND FX (SCANLINES & NOISE) --- */
@@ -482,6 +488,7 @@
         .diet-herbivore { background: #2a9d8f; color: white; }
         .diet-omnivore { background: #f4a261; color: white; }
         .diet-piscivore { background: #5dade2; color: white; }
+        .diet-insectivore { background: var(--insectivore); color: white; }
 
         .dino-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
         .dino-name {
@@ -1087,6 +1094,7 @@
                 <h2 class="modal-title">SPECIMEN UPLOAD</h2>
                 <button class="close-modal" onclick="closeModal()">&times;</button>
             </div>
+            <input type="hidden" id="dinoId">
             <div class="form-group">
                 <label>Scientific Name / ID</label>
                 <input type="text" id="dinoName" placeholder="e.g. Tyrannosaurus Rex">
@@ -1098,6 +1106,7 @@
                     <option value="herbivore">Herbivore (Plant-Eater)</option>
                     <option value="omnivore">Omnivore (Generalist)</option>
                     <option value="piscivore">Piscivore (Fish-Eater)</option>
+                    <option value="insectivore">Insectivore (Insect-Eater)</option>
                 </select>
             </div>
             <div class="form-group">
@@ -1356,8 +1365,9 @@
 
             grid.innerHTML = data.map(dino => {
                 const isWatched = watchlist.includes(dino.id);
+                const isOwner = dino.contributor === currentAgent;
                 return `
-                <div class="dino-card">
+                <div class="dino-card" style="animation: fadeIn 0.5s ease-out;">
                     <i class="fa fa-star watchlist-btn ${isWatched ? 'active' : ''}" onclick="toggleWatchlist('${dino.id}', event)"></i>
                     <div class="dino-img-container">
                         <span class="diet-tag diet-${dino.diet}">${dino.diet}</span>
@@ -1373,7 +1383,7 @@
                         <div class="card-actions">
                             <button class="btn-card" onclick="openDetail('${dino.id}')"><i class="fa fa-file-alt"></i> DOSSIER</button>
                             <button class="btn-card" onclick="addToCompare('${dino.id}')"><i class="fa fa-balance-scale"></i> COMPARE</button>
-                            <button class="btn-card" onclick="openThreatCalc('${dino.id}')"><i class="fa fa-radiation"></i> THREAT</button>
+                            ${isOwner ? `<button class="btn-card" style="border-color: var(--warning); color: var(--warning);" onclick="editDino('${dino.id}')"><i class="fa fa-edit"></i> EDIT</button>` : `<button class="btn-card" onclick="openThreatCalc('${dino.id}')"><i class="fa fa-radiation"></i> THREAT</button>`}
                         </div>
                     </div>
                 </div>
@@ -1413,6 +1423,7 @@
         }
 
         function submitDino() {
+            const id = document.getElementById('dinoId').value;
             const name = document.getElementById('dinoName').value;
             const diet = document.getElementById('dinoDiet').value;
             const threat = document.getElementById('dinoThreat').value;
@@ -1429,24 +1440,48 @@
                 return;
             }
 
-            const newDino = {
+            const dinoData = {
                 name, diet, threat, image, desc,
-                contributor: currentAgent,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             };
 
-            db.ref('shared_dinos').push(newDino).then(() => {
-                showNotification("PROTOCOL_SUCCESS: Asset uploaded to secure server.", "success");
-                closeModal();
-                // Clear inputs
-                document.getElementById('dinoName').value = "";
-                document.getElementById('dinoImage').value = "";
-                document.getElementById('dinoThreat').value = "";
-                document.getElementById('dinoDesc').value = "";
-            }).catch(err => {
-                showNotification("UPLOAD_FAILED: Check network encryption.", "error");
-                console.error(err);
-            });
+            if (id) {
+                // Update existing
+                db.ref('shared_dinos/' + id).update(dinoData).then(() => {
+                    showNotification("DATABASE UPDATED: Specimen modified.", "success");
+                    closeModal();
+                }).catch(err => {
+                    showNotification("UPDATE_FAILED: " + err.message, "error");
+                });
+            } else {
+                // Create new
+                dinoData.contributor = currentAgent;
+                db.ref('shared_dinos').push(dinoData).then(() => {
+                    showNotification("PROTOCOL_SUCCESS: Asset uploaded to secure server.", "success");
+                    closeModal();
+                }).catch(err => {
+                    showNotification("UPLOAD_FAILED: Check network encryption.", "error");
+                    console.error(err);
+                });
+            }
+        }
+
+        function editDino(id) {
+            const dino = allDinos.find(d => d.id === id);
+            if (!dino) return;
+            
+            document.getElementById('dinoId').value = id;
+            document.getElementById('dinoName').value = dino.name;
+            document.getElementById('dinoDiet').value = dino.diet;
+            document.getElementById('dinoThreat').value = dino.threat;
+            document.getElementById('dinoImage').value = dino.image;
+            document.getElementById('dinoDesc').value = dino.desc;
+            
+            document.querySelector('#uploadModal .modal-title').innerText = "EDIT SPECIMEN";
+            const btn = document.querySelector('#uploadModal .btn-action');
+            btn.innerHTML = '<i class="fa fa-save"></i> Update Database';
+            
+            document.getElementById('uploadModal').style.display = 'flex';
         }
 
         // --- Detail View & Field Notes ---
@@ -1915,7 +1950,17 @@
             }
         }
 
-        function openModal() { document.getElementById('uploadModal').style.display = 'flex'; }
+        function openModal() { 
+            // Reset form
+            document.getElementById('dinoId').value = "";
+            document.getElementById('dinoName').value = "";
+            document.getElementById('dinoImage').value = "";
+            document.getElementById('dinoThreat').value = "";
+            document.getElementById('dinoDesc').value = "";
+            document.querySelector('#uploadModal .modal-title').innerText = "SPECIMEN UPLOAD";
+            document.querySelector('#uploadModal .btn-action').innerHTML = '<i class="fa fa-cloud-upload-alt"></i> Authorize Data Indexing';
+            document.getElementById('uploadModal').style.display = 'flex'; 
+        }
         function closeModal() { document.getElementById('uploadModal').style.display = 'none'; }
 
         // Listen for global alerts

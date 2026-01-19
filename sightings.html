@@ -97,6 +97,16 @@
             animation: noise-anim 0.5s infinite linear;
         }
 
+        /* CRT Boot Animation */
+        @keyframes turn-on {
+            0% { transform: scale(1, 0.002); opacity: 0; filter: brightness(3); }
+            50% { transform: scale(1, 0.002); opacity: 1; }
+            100% { transform: scale(1, 1); opacity: 1; filter: brightness(1); }
+        }
+        body.crt-boot {
+            animation: turn-on 0.3s ease-out forwards;
+        }
+
         @keyframes noise-anim {
             0% { background-position: 0 0; }
             100% { background-position: 100px 100px; }
@@ -400,6 +410,21 @@
             gap: 10px;
         }
 
+        /* Radar Overlay */
+        .radar-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 80vmin; height: 80vmin;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 1px solid rgba(0, 255, 0, 0.05);
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 255, 0, 0.05) 60deg, transparent 60.1deg);
+            animation: radar-spin 4s linear infinite;
+            pointer-events: none;
+            z-index: 300;
+        }
+        @keyframes radar-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+
         /* --- MAP CONTROLS --- */
         .map-controls {
             position: absolute;
@@ -413,7 +438,7 @@
         }
 
         .map-control-btn {
-            width: 40px; height: 40px;
+            width: 44px; height: 44px;
             background: var(--glass);
             border: 1px solid var(--border);
             color: var(--text-dim);
@@ -429,6 +454,19 @@
         .vision-btn { font-size: 0.8rem; font-weight: bold; width: auto; padding: 0 10px; }
         .vision-btn.thermal { color: #ffaa00; border-color: #ffaa00; }
         .vision-btn.night { color: #00ff00; border-color: #00ff00; }
+
+        .map-filter-select {
+            background: rgba(10, 10, 10, 0.9);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px;
+            font-family: 'Orbitron';
+            font-size: 0.7rem;
+            width: 100%;
+            outline: none;
+            pointer-events: auto;
+            margin-bottom: 5px;
+        }
 
         /* --- WEATHER CANVAS --- */
         #weather-canvas {
@@ -631,6 +669,8 @@
             flex-direction: column;
             background: #050505;
             display: none; /* Hidden by default */
+            min-height: 0; /* Fix for nested flex scrolling */
+            overflow: hidden;
         }
 
         .chat-messages {
@@ -659,6 +699,9 @@
             border-top: 1px solid var(--border);
             display: flex;
             gap: 10px;
+            background: var(--bg-panel);
+            z-index: 10;
+            flex-shrink: 0;
         }
 
         .chat-input {
@@ -1054,7 +1097,7 @@
 
     </style>
 </head>
-<body>
+<body class="crt-boot" onclick="initAudio()">
 
     <!-- VISUAL OVERLAYS -->
     <div class="scanlines"></div>
@@ -1127,6 +1170,7 @@
             <div id="map-container" style="position: relative; width: 100%; height: 100%;">
                 <div id="map"></div>
                 <canvas id="weather-canvas"></canvas>
+                <div class="radar-overlay"></div>
                 
                 <!-- HUD Overlay -->
                 <div class="map-hud">
@@ -1153,23 +1197,29 @@
                 </div>
 
                 <div class="map-controls">
-                    <button class="map-control-btn vision-btn thermal" onclick="setVisionMode('thermal')">THRM</button>
-                    <button class="map-control-btn vision-btn night" onclick="setVisionMode('night')">NVG</button>
-                    <button class="map-control-btn vision-btn" onclick="setVisionMode('normal')">STD</button>
-                    <button class="map-control-btn" title="Toggle Heatmap" onclick="toggleHeatmap()"><i class="fa fa-fire"></i></button>
-                    <button class="map-control-btn" title="Center on HQ" onclick="centerMap()"><i class="fa fa-compress-arrows-alt"></i></button>
-                    <button class="map-control-btn" title="Run Satellite Sweep" onclick="runSatelliteSweep()"><i class="fa fa-satellite"></i></button>
+                    <select class="map-filter-select" id="mapSpeciesFilter" onchange="filterMapBySpecies(this.value)">
+                        <option value="all">ALL SPECIES</option>
+                        <option value="Carnivore">CARNIVORES</option>
+                        <option value="Herbivore">HERBIVORES</option>
+                    </select>
+                    <button class="map-control-btn vision-btn thermal" onclick="setVisionMode('thermal'); playSound('click')">THRM</button>
+                    <button class="map-control-btn vision-btn night" onclick="setVisionMode('night'); playSound('click')">NVG</button>
+                    <button class="map-control-btn vision-btn" onclick="setVisionMode('normal'); playSound('click')">STD</button>
+                    <button class="map-control-btn" title="Toggle Heatmap" onclick="toggleHeatmap(); playSound('click')"><i class="fa fa-fire"></i></button>
+                    <button class="map-control-btn" title="Center on HQ" onclick="centerMap(); playSound('click')"><i class="fa fa-compress-arrows-alt"></i></button>
+                    <button class="map-control-btn" title="Run Satellite Sweep" onclick="runSatelliteSweep(); playSound('click')"><i class="fa fa-satellite"></i></button>
                 </div>
             </div>
 
             <!-- SIDEBAR FEED -->
             <aside class="sightings-panel" id="sightingsPanel">
                 <div class="sidebar-tabs">
-                    <div class="sidebar-tab active" onclick="switchTab('feed', this)">FEED</div>
-                    <div class="sidebar-tab" onclick="switchTab('chat', this)">COMMS</div>
-                    <div class="sidebar-tab" onclick="switchTab('missions', this)">OPS</div>
-                    <div class="sidebar-tab" onclick="switchTab('db', this)">DB</div>
-                    <div class="sidebar-tab" onclick="switchTab('settings', this)">CFG</div>
+                    <div class="sidebar-tab active" data-tab="feed" onclick="switchTab('feed', this)"><i class="fa fa-list"></i> FEED</div>
+                    <div class="sidebar-tab" data-tab="chat" onclick="switchTab('chat', this); playSound('click')"><i class="fa fa-comment-alt"></i> COMMS</div>
+                    <div class="sidebar-tab" data-tab="missions" onclick="switchTab('missions', this); playSound('click')"><i class="fa fa-tasks"></i> OPS</div>
+                    <div class="sidebar-tab" data-tab="db" onclick="switchTab('db', this); playSound('click')"><i class="fa fa-database"></i> DB</div>
+                    <div class="sidebar-tab" data-tab="archive" onclick="switchTab('archive', this); playSound('click')"><i class="fa fa-history"></i> LOGS</div>
+                    <div class="sidebar-tab" data-tab="settings" onclick="switchTab('settings', this); playSound('click')"><i class="fa fa-cog"></i> CFG</div>
                 </div>
 
                 <!-- FEED TAB -->
@@ -1180,9 +1230,9 @@
                         <span id="active-count" style="font-size: 0.7rem; color: var(--success);">SCANNING...</span>
                     </div>
                     <div class="filter-bar">
-                        <button class="filter-btn active" onclick="filterFeed('all')">ALL</button>
-                        <button class="filter-btn" onclick="filterFeed('high')">HIGH THREAT</button>
-                        <button class="filter-btn" onclick="filterFeed('recent')">RECENT</button>
+                        <button class="filter-btn active" onclick="filterFeed('all'); playSound('click')">ALL</button>
+                        <button class="filter-btn" onclick="filterFeed('high'); playSound('click')">HIGH THREAT</button>
+                        <button class="filter-btn" onclick="filterFeed('recent'); playSound('click')">RECENT</button>
                     </div>
                 </div>
                 
@@ -1195,7 +1245,7 @@
                 </div>
 
                 <div class="panel-actions">
-                    <button class="btn-action" onclick="openReportModal()">
+                    <button class="btn-action" onclick="openReportModal(); playSound('click')">
                         <i class="fa fa-plus-circle"></i> REPORT NEW SIGHTING
                     </button>
                 </div>
@@ -1208,7 +1258,7 @@
                     </div>
                     <div class="chat-input-area">
                         <input type="text" class="chat-input" id="chatInput" placeholder="Broadcast to sector...">
-                        <button class="chat-send" onclick="sendChatMessage()"><i class="fa fa-paper-plane"></i></button>
+                        <button class="chat-send" onclick="sendChatMessage(); playSound('click')"><i class="fa fa-paper-plane"></i></button>
                     </div>
                 </div>
 
@@ -1233,6 +1283,16 @@
                     </div>
                 </div>
 
+                <!-- ARCHIVE TAB -->
+                <div id="tab-archive" style="display: none; flex-direction: column; flex: 1; min-height: 0; padding: 0; overflow-y: auto;">
+                    <div class="panel-header">
+                        <div class="panel-title"><span><i class="fa fa-history"></i> EXPIRED LOGS</span></div>
+                    </div>
+                    <div class="feed-container" id="archive-list">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
                 <!-- SETTINGS TAB -->
                 <div id="tab-settings" style="display: none; flex-direction: column; flex: 1; min-height: 0; padding: 20px; overflow-y: auto;">
                     <div class="panel-header" style="padding: 0 0 20px 0; background: transparent;">
@@ -1241,19 +1301,19 @@
                     
                     <div class="setting-row">
                         <span class="setting-label">AUDIO FEEDBACK</span>
-                        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+                        <div class="toggle-switch active" onclick="toggleSetting(this, 'audio'); playSound('click')"></div>
                     </div>
                     <div class="setting-row">
                         <span class="setting-label">HIGH CONTRAST MAP</span>
-                        <div class="toggle-switch" onclick="toggleSetting(this, 'contrast')"></div>
+                        <div class="toggle-switch" onclick="toggleSetting(this, 'contrast'); playSound('click')"></div>
                     </div>
                     <div class="setting-row">
                         <span class="setting-label">PUSH NOTIFICATIONS</span>
-                        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+                        <div class="toggle-switch active" onclick="toggleSetting(this); playSound('click')"></div>
                     </div>
                     <div class="setting-row">
                         <span class="setting-label">AUTO-TRACKING</span>
-                        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+                        <div class="toggle-switch active" onclick="toggleSetting(this); playSound('click')"></div>
                     </div>
                     
                     <div style="margin-top: 30px;">
@@ -1281,11 +1341,11 @@
     
     <!-- MOBILE BOTTOM NAV -->
     <nav class="bottom-nav">
-        <div class="nav-item active" onclick="mobileNav('map')"><i class="fa fa-map"></i><span>MAP</span></div>
-        <div class="nav-item" onclick="mobileNav('feed')"><i class="fa fa-list"></i><span>FEED</span></div>
-        <div class="nav-item" onclick="mobileNav('missions')"><i class="fa fa-tasks"></i><span>OPS</span></div>
-        <div class="nav-item" onclick="mobileNav('chat')"><i class="fa fa-comment-alt"></i><span>CHAT</span></div>
-        <div class="nav-item" onclick="mobileNav('settings')"><i class="fa fa-cog"></i><span>CFG</span></div>
+        <div class="nav-item active" onclick="mobileNav('map'); playSound('click')"><i class="fa fa-map"></i><span>MAP</span></div>
+        <div class="nav-item" onclick="mobileNav('feed'); playSound('click')"><i class="fa fa-list"></i><span>FEED</span></div>
+        <div class="nav-item" onclick="mobileNav('missions'); playSound('click')"><i class="fa fa-tasks"></i><span>OPS</span></div>
+        <div class="nav-item" onclick="mobileNav('chat'); playSound('click')"><i class="fa fa-comment-alt"></i><span>CHAT</span></div>
+        <div class="nav-item" onclick="mobileNav('settings'); playSound('click')"><i class="fa fa-cog"></i><span>CFG</span></div>
     </nav>
 
     <!-- REPORT MODAL -->
@@ -1471,7 +1531,7 @@
                 WARNING: Submitting false intel is a violation of InGen protocols and will result in immediate termination.
             </p>
 
-            <button class="btn-action" id="submitSighting">TRANSMIT DATA</button>
+            <button class="btn-action" id="submitSighting" onclick="playSound('click')">TRANSMIT DATA</button>
         </div>
     </div>
 
@@ -1516,10 +1576,13 @@
         let map, markers = {};
         let currentUser = "GUEST_AGENT";
         let allSightings = [];
+        let expiredSightings = [];
         let isSidebarOpen = false;
         let heatmapLayer;
         let weatherCanvas, weatherCtx;
         let currentVisionMode = 'normal';
+        let audioCtx = null;
+        let audioEnabled = true;
 
         // --- MAP INITIALIZATION ---
         function initMap() {
@@ -1624,7 +1687,7 @@
             if (el) {
                 el.classList.add('active');
             } else {
-                const tabBtn = document.querySelector(`.sidebar-tab[onclick*="'${tab}'"]`);
+                const tabBtn = document.querySelector(`.sidebar-tab[data-tab="${tab}"]`);
                 if(tabBtn) tabBtn.classList.add('active');
             }
             
@@ -1632,6 +1695,7 @@
             document.getElementById('tab-chat').style.display = tab === 'chat' ? 'flex' : 'none';
             document.getElementById('tab-missions').style.display = tab === 'missions' ? 'flex' : 'none';
             document.getElementById('tab-db').style.display = tab === 'db' ? 'flex' : 'none';
+            document.getElementById('tab-archive').style.display = tab === 'archive' ? 'flex' : 'none';
             document.getElementById('tab-settings').style.display = tab === 'settings' ? 'flex' : 'none';
         }
 
@@ -1655,10 +1719,14 @@
             }
         }
 
+        // --- SETTINGS ---
         function toggleSetting(el, type) {
             el.classList.toggle('active');
             if (type === 'contrast') {
                 document.body.style.filter = el.classList.contains('active') ? 'contrast(1.2)' : 'none';
+            }
+            if (type === 'audio') {
+                audioEnabled = el.classList.contains('active');
             }
         }
 
@@ -1686,21 +1754,24 @@
             db.ref('sightings').on('value', snapshot => {
                 const data = snapshot.val();
                 allSightings = [];
-                
-                // Clear existing markers
-                Object.values(markers).forEach(m => map.removeLayer(m));
-                markers = {};
 
                 // Clear heatmap
                 const heatPoints = [];
 
 
                 if (data) {
+                    const now = Date.now();
+                    const expirationTime = 24 * 60 * 60 * 1000; // 24 hours
                     Object.entries(data).forEach(([id, item]) => {
-                        allSightings.push({ id, ...item });
+                        if (now - item.timestamp < expirationTime) {
+                            allSightings.push({ id, ...item });
+                        } else {
+                            expiredSightings.push({ id, ...item });
+                        }
                     });
                     // Sort by timestamp descending
                     allSightings.sort((a, b) => b.timestamp - a.timestamp);
+                    expiredSightings.sort((a, b) => b.timestamp - a.timestamp);
                 }
                 
                 allSightings.forEach(s => heatPoints.push([s.lat, s.lng, 0.5]));
@@ -1708,6 +1779,7 @@
 
                 renderFeed(allSightings);
                 renderMarkers(allSightings);
+                renderArchive(expiredSightings);
                 
 
                 document.getElementById('active-count').innerText = `${allSightings.length} ACTIVE SIGNALS`;
@@ -1729,13 +1801,13 @@
                 card.className = 'sighting-card';
                 card.id = `card-${item.id}`;
                 card.onclick = () => focusSighting(item.id, item.lat, item.lng);
-
+                
                 const timeStr = new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 const threatClass = item.threat === 'high' ? 'threat-high' : (item.threat === 'medium' ? 'threat-med' : 'threat-low');
                 const threatLabel = item.threat ? item.threat.toUpperCase() : 'UNKNOWN';
 
                 card.innerHTML = `
-                    <div class="card-top">
+                    <div class="card-top" onclick="playSound('click')">
                         <div class="card-img" style="background-image: url('${item.image || 'https://via.placeholder.com/60?text=NO_IMG'}')"></div>
                         <div class="card-info">
                             <h4>${item.name}</h4>
@@ -1744,8 +1816,8 @@
                         </div>
                     </div>
                     <div class="card-actions">
-                        <button class="btn-card-action" onclick="focusSighting('${item.id}', ${item.lat}, ${item.lng})"><i class="fa fa-crosshairs"></i> LOCATE</button>
-                        <button class="btn-card-action" onclick="launchDroneView('${item.name}')"><i class="fa fa-video"></i> DRONE</button>
+                        <button class="btn-card-action" onclick="focusSighting('${item.id}', ${item.lat}, ${item.lng}); playSound('click')"><i class="fa fa-crosshairs"></i> LOCATE</button>
+                        <button class="btn-card-action" onclick="launchDroneView('${item.name}'); playSound('click')"><i class="fa fa-video"></i> DRONE</button>
                     </div>
                     <div class="card-time">${timeStr}</div>
                 `;
@@ -1753,8 +1825,23 @@
             });
         }
 
+        let currentSpeciesFilter = 'all';
+
         function renderMarkers(sightings) {
+            // Clear existing markers
+            Object.values(markers).forEach(m => map.removeLayer(m));
+            markers = {};
+
             sightings.forEach(item => {
+                // Filter check
+                let include = true;
+                if (currentSpeciesFilter === 'Carnivore') {
+                    if (item.threat === 'low') include = false;
+                } else if (currentSpeciesFilter === 'Herbivore') {
+                    if (item.threat !== 'low') include = false;
+                }
+                if (!include) return;
+
                 const customIcon = L.divIcon({
                     className: 'custom-div-icon',
                     html: `<div class="pulse" style="background:${getThreatColor(item.threat)}"></div>`,
@@ -1762,9 +1849,12 @@
                     iconAnchor: [10, 10]
                 });
 
+                const imgHtml = item.image ? `<img src="${item.image}" style="width:100%; height:80px; object-fit:cover; margin-bottom:5px; border:1px solid #333;">` : '';
+
                 const marker = L.marker([item.lat, item.lng], { icon: customIcon }).addTo(map);
                 marker.bindPopup(`
-                    <div style="font-family:'JetBrains Mono'; font-size: 11px; line-height:1.4;">
+                    <div style="font-family:'JetBrains Mono'; font-size: 11px; line-height:1.4; width: 180px;">
+                        ${imgHtml}
                         <strong style="color:var(--primary)">${item.name.toUpperCase()}</strong><br>
                         LOC: ${item.location}<br>
                         THREAT: ${item.threat ? item.threat.toUpperCase() : 'N/A'}<br>
@@ -1772,6 +1862,11 @@
                     </div>
                 `);
                 markers[item.id] = marker;
+                
+                // Add click sound to marker
+                marker.on('click', () => {
+                    playSound('click');
+                });
             });
         }
 
@@ -1812,6 +1907,40 @@
                 // Just show top 5
                 renderFeed(allSightings.slice(0, 5));
             }
+        }
+        
+        function filterMapBySpecies(val) {
+            currentSpeciesFilter = val;
+            renderMarkers(allSightings);
+        }
+
+        function renderArchive(sightings) {
+            const list = document.getElementById('archive-list');
+            list.innerHTML = "";
+
+            if (sightings.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; color: #444; text-align: center;">No expired records found.</div>';
+                return;
+            }
+
+            sightings.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'sighting-card';
+                card.style.opacity = "0.7";
+                
+                const timeStr = new Date(item.timestamp).toLocaleDateString() + ' ' + new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                card.innerHTML = `
+                    <div class="card-top">
+                        <div class="card-info">
+                            <h4 style="color: #888;">${item.name}</h4>
+                            <p><i class="fa fa-map-marker-alt"></i> ${item.location}</p>
+                        </div>
+                    </div>
+                    <div class="card-time" style="color: #666;">EXPIRED: ${timeStr}</div>
+                `;
+                list.appendChild(card);
+            });
         }
 
         // --- REPORTING LOGIC ---
@@ -1855,6 +1984,24 @@
                 reportedBy: currentUser,
                 timestamp: Date.now()
             };
+
+            // Auto-upload to species DB (shared_dinos)
+            let dietType = 'carnivore';
+            if (threat === 'low') dietType = 'herbivore';
+            
+            let threatVal = 50;
+            if (threat === 'low') threatVal = 15;
+            if (threat === 'high') threatVal = 90;
+
+            db.ref('shared_dinos').push({
+                name: name,
+                diet: dietType,
+                threat: threatVal,
+                image: img || "https://via.placeholder.com/400x200?text=NO_IMAGE",
+                desc: `Auto-logged from sighting at ${loc}. ${notes}`,
+                contributor: currentUser,
+                timestamp: Date.now()
+            });
 
             db.ref('sightings').push(newSighting).then(() => {
                 closeModal();
@@ -1906,6 +2053,7 @@
                     timestamp: Date.now()
                 });
                 input.value = "";
+                playSound('click');
             }
         }
 
@@ -1916,7 +2064,7 @@
                 { title: "REPAIR COMMS TOWER", reward: "15,000 XP", desc: "North Ridge relay is offline.", progress: 20 },
                 { title: "EGG RECOVERY", reward: "30,000 XP", desc: "Secure Triceratops nest in Valley.", progress: 0 },
                 { title: "PATROL SECTOR 2", reward: "5,000 XP", desc: "Routine perimeter check.", progress: 100 }
-            ];
+            ]; 
             
             const container = document.getElementById('missions-list');
             container.innerHTML = missions.map(m => `
@@ -1947,7 +2095,7 @@
             
             const container = document.getElementById('db-list');
             container.innerHTML = dbData.map(d => `
-                <div class="db-entry">
+                <div class="db-entry" onclick="playSound('click')">
                     <div class="db-icon"><i class="fa fa-dna"></i></div>
                     <div class="db-info">
                         <h4>${d.name}</h4>
@@ -1966,6 +2114,7 @@
         }
 
         function triggerEmergency() {
+            playSound('alert');
             document.getElementById('emergencyOverlay').style.display = 'block';
             setTimeout(() => document.getElementById('emergencyOverlay').style.display = 'none', 5000);
         }
@@ -2061,6 +2210,40 @@
                 alert.style.animation = 'slideInRight 0.4s reverse forwards';
                 setTimeout(() => alert.remove(), 400);
             }, 5000);
+        }
+
+        // --- AUDIO SYSTEM ---
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!audioEnabled || !audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'alert') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(600, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            }
         }
 
         // Listen for global alerts
