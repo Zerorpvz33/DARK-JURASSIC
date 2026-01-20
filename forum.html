@@ -1103,35 +1103,6 @@
         .theme-toggle { cursor: pointer; color: var(--text-dim); font-size: 0.8rem; margin-top: 20px; text-align: center; }
         .theme-toggle:hover { color: var(--primary); }
 
-        /* --- BADGES --- */
-        .badge-container {
-            display: flex; justify-content: center; gap: 5px; margin-top: 15px; flex-wrap: wrap;
-        }
-        .profile-badge {
-            font-size: 0.6rem; padding: 2px 6px; border: 1px solid var(--border);
-            border-radius: 4px; color: var(--text-dim); background: rgba(255,255,255,0.05);
-        }
-        .profile-badge.earned {
-            border-color: var(--gold); color: var(--gold); background: rgba(255, 215, 0, 0.1);
-            box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
-        }
-
-        /* --- PREVIEW MODE --- */
-        #previewBody {
-            display: none; height: 200px; overflow-y: auto; background: rgba(0,0,0,0.5);
-            border: 1px solid var(--border); padding: 15px; color: #ccc;
-        }
-        .preview-active #newBody { display: none; }
-        .preview-active #previewBody { display: block; }
-        
-        /* --- TRENDING TAGS --- */
-        .trending-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-        .trending-tag { 
-            font-size: 0.7rem; padding: 4px 8px; background: #111; 
-            border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; 
-        }
-        .trending-tag:hover { border-color: var(--primary); color: var(--primary); }
-
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -1328,14 +1299,6 @@
                 </div>
             </div>
 
-            <!-- Trending Tags -->
-            <div class="widget-card">
-                <div class="widget-title">
-                    <span><i class="fa fa-hashtag"></i> TRENDING TAGS</span>
-                </div>
-                <div class="trending-tags" id="trending-tags-list"></div>
-            </div>
-
             <!-- Hot Threads -->
             <div class="widget-card">
                 <div class="widget-title">
@@ -1405,9 +1368,7 @@
                 <button class="editor-btn" onclick="insertMarkdown('`', '`')" title="Code"><i class="fa fa-code"></i></button>
                 <button class="editor-btn" onclick="insertMarkdown('> ', '')" title="Quote"><i class="fa fa-quote-right"></i></button>
                 <button class="editor-btn" onclick="insertMarkdown('', '')" title="Link"><i class="fa fa-link"></i></button>
-                <button class="editor-btn" style="margin-left: auto; color: var(--secondary);" onclick="togglePreview()" title="Preview"><i class="fa fa-eye"></i> PREVIEW</button>
             </div>
-            <div id="previewBody" class="full-thread-body"></div>
             <textarea id="newBody" placeholder="Body of intel report... (Markdown supported)"></textarea>
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeModal()">CANCEL</button>
@@ -1424,7 +1385,6 @@
             <h2 id="profile-modal-name" class="profile-modal-name">AGENT</h2>
             <p id="profile-modal-rank" class="profile-modal-rank">RANK</p>
             <p id="profile-modal-bio" style="font-size: 0.8rem; color: #ccc; margin-top: 15px;"></p>
-            <div class="badge-container" id="profile-modal-badges"></div>
             <div class="profile-modal-stats">
                 <div>
                     <span id="profile-modal-xp" class="user-stat-val">0</span>
@@ -1434,9 +1394,6 @@
                     <span id="profile-modal-posts" class="user-stat-val">0</span>
                     <div style="font-size: 0.7rem; color: var(--text-dim);">POSTS</div>
                 </div>
-            </div>
-            <div style="margin-top: 20px;">
-                <button class="btn-broadcast" style="width: 100%; font-size: 0.8rem; padding: 10px;" onclick="openSecureComms()">INITIATE SECURE COMMS</button>
             </div>
         </div>
     </div>
@@ -1549,7 +1506,6 @@
                 }
                 filterThreads(activeFilter);
                 updateTopAgents();
-                updateTrendingTags();
                 updateUserPostCount();
                 addLog(`Synced ${allThreads.length} intel packets.`);
             });
@@ -1696,10 +1652,6 @@
                     ${thread.author === currentAgent ? `
                         <button class="action-btn" style="margin-left: auto; color: var(--danger); border-color: var(--danger);" onclick="deleteThread('${id}')">
                             <i class="fa fa-trash"></i> DELETE
-                        </button>
-                    ` : `
-                        <button class="action-btn" style="margin-left: auto; color: var(--warning); border-color: var(--warning);" onclick="reportThread('${id}')">
-                            <i class="fa fa-flag"></i> REPORT
                         </button>
                     ` : ''}
                 </div>
@@ -1976,26 +1928,6 @@
             }).join('');
         }
 
-        function updateTrendingTags() {
-            const tags = {};
-            allThreads.forEach(t => {
-                // Extract hashtags from body
-                const matches = t.body.match(/#[a-zA-Z0-9_]+/g);
-                if (matches) {
-                    matches.forEach(tag => {
-                        tags[tag] = (tags[tag] || 0) + 1;
-                    });
-                }
-            });
-
-            const sortedTags = Object.entries(tags).sort((a, b) => b[1] - a[1]).slice(0, 10);
-            const list = document.getElementById('trending-tags-list');
-            
-            list.innerHTML = sortedTags.length ? sortedTags.map(([tag, count]) => `
-                <div class="trending-tag" onclick="searchThreadsByTag('${tag}')">${tag}</div>
-            `).join('') : '<div style="color:var(--text-dim); font-size:0.7rem;">No trending data.</div>';
-        }
-
         function updateHotThreads() {
             const hot = allThreads.map(t => {
                 const reactions = t.reactions ? Object.values(t.reactions).reduce((s, c) => s + c, 0) : 0;
@@ -2059,11 +1991,6 @@
             }
         }
 
-        function reportThread(id) {
-            showNotification("REPORT SUBMITTED TO ADMINS", "success");
-            // In real app, push to reports node
-        }
-
         function openProfileModal(authorName, event) {
             if(event) event.stopPropagation();
             const userKey = authorName.toLowerCase();
@@ -2075,35 +2002,10 @@
             document.getElementById('profile-modal-rank').innerText = user.role || 'Field Agent';
             document.getElementById('profile-modal-bio').innerText = user.bio || 'No public bio on file.';
             document.getElementById('profile-modal-xp').innerText = user.xp || 0;
-            const postCount = allThreads.filter(t => t.author === authorName).length;
-            document.getElementById('profile-modal-posts').innerText = postCount;
-            
-            // Badges
-            const badgesContainer = document.getElementById('profile-modal-badges');
-            badgesContainer.innerHTML = '';
-            const badges = [
-                { name: "RECRUIT", earned: true },
-                { name: "VETERAN", earned: (user.xp || 0) > 1000 },
-                { name: "INTEL", earned: postCount > 5 },
-                { name: "ELITE", earned: (user.xp || 0) > 5000 }
-            ];
-            
-            badges.forEach(b => {
-                const span = document.createElement('span');
-                span.className = `profile-badge ${b.earned ? 'earned' : ''}`;
-                span.innerText = b.name;
-                badgesContainer.appendChild(span);
-            });
-
+            document.getElementById('profile-modal-posts').innerText = allThreads.filter(t => t.author === authorName).length;
             document.getElementById('profileModal').style.display = 'flex';
         }
         function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
-
-        function openSecureComms() {
-            // Redirect to DMs
-            // In a real app, we might pass the user ID via URL params
-            window.location.href = 'dms.html';
-        }
 
         // --- Editor Utils ---
         function insertMarkdown(startTag, endTag) {
@@ -2119,24 +2021,6 @@
             textarea.focus();
             textarea.selectionStart = start + startTag.length;
             textarea.selectionEnd = end + startTag.length;
-        }
-
-        function togglePreview() {
-            const modal = document.querySelector('#threadModal .modal-content');
-            const textarea = document.getElementById('newBody');
-            const preview = document.getElementById('previewBody');
-            
-            if (modal.classList.contains('preview-active')) {
-                modal.classList.remove('preview-active');
-            } else {
-                preview.innerHTML = DOMPurify.sanitize(marked.parse(textarea.value));
-                modal.classList.add('preview-active');
-            }
-        }
-
-        function searchThreadsByTag(tag) {
-            document.getElementById('threadSearch').value = tag;
-            searchThreads();
         }
 
         function toggleTheme() {
