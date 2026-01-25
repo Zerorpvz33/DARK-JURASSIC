@@ -642,6 +642,51 @@
         .game-cell.active { background: var(--primary); color: #fff; box-shadow: 0 0 10px var(--primary); }
         .game-cell.success { background: var(--success); border-color: var(--success); }
         
+        /* --- MISSION BRIEFING --- */
+        .mission-briefing {
+            grid-column: 1 / -1;
+        }
+
+        .briefing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .briefing-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 20px;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: 0.3s;
+            border-radius: 4px;
+        }
+
+        .briefing-card:hover {
+            background: var(--primary-dim);
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .briefing-card i {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .briefing-card h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: var(--text-highlight);
+        }
+
+        .briefing-card p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
         /* --- BOTTOM NAVIGATION (MOBILE) --- */
         .bottom-nav {
             display: none;
@@ -1037,14 +1082,59 @@
 
         <!-- HERO SECTION -->
         <section class="hero">
-            <h1 class="glitch-text" data-text="GLOBAL COMMAND TERMINAL">GLOBAL COMMAND TERMINAL</h1>
+            <h1 class="glitch-text" data-text="WELCOME, AGENT">WELCOME, AGENT</h1>
             <div class="agent-badge">
                 <div class="status-dot"></div>
                 <span id="agent-display">INITIATING HANDSHAKE...</span>
             </div>
             <p style="margin-top: 15px; color: var(--text-dim); font-size: 0.8rem; max-width: 600px;">
-                WELCOME TO THE DARK JURASSIC NETWORK. ALL COMMUNICATIONS ARE ENCRYPTED. UNAUTHORIZED ACCESS WILL RESULT IN IMMEDIATE TERMINATION.
+                You are connected to the Dark Jurassic command and control network. Your mission is to monitor the situation, gather intelligence, and report any anomalies. Use the links below to get started.
             </p>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <a href="forum.html" style="text-decoration: none; background: var(--primary); padding: 10px 20px; color: #fff; border-radius: 4px; font-size: 0.8rem; transition: 0.3s;">
+                    <i class="fa fa-comments"></i> INTEL FORUM
+                </a>
+                <a href="sightings.html" style="text-decoration: none; background: var(--secondary); padding: 10px 20px; color: #000; border-radius: 4px; font-size: 0.8rem; transition: 0.3s;">
+                    <i class="fa fa-crosshairs"></i> LIVE TRACKER
+                </a>
+                <a href="dinosaurs.html" style="text-decoration: none; background: #fff; padding: 10px 20px; color: #000; border-radius: 4px; font-size: 0.8rem; transition: 0.3s;">
+                    <i class="fa fa-dna"></i> SPECIES DATABASE
+                </a>
+            </div>
+        </section>
+
+        <!-- MISSION BRIEFING SECTION -->
+        <section class="mission-briefing">
+            <div class="terminal-panel">
+                <div class="panel-header">
+                    <span class="panel-title"><i class="fa fa-book"></i> MISSION BRIEFING</span>
+                </div>
+                <p style="color: var(--text-dim); font-size: 0.8rem; margin-bottom: 20px;">
+                    Your primary objective is to monitor the volatile situation on the islands. Gather intelligence from fellow agents, track the movement of assets, and familiarize yourself with the threats we face. Stay sharp, stay vigilant, and trust no one.
+                </p>
+                <div class="briefing-cards">
+                    <a href="forum.html" class="briefing-card">
+                        <i class="fa fa-comments"></i>
+                        <h3>GATHER INTELLIGENCE</h3>
+                        <p>Access the Intel forum to read and share the latest information from agents in the field.</p>
+                    </a>
+                    <a href="sightings.html" class="briefing-card">
+                        <i class="fa fa-crosshairs"></i>
+                        <h3>TRACK ASSETS</h3>
+                        <p>Use the live tracker to monitor the location and status of all biological assets.</p>
+                    </a>
+                    <a href="dinosaurs.html" class="briefing-card">
+                        <i class="fa fa-dna"></i>
+                        <h3>KNOW YOUR ENEMY</h3>
+                        <p>Study the species database to understand the capabilities and weaknesses of the threats.</p>
+                    </a>
+                    <a href="profile.html" class="briefing-card">
+                        <i class="fa fa-user"></i>
+                        <h3>MANAGE YOUR PROFILE</h3>
+                        <p>Update your agent profile, manage your settings, and track your progress.</p>
+                    </a>
+                </div>
+            </div>
         </section>
 
         <!-- LEFT COLUMN: SYSTEM METRICS -->
