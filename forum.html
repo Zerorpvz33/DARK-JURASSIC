@@ -19,6 +19,11 @@
     <!-- Markdown & Sanitizer -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    
+    <!-- Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
 
     <style>
         /* --- CORE VARIABLES --- */
@@ -375,6 +380,15 @@
             box-shadow: 0 0 5px #00ff00;
             animation: pulse 1.5s infinite;
         }
+        
+        .online-indicator {
+            width: 8px; height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 5px var(--success);
+        }
+
 
         @keyframes pulse {
             0% { transform: scale(1); opacity: 1; }
@@ -535,6 +549,7 @@
             text-transform: uppercase;
             display: flex;
             gap: 15px;
+            align-items: center;
         }
         
         .thread-card:hover .thread-title {
@@ -549,6 +564,8 @@
 
         .thread-author-link {
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
         }
 
         .thread-preview {
@@ -777,6 +794,7 @@
             margin-top: 20px;
             border-top: 1px solid var(--border);
             padding-top: 15px;
+            align-items: center;
         }
 
         .action-btn {
@@ -817,6 +835,8 @@
             font-size: 0.75rem;
             color: var(--accent-blue);
             margin-bottom: 5px;
+            display: inline-flex;
+            align-items: center;
         }
 
         .comment-text {
@@ -1017,7 +1037,7 @@
             100% { background-color: #1a1a1a; }
         }
 
-        /* --- PROFILE MODAL --- */
+        /* --- PROFILE MODAL & ACHIEVEMENTS --- */
         .profile-modal-content {
             background: var(--bg-panel);
             border: 1px solid var(--primary);
@@ -1041,8 +1061,28 @@
             display: flex; justify-content: space-around; margin-top: 20px;
             border-top: 1px solid var(--border); padding-top: 20px;
         }
+        .achievements-container {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        .achievements-title {
+            font-family: 'Orbitron'; color: var(--primary); font-size: 0.9rem; margin-bottom: 15px;
+        }
+        .achievements-grid {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+        }
+        .achievement-badge {
+            background: #111; border: 1px solid var(--border); border-radius: 4px;
+            width: 120px; padding: 10px; text-align: center;
+            transition: 0.2s;
+        }
+        .achievement-badge:hover { transform: translateY(-3px); border-color: var(--gold); }
+        .achievement-icon { font-size: 2rem; color: var(--gold); }
+        .achievement-name { font-size: 0.6rem; text-transform: uppercase; margin-top: 5px; }
 
-        /* --- MARKDOWN STYLES --- */
+
+        /* --- MARKDOWN & SYNTAX HIGHLIGHTING --- */
         .full-thread-body blockquote {
             border-left: 3px solid var(--primary);
             padding-left: 15px;
@@ -1057,7 +1097,10 @@
             font-family: 'JetBrains Mono', monospace;
             overflow-x: auto;
             font-size: 0.8rem;
-            color: var(--success);
+        }
+        .full-thread-body pre code.hljs {
+             padding: 1em;
+             border-radius: 4px;
         }
         .full-thread-body code {
             background: rgba(230, 57, 70, 0.2);
@@ -1148,20 +1191,20 @@
             </button>
         </div>
         <ul class="sidebar-links">
-                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
-                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
-                <li><a href="sightings.html"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
-                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
-                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
-                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
-                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
-                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
-                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li><a href="index.html" onclick="playSound('click')"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html" onclick="playSound('click')"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html" onclick="playSound('click')"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html" onclick="playSound('click')"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html" onclick="playSound('click')"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html" onclick="playSound('click')"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html" onclick="playSound('click')"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html" onclick="playSound('click')"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html" onclick="playSound('click')"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
                 <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
-                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
+                <li><a href="login.html" onclick="playSound('click')"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
         </ul>
         <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
-            SECURE CONNECTION<br>V4.0.2 STABLE
+            SECURE CONNECTION<br>V4.2.0 STABLE
         </div>
     </aside>
 
@@ -1182,7 +1225,7 @@
                 <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
                 <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
                 <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
-                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li id="admin-nav-desktop" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
                 <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
             </ul>
 
@@ -1333,6 +1376,12 @@
         </div>
 
     </main>
+    
+    <!-- AUDIO ELEMENTS -->
+    <audio id="audio-click" src="data:audio/wav;base64,UklGRkIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAD//wA="></audio>
+    <audio id="audio-notification" src="data:audio/wav;base64,UklGRkoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSIAAAAAgD+AP4A/gD+AP4A/gD+APwA/AD8APwA/AD8="></audio>
+    <audio id="audio-transmit" src="data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSAgAAAA////gD+APwA/AD8APwBAAEACgAJAFAAcgA0ANwA="></audio>
+
 
     <!-- New Thread Modal -->
     <div class="modal-overlay" id="threadModal">
@@ -1367,7 +1416,7 @@
                 <button class="editor-btn" onclick="insertMarkdown('*', '*')" title="Italic"><i class="fa fa-italic"></i></button>
                 <button class="editor-btn" onclick="insertMarkdown('`', '`')" title="Code"><i class="fa fa-code"></i></button>
                 <button class="editor-btn" onclick="insertMarkdown('> ', '')" title="Quote"><i class="fa fa-quote-right"></i></button>
-                <button class="editor-btn" onclick="insertMarkdown('', '')" title="Link"><i class="fa fa-link"></i></button>
+                <button class="editor-btn" onclick="insertMarkdown('```\\n', '\\n```')" title="Code Block"><i class="fa fa-file-code"></i></button>
             </div>
             <textarea id="newBody" placeholder="Body of intel report... (Markdown supported)"></textarea>
             <div class="modal-footer">
@@ -1394,6 +1443,12 @@
                     <span id="profile-modal-posts" class="user-stat-val">0</span>
                     <div style="font-size: 0.7rem; color: var(--text-dim);">POSTS</div>
                 </div>
+            </div>
+            <div class="achievements-container" id="profile-achievements">
+                 <div class="achievements-title">SERVICE MEDALS</div>
+                 <div class="achievements-grid" id="profile-achievements-grid">
+                     <!-- Achievements loaded here -->
+                 </div>
             </div>
         </div>
     </div>
@@ -1428,11 +1483,14 @@
 
         let currentAgent = "Guest_Agent";
         let currentUid = null;
+        let isAdmin = false;
         let activeThreadId = null;
         let allThreads = [];
         let activeFilter = 'all';
         let allUsers = {};
         let userBookmarks = [];
+        let userAchievements = {};
+        let userStatuses = {};
 
         // Auth Listener
         auth.onAuthStateChanged(user => {
@@ -1441,29 +1499,59 @@
                 currentAgent = user.email.split('@')[0].replace(/\./g, '_').toUpperCase();
                 document.getElementById('agent-display').innerText = `AGENT VERIFIED: ${currentAgent}`;
                 addLog(`Authentication successful for ${currentAgent}.`);
+                initPresence(user.uid, currentAgent);
 
                 db.ref('users/' + currentAgent.toLowerCase()).once('value').then(snapshot => {
-                    const data = snapshot.val();
+                    const data = snapshot.val() || {};
                     
-                    // Check Daily Bonus
                     checkDailyBonus(data);
                     
-                    // Load Bookmarks
                     if(data.bookmarks) userBookmarks = Object.keys(data.bookmarks);
-
-                    if (data) {
-                        document.getElementById('user-rep').innerText = data.xp || 0;
-                        if (data.role === 'admin') {
-                            document.getElementById('admin-nav').style.display = 'block';
-                            document.getElementById('admin-sidebar').style.display = 'block';
-                        }
+                    userAchievements = data.achievements || {};
+                    
+                    isAdmin = data.role === 'admin';
+                    if (isAdmin) {
+                        document.getElementById('admin-nav-desktop').style.display = 'block';
+                        document.getElementById('admin-nav').style.display = 'block';
                     }
+
+                    document.getElementById('user-rep').innerText = data.xp || 0;
                 });
             } else {
                 document.getElementById('agent-display').innerText = `UNAUTHORIZED ACCESS (READ ONLY)`;
                 addLog("Warning: Anonymous session detected.");
             }
         });
+
+        // --- New Feature: Presence System ---
+        function initPresence(uid, username) {
+            const userStatusDatabaseRef = db.ref('/user_status/' + uid);
+            const userStatusFirestoreRef = {
+                status: 'online',
+                last_changed: firebase.database.ServerValue.TIMESTAMP,
+                username: username
+            };
+
+            db.ref('.info/connected').on('value', function(snapshot) {
+                if (snapshot.val() === false) {
+                    return;
+                };
+                userStatusDatabaseRef.onDisconnect().set({ ...userStatusFirestoreRef, status: 'offline' }).then(function() {
+                    userStatusDatabaseRef.set(userStatusFirestoreRef);
+                });
+            });
+        }
+        
+        // --- Sound Effects ---
+        function playSound(soundId) {
+            try {
+                const sound = document.getElementById(`audio-${soundId}`);
+                sound.currentTime = 0;
+                sound.play();
+            } catch(e) {
+                // Audio playback can fail if user hasn't interacted with the page yet.
+            }
+        }
 
         // --- Daily Bonus Logic ---
         function checkDailyBonus(userData) {
@@ -1473,10 +1561,12 @@
             
             if (now - lastLogin > oneDay) {
                 document.getElementById('bonusModal').style.display = 'flex';
+                playSound('notification');
             }
         }
 
         function claimBonus() {
+            playSound('transmit');
             const userKey = currentAgent.toLowerCase();
             db.ref('users/' + userKey).update({
                 xp: firebase.database.ServerValue.increment(50),
@@ -1489,9 +1579,15 @@
         // Initialize Forum Data
         function initForum() {
             addLog("Initializing Forum Module...");
-            // Pre-fetch all users for profile lookups
-            db.ref('users').once('value', snap => {
-                allUsers = snap.val() || {};
+            db.ref('users').once('value', snap => { allUsers = snap.val() || {}; });
+            
+            // Listen for user status changes
+            db.ref('user_status').on('value', snap => {
+                userStatuses = snap.val() || {};
+                // Re-render if necessary to show online status
+                if(document.getElementById('forum-list-view').style.display !== 'none') {
+                    filterThreads(activeFilter);
+                }
             });
 
             const threadsRef = db.ref('forum_threads');
@@ -1506,6 +1602,7 @@
                 }
                 filterThreads(activeFilter);
                 updateTopAgents();
+                updateHotThreads();
                 updateUserPostCount();
                 addLog(`Synced ${allThreads.length} intel packets.`);
             });
@@ -1513,12 +1610,14 @@
 
         function displayThreads(threads) {
             const list = document.getElementById('threads-list');
-            list.innerHTML = ''; // Clear skeletons
+            list.innerHTML = '';
 
             if (!threads || threads.length === 0) {
                 list.innerHTML = `<div class="thread-card"><p style="text-align:center; color: var(--text-dim);">NO INTEL DETECTED IN SECTOR.</p></div>`;
                 return;
             }
+            
+            const onlineUsers = Object.values(userStatuses).filter(u => u.status === 'online').map(u => u.username);
 
             list.innerHTML = threads.map(t => {
                 let icon = 'fa-file-alt';
@@ -1532,21 +1631,25 @@
                 if (t.reactions) {
                     totalReactions = Object.values(t.reactions).reduce((sum, count) => sum + count, 0);
                 }
+                
+                const authorOnline = onlineUsers.includes(t.author);
 
                 return `
                 <div class="thread-card ${isPinned}" onclick="viewThread('${t.id}')">
                     <div class="thread-icon"><i class="fa ${icon}"></i></div>
                     <div class="thread-content">
                         <div class="thread-header">
-                            <h3 class="thread-title">${t.title}</h3>
+                            <h3 class="thread-title">${t.pinned ? '<i class="fa fa-thumbtack" style="font-size: 0.8em; color: var(--warning);"></i> ' : ''}${t.title}</h3>
                         </div>
                         <div class="thread-meta">
-                            <span class="thread-author-link" onclick="openProfileModal('${t.author}', event)"><i class="fa fa-user"></i> ${t.author || 'UNKNOWN'}</span>
+                            <span class="thread-author-link" onclick="openProfileModal('${t.author}', event)">
+                                ${authorOnline ? '<div class="online-indicator"></div>' : ''}
+                                <i class="fa fa-user"></i> ${t.author || 'UNKNOWN'}
+                            </span>
                             <span><i class="fa fa-clock"></i> ${new Date(t.timestamp).toLocaleDateString()}</span>
                             <span class="tag ${tagClass}">${t.category || 'INTEL'}</span>
-                            ${t.pinned ? '<span class="tag alert"><i class="fa fa-thumbtack"></i> PINNED</span>' : ''}
                         </div>
-                        <div class="thread-preview">${t.body.substring(0, 150)}...</div>
+                        <div class="thread-preview">${DOMPurify.sanitize(marked.parse(t.body)).replace(/<[^>]*>?/gm, '').substring(0, 150)}...</div>
                     </div>
                     <div class="thread-stats">
                         <div class="stat-item"><i class="fa fa-thumbs-up"></i> ${totalReactions}</div>
@@ -1557,6 +1660,7 @@
         }
 
         function filterThreads(category) {
+            playSound('click');
             if(category === 'bookmarks') {
                 const filtered = allThreads.filter(t => userBookmarks.includes(t.id));
                 displayThreads(filtered);
@@ -1564,7 +1668,6 @@
             }
             activeFilter = category;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            // Find button with onclick matching category and add active
             const btns = document.querySelectorAll('.filter-btn');
             for(let btn of btns) {
                 if(btn.getAttribute('onclick').includes(category)) {
@@ -1591,6 +1694,7 @@
 
         // Thread Viewing
         function viewThread(id) {
+            playSound('click');
             activeThreadId = id;
             const thread = allThreads.find(t => t.id === id);
             
@@ -1605,7 +1709,6 @@
             
             const isBookmarked = userBookmarks.includes(id);
             
-            // Poll Rendering
             let pollHtml = '';
             if (thread.poll) {
                 const totalVotes = thread.poll.options.reduce((acc, opt) => acc + (opt.votes || 0), 0);
@@ -1618,44 +1721,30 @@
                                 <span>${opt.text}</span>
                                 <span>${percent}% (${opt.votes || 0})</span>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }).join('');
-                
-                pollHtml = `
-                    <div class="poll-container">
-                        <div class="poll-question"><i class="fa fa-poll"></i> ${thread.poll.question}</div>
-                        ${optionsHtml}
-                    </div>
-                `;
+                pollHtml = `<div class="poll-container"><div class="poll-question"><i class="fa fa-poll"></i> ${thread.poll.question}</div>${optionsHtml}</div>`;
             }
+            
+            const authorOnline = Object.values(userStatuses).some(u => u.username === thread.author && u.status === 'online');
 
             document.getElementById('active-thread-content').innerHTML = `
                 <h1 style="font-family:'Orbitron'; color: var(--primary); margin-bottom: 10px;">${thread.title}</h1>
-                <div class="thread-meta">TRANSMITTED BY: <span class="thread-author-link" onclick="openProfileModal('${thread.author}', event)">@${thread.author}</span> | TIMESTAMP: ${new Date(thread.timestamp).toLocaleString()}</div>
+                <div class="thread-meta">TRANSMITTED BY: <span class="thread-author-link" onclick="openProfileModal('${thread.author}', event)">${authorOnline ? '<div class="online-indicator"></div>' : ''}@${thread.author}</span> | TIMESTAMP: ${new Date(thread.timestamp).toLocaleString()}</div>
                 <div class="full-thread-body">${DOMPurify.sanitize(marked.parse(thread.body))}</div>
                 ${pollHtml}
-                ${thread.attachmentURL ? `
-                    <div class="thread-attachment">
-                        <h4 style="color: var(--text-dim); font-size: 0.7rem; margin-bottom: 10px;">ATTACHED VISUAL DATA</h4>
-                        <img src="${thread.attachmentURL}" alt="Attachment">
-                    </div>
-                ` : ''}
+                ${thread.attachmentURL ? `<div class="thread-attachment"><h4 style="color: var(--text-dim); font-size: 0.7rem; margin-bottom: 10px;">ATTACHED VISUAL DATA</h4><img src="${thread.attachmentURL}" alt="Attachment"></div>` : ''}
                 <div class="thread-actions">
-                    <div class="reactions-container">
-                        ${reactionButtons}
-                    </div>
-                    <button class="action-btn ${isBookmarked ? 'active' : ''}" onclick="toggleBookmark('${id}')">
-                        <i class="fa ${isBookmarked ? 'fa-bookmark' : 'fa-bookmark-o'}"></i> ${isBookmarked ? 'SAVED' : 'SAVE'}
-                    </button>
-                    <button class="action-btn"><i class="fa fa-share-alt"></i> SHARE</button>
-                    ${thread.author === currentAgent ? `
-                        <button class="action-btn" style="margin-left: auto; color: var(--danger); border-color: var(--danger);" onclick="deleteThread('${id}')">
-                            <i class="fa fa-trash"></i> DELETE
-                        </button>
-                    ` : ''}
-                </div>
-            `;
+                    <div class="reactions-container">${reactionButtons}</div>
+                    <button class="action-btn ${isBookmarked ? 'active' : ''}" onclick="toggleBookmark('${id}')"><i class="fa ${isBookmarked ? 'fa-bookmark' : 'fa-bookmark-o'}"></i> ${isBookmarked ? 'SAVED' : 'SAVE'}</button>
+                    ${isAdmin ? `<button class="action-btn" onclick="togglePinThread('${id}', ${!!thread.pinned})"><i class="fa fa-thumbtack"></i> ${thread.pinned ? 'UNPIN' : 'PIN'}</button>` : ''}
+                    ${thread.author === currentAgent || isAdmin ? `<button class="action-btn" style="margin-left: auto; color: var(--danger); border-color: var(--danger);" onclick="deleteThread('${id}')"><i class="fa fa-trash"></i> DELETE</button>` : ''}
+                </div>`;
+            
+            // New Feature: Syntax Highlighting
+            document.querySelectorAll('#active-thread-content pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
 
             loadComments(id);
             addLog(`Decrypting thread ${id}...`);
@@ -1666,18 +1755,24 @@
                 const commentsData = snapshot.val();
                 const list = document.getElementById('comments-list');
                 list.innerHTML = "";
+                const onlineUsers = Object.values(userStatuses).filter(u => u.status === 'online').map(u => u.username);
                 if (commentsData) {
                     const comments = Object.values(commentsData).sort((a, b) => a.timestamp - b.timestamp);
                     comments.forEach(c => {
+                        const authorOnline = onlineUsers.includes(c.user);
                         const div = document.createElement('div');
                         div.className = 'comment-item';
                         div.innerHTML = `
                             <div class="comment-avatar">${c.user.charAt(0)}</div>
                             <div class="comment-body">
-                                <div class="comment-meta"><span class="thread-author-link" onclick="openProfileModal('${c.user}', event)">@${c.user}</span> - ${new Date(c.timestamp).toLocaleString()}</div>
+                                <div class="comment-meta">
+                                    <span class="thread-author-link" onclick="openProfileModal('${c.user}', event)">
+                                       ${authorOnline ? '<div class="online-indicator"></div>' : ''}
+                                       @${c.user}
+                                    </span> - ${new Date(c.timestamp).toLocaleString()}
+                                </div>
                                 <div class="comment-text">${c.text}</div>
-                            </div>
-                        `;
+                            </div>`;
                         list.appendChild(div);
                     });
                 } else {
@@ -1691,26 +1786,15 @@
             const text = input.value.trim();
 
             if (text && activeThreadId) {
-                if (currentAgent === "Guest_Agent") {
-                    showNotification("ERROR: LOGIN REQUIRED", "error");
-                    return;
-                }
-
+                if (!currentUid) { showNotification("ERROR: LOGIN REQUIRED", "error"); return; }
+                playSound('transmit');
                 db.ref('forum_comments/' + activeThreadId).push().set({
                     user: currentAgent,
                     text: text,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 }).then(() => {
-                    // Update comment count on thread
-                    const threadRef = db.ref('forum_threads/' + activeThreadId);
-                    threadRef.transaction(t => {
-                        if (t) {
-                            t.commentCount = (t.commentCount || 0) + 1;
-                        }
-                        return t;
-                    });
-                    // Award XP
-                    awardXP(15);
+                    db.ref('forum_threads/' + activeThreadId + '/commentCount').transaction(c => (c || 0) + 1);
+                    awardXP(15, 'Commenter');
                 });
                 input.value = "";
             }
@@ -1723,103 +1807,87 @@
         }
 
         async function broadcastIntel() {
+            if (!currentUid) { showNotification("ERROR: LOGIN REQUIRED", "error"); return; }
+            
             const title = document.getElementById('newTitle').value.trim();
             const body = document.getElementById('newBody').value.trim();
+            if (!title || !body) { showNotification("Title and Body are required.", "error"); return; }
+
+            playSound('transmit');
             const category = document.getElementById('newCategory').value;
             const file = document.getElementById('newAttachment').files[0];
             const pollQ = document.getElementById('pollQuestion').value.trim();
             const pollO = document.getElementById('pollOptions').value.trim();
-
-            if (title && body) {
-                if (currentAgent === "Guest_Agent") {
-                    showNotification("ERROR: LOGIN REQUIRED", "error");
+            
+            let attachmentURL = null;
+            if (file) {
+                const uploadNotificationId = `notif-upload-${Date.now()}`;
+                try {
+                    showNotification("UPLOADING ATTACHMENT... 0%", "info", uploadNotificationId, false);
+                    attachmentURL = await uploadAttachment(file, (p) => showNotification(`UPLOADING... ${Math.round(p)}%`, "info", uploadNotificationId, false));
+                    const progressNotification = document.getElementById(uploadNotificationId);
+                    if (progressNotification) progressNotification.remove();
+                    showNotification("ATTACHMENT UPLOADED", "success");
+                } catch (error) {
+                    showNotification(`UPLOAD FAILED: ${error.message}`, "error");
+                    const progressNotification = document.getElementById(uploadNotificationId);
+                    if (progressNotification) progressNotification.remove();
                     return;
                 }
+            }
 
-                let attachmentURL = null;
-                if (file) {
-                    if (file.size === 0) {
-                        showNotification("ERROR: FILE IS EMPTY", "error");
-                        return;
-                    }
+            const newThread = {
+                title, body, category, attachmentURL,
+                author: currentAgent,
+                reactions: {},
+                commentCount: 0,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
 
-                    const uploadNotificationId = `notif-upload-${Date.now()}`;
-                    try {
-                        showNotification("UPLOADING ATTACHMENT... 0%", "info", uploadNotificationId, false);
-                        
-                        const onProgress = (progress) => {
-                            showNotification(`UPLOADING ATTACHMENT... ${Math.round(progress)}%`, "info", uploadNotificationId, false);
-                        };
+            if (pollQ && pollO) {
+                newThread.poll = { question: pollQ, options: pollO.split(',').map(o => ({ text: o.trim(), votes: 0 })) };
+            }
 
-                        attachmentURL = await uploadAttachment(file, onProgress);
-                        
-                        // On success, remove the progress one and show a success message
-                        const progressNotification = document.getElementById(uploadNotificationId);
-                        if (progressNotification) progressNotification.remove();
-                        showNotification("ATTACHMENT UPLOADED", "success");
-
-                    } catch (error) {
-                        showNotification(`UPLOAD FAILED: ${error.message || error.code || 'Unknown Error'}`, "error");
-                    console.error("Firebase Storage Upload Error:", error);
-                        const progressNotification = document.getElementById(uploadNotificationId);
-                        if (progressNotification) progressNotification.remove();
-                        return;
-                    }
-                }
-
-                const newThread = {
-                    title: title,
-                    body: body,
-                    category: category,
-                    attachmentURL: attachmentURL,
-                    author: currentAgent,
-                    reactions: {},
-                    commentCount: 0,
+            db.ref('forum_threads').push(newThread).then(() => {
+                closeModal();
+                document.getElementById('newTitle').value = "";
+                document.getElementById('newBody').value = "";
+                document.getElementById('pollQuestion').value = "";
+                document.getElementById('pollOptions').value = "";
+                clearAttachment();
+                showNotification("INTEL BROADCAST SUCCESSFUL", "success");
+                awardXP(30, 'Intel Provider');
+                checkFirstBroadcastAchievement();
+                addLog(`Broadcasting new intel: ${title}`);
+            });
+        }
+        
+        async function checkFirstBroadcastAchievement() {
+            const userKey = currentAgent.toLowerCase();
+            const achievementRef = db.ref(`users/${userKey}/achievements/first_broadcast`);
+            const snapshot = await achievementRef.once('value');
+            if (!snapshot.exists()) {
+                achievementRef.set({
+                    name: 'First Broadcast',
+                    icon: 'fa-bullhorn',
+                    description: 'Transmitted first piece of intel.',
                     timestamp: firebase.database.ServerValue.TIMESTAMP
-                };
-
-                if (pollQ && pollO) {
-                    const opts = pollO.split(',').map(o => ({ text: o.trim(), votes: 0 }));
-                    newThread.poll = { question: pollQ, options: opts };
-                }
-
-                db.ref('forum_threads').push().set(newThread).then(() => {
-                    closeModal();
-                    document.getElementById('newTitle').value = "";
-                    document.getElementById('newBody').value = "";
-                    document.getElementById('pollQuestion').value = "";
-                    document.getElementById('pollOptions').value = "";
-                    clearAttachment();
-                    showNotification("INTEL BROADCAST SUCCESSFUL", "success");
-                    awardXP(30);
-                    addLog(`Broadcasting new intel: ${title}`);
                 });
+                awardXP(50, 'First Broadcast Achievement');
+                showNotification("ACHIEVEMENT UNLOCKED: First Broadcast!", "success");
             }
         }
 
         async function uploadAttachment(file, onProgress) {
-            if (!currentUid) throw new Error("Authentication missing. Please refresh.");
             const filePath = `forum_attachments/${currentUid}/${Date.now()}_${file.name}`;
             const fileRef = storage.ref(filePath);
             const uploadTask = fileRef.put(file);
 
             return new Promise((resolve, reject) => {
                 uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        if (onProgress) {
-                            onProgress(progress);
-                        }
-                    }, 
-                    (error) => {
-                        console.error("Upload Task Error:", error);
-                        reject(error);
-                    }, 
-                    () => {
-                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                            resolve(downloadURL);
-                        });
-                    }
+                    (snapshot) => onProgress && onProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100), 
+                    (error) => reject(error), 
+                    () => uploadTask.snapshot.ref.getDownloadURL().then(resolve)
                 );
             });
         }
@@ -1843,30 +1911,23 @@
         }
 
         function addReaction(id, reaction) {
-            if (currentAgent === "Guest_Agent") {
-                showNotification("ERROR: LOGIN REQUIRED", "error");
-                return;
-            }
-
-            const reactionRef = db.ref(`forum_threads/${id}/reactions/${reaction}`);
-            reactionRef.transaction(currentCount => (currentCount || 0) + 1);
+            if (!currentUid) { showNotification("ERROR: LOGIN REQUIRED", "error"); return; }
+            playSound('click');
+            db.ref(`forum_threads/${id}/reactions/${reaction}`).transaction(c => (c || 0) + 1);
             awardXP(2);
         }
 
         function votePoll(threadId, optionIdx) {
-            if (currentAgent === "Guest_Agent") {
-                showNotification("ERROR: LOGIN REQUIRED", "error");
-                return;
-            }
-            // Simple vote increment (in real app, track user votes to prevent duplicates)
-            const voteRef = db.ref(`forum_threads/${threadId}/poll/options/${optionIdx}/votes`);
-            voteRef.transaction(votes => (votes || 0) + 1);
+            if (!currentUid) { showNotification("ERROR: LOGIN REQUIRED", "error"); return; }
+            playSound('click');
+            db.ref(`forum_threads/${threadId}/poll/options/${optionIdx}/votes`).transaction(v => (v || 0) + 1);
             showNotification("VOTE RECORDED", "success");
-            viewThread(threadId); // Refresh view
+            viewThread(threadId);
         }
 
         function toggleBookmark(threadId) {
-            if (currentAgent === "Guest_Agent") return;
+            if (!currentUid) return;
+            playSound('click');
             const userKey = currentAgent.toLowerCase();
             const bookmarkRef = db.ref(`users/${userKey}/bookmarks/${threadId}`);
             
@@ -1879,43 +1940,22 @@
                 userBookmarks.push(threadId);
                 showNotification("THREAD SAVED TO ARCHIVE", "success");
             }
-            // Refresh view if open
-            if (activeThreadId === threadId) {
-                viewThread(threadId);
-            }
+            if (activeThreadId === threadId) viewThread(threadId);
         }
 
         function awardXP(amount) {
             if(!currentUid) return;
-            const username = currentAgent.toLowerCase().replace(/_/g, '.'); // Revert formatting if needed, but usually we store by username key
-            // Actually we stored by username key in other files. Let's assume we have the key.
-            // Since we don't have the exact key easily without query, let's skip complex logic and assume username is key
-            // Better: use the username derived from email
             const userKey = currentAgent.toLowerCase(); 
-            
-            // Simple XP increment simulation
-            // In a real app, use transaction on user record
-            db.ref('users/' + userKey).transaction(user => {
-                if (user) {
-                    user.xp = (user.xp || 0) + amount;
-                }
-                return user;
-            });
+            db.ref('users/' + userKey + '/xp').transaction(xp => (xp || 0) + amount);
             addLog(`XP Update: +${amount}`);
         }
 
         function updateTopAgents() {
-            // Calculate top agents based on thread count
-            const counts = {};
-            allThreads.forEach(t => {
-                counts[t.author] = (counts[t.author] || 0) + 1;
-            });
-            
-            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            const sorted = Object.values(allUsers).sort((a,b) => (b.xp || 0) - (a.xp || 0)).slice(0, 5);
             
             const list = document.getElementById('top-agents-list');
-            list.innerHTML = sorted.map(([name, count]) => {
-                const user = allUsers[name.toLowerCase()] || {};
+            list.innerHTML = sorted.map((user) => {
+                const name = user.displayName || 'UNKNOWN';
                 return `
                     <div class="top-agent-item" onclick="openProfileModal('${name}', event)">
                         <div class="agent-avatar-small">${name.charAt(0)}</div>
@@ -1923,28 +1963,19 @@
                             <div style="font-size:0.8rem; font-weight:bold;">${name}</div>
                             <div style="font-size:0.65rem; color:var(--text-dim);">${user.xp || 0} XP</div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
         function updateHotThreads() {
-            const hot = allThreads.map(t => {
-                const reactions = t.reactions ? Object.values(t.reactions).reduce((s, c) => s + c, 0) : 0;
-                const score = (t.commentCount || 0) * 2 + reactions;
-                return { ...t, score };
-            }).sort((a, b) => b.score - a.score).slice(0, 3);
-
+            const hot = allThreads.map(t => ({...t, score: ((t.commentCount || 0) * 2) + (t.reactions ? Object.values(t.reactions).reduce((s, c) => s + c, 0) : 0)}))
+                .sort((a, b) => b.score - a.score).slice(0, 3);
             const list = document.getElementById('hot-threads-list');
-            list.innerHTML = hot.map(t => `
-                <div class="hot-thread-item" onclick="viewThread('${t.id}')">
-                    <div>${t.title}</div>
-                    <div class="hot-score">${t.score} HEAT | ${t.commentCount || 0} REPLIES</div>
-                </div>
-            `).join('');
+            list.innerHTML = hot.map(t => `<div class="hot-thread-item" onclick="viewThread('${t.id}')"><div>${t.title}</div><div class="hot-score">${t.score} HEAT | ${t.commentCount || 0} REPLIES</div></div>`).join('');
         }
 
         function updateUserPostCount() {
+            if (!currentAgent) return;
             const posts = allThreads.filter(t => t.author === currentAgent).length;
             document.getElementById('user-posts').innerText = posts;
         }
@@ -1959,24 +1990,31 @@
             if (log.children.length > 20) log.lastChild.remove();
         }
 
-        function showNotification(msg, type="info") {
+        function showNotification(msg, type="info", id=null, autoDismiss=true) {
             const container = document.getElementById('push-container');
-            const div = document.createElement('div');
-            div.className = 'push-alert';
+            let div = id ? document.getElementById(id) : null;
+            if (!div) {
+                div = document.createElement('div');
+                div.className = 'push-alert';
+                if (id) div.id = id;
+            }
+            
             let color = 'var(--primary)';
             if(type === 'success') color = 'var(--success)';
             if(type === 'error') color = 'var(--danger)';
             
             div.style.borderLeftColor = color;
-            div.innerHTML = `
-                <div style="color:${color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">SYSTEM ALERT</div>
-                <div style="font-size:0.75rem; color:#ccc;">${msg}</div>
-            `;
-            container.appendChild(div);
-            setTimeout(() => div.remove(), 4000);
+            div.innerHTML = `<div style="color:${color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">SYSTEM ALERT</div><div style="font-size:0.75rem; color:#ccc;">${msg}</div>`;
+            if(!div.parentNode) container.appendChild(div);
+
+            if (autoDismiss) {
+                setTimeout(() => div.remove(), 4000);
+            }
+            if(type !== 'info') playSound('notification');
         }
 
         function closeThread() {
+            playSound('click');
             document.getElementById('forum-list-view').style.display = 'block';
             document.getElementById('single-thread-view').style.display = 'none';
             activeThreadId = null;
@@ -1984,15 +2022,25 @@
 
         function deleteThread(id) {
             if (confirm("WARNING: This will permanently delete this intel packet. Proceed?")) {
+                playSound('transmit');
                 db.ref('forum_threads/' + id).remove();
                 db.ref('forum_comments/' + id).remove();
+                storage.ref(`forum_attachments/${id}`).delete().catch(e => {}); // Delete associated file
                 closeThread();
                 showNotification("Intel packet purged.", "success");
             }
         }
+        
+        function togglePinThread(id, isPinned) {
+            if (!isAdmin) return;
+            playSound('transmit');
+            db.ref(`forum_threads/${id}/pinned`).set(!isPinned);
+            showNotification(`Thread ${!isPinned ? 'pinned' : 'unpinned'}.`, "success");
+        }
 
         function openProfileModal(authorName, event) {
             if(event) event.stopPropagation();
+            playSound('click');
             const userKey = authorName.toLowerCase();
             const user = allUsers[userKey];
             if (!user) return;
@@ -2003,47 +2051,60 @@
             document.getElementById('profile-modal-bio').innerText = user.bio || 'No public bio on file.';
             document.getElementById('profile-modal-xp').innerText = user.xp || 0;
             document.getElementById('profile-modal-posts').innerText = allThreads.filter(t => t.author === authorName).length;
+            
+            const achievementsGrid = document.getElementById('profile-achievements-grid');
+            achievementsGrid.innerHTML = '';
+            if (user.achievements) {
+                achievementsGrid.innerHTML = Object.values(user.achievements).map(ach => `
+                    <div class="achievement-badge" title="${ach.description || ach.name}">
+                        <div class="achievement-icon"><i class="fa ${ach.icon}"></i></div>
+                        <div class="achievement-name">${ach.name}</div>
+                    </div>
+                `).join('');
+                document.getElementById('profile-achievements').style.display = 'block';
+            } else {
+                document.getElementById('profile-achievements').style.display = 'none';
+            }
+
             document.getElementById('profileModal').style.display = 'flex';
         }
-        function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+        function closeProfileModal() { playSound('click'); document.getElementById('profileModal').style.display = 'none'; }
 
         // --- Editor Utils ---
         function insertMarkdown(startTag, endTag) {
+            playSound('click');
             const textarea = document.getElementById('newBody');
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
             const text = textarea.value;
-            const before = text.substring(0, start);
-            const selected = text.substring(start, end);
-            const after = text.substring(end);
-            
-            textarea.value = before + startTag + selected + endTag + after;
+            textarea.value = text.substring(0, start) + startTag + text.substring(start, end) + endTag + text.substring(end);
             textarea.focus();
-            textarea.selectionStart = start + startTag.length;
-            textarea.selectionEnd = end + startTag.length;
+            textarea.selectionStart = textarea.selectionEnd = start + startTag.length;
         }
 
         function toggleTheme() {
+            playSound('click');
             document.body.classList.toggle('matrix-mode');
             addLog("Visual Interface Updated.");
         }
 
         // Utils
         function toggleSidebar() {
+            playSound('click');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             const isOpen = sidebar.classList.toggle('open');
             overlay.style.display = isOpen ? 'block' : 'none';
         }
 
-        function openModal() { document.getElementById('threadModal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('threadModal').style.display = 'none'; }
+        function openModal() { playSound('click'); document.getElementById('threadModal').style.display = 'flex'; }
+        function closeModal() { playSound('click'); document.getElementById('threadModal').style.display = 'none'; }
 
         // Listen for global alerts
         db.ref('alerts').limitToLast(1).on('child_added', snap => {
             const alert = snap.val();
             if (alert.timestamp && Date.now() - alert.timestamp < 60000) {
-                showNotification(alert.title + ": " + alert.message);
+                showNotification(alert.title + ": " + alert.message, "error");
             }
         });
 
