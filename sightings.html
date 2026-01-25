@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dark Jurassic | Global Asset Tracker V5.0</title>
+    <title>Dark Jurassic | Global Asset Tracker V7.0</title>
     <link rel="icon" type="image/png" href="logo.png">
     
     <!-- External Resources -->
@@ -334,6 +334,22 @@
         .vision-thermal .leaflet-tile-pane { filter: var(--vision-thermal); }
         .vision-night .leaflet-tile-pane { filter: var(--vision-night); }
         .vision-bio .leaflet-tile-pane { filter: var(--vision-bio); }
+        .vision-satellite .leaflet-tile-pane { filter: brightness(0.8) contrast(1.2) saturate(1.2); }
+        
+        /* Optimization for lag */
+        .leaflet-marker-icon { will-change: transform; }
+        .sighting-card { content-visibility: auto; contain-intrinsic-size: 100px; }
+        
+        /* Edit Mode Styles */
+        .edit-mode-indicator {
+            background: var(--warning); color: #000; padding: 5px; text-align: center;
+            font-weight: bold; font-family: 'Orbitron'; display: none;
+        }
+        .edit-mode .edit-mode-indicator { display: block; }
+        .edit-mode .modal-header { border-bottom-color: var(--warning); }
+
+        /* Picking Mode Cursor */
+        .picking-mode { cursor: crosshair !important; }
 
         /* --- MAP HUD OVERLAY --- */
         .map-hud {
@@ -454,6 +470,7 @@
         .vision-btn { font-size: 0.8rem; font-weight: bold; width: auto; padding: 0 10px; }
         .vision-btn.thermal { color: #ffaa00; border-color: #ffaa00; }
         .vision-btn.night { color: #00ff00; border-color: #00ff00; }
+        .vision-btn.sat { color: #00d4ff; border-color: #00d4ff; }
 
         .map-filter-select {
             background: rgba(10, 10, 10, 0.9);
@@ -591,6 +608,13 @@
         }
 
         .card-actions {
+            display: flex; gap: 5px; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px;
+        }
+
+        /* Updated Card Actions for Edit/Delete */
+        .card-actions-row { display: flex; gap: 5px; width: 100%; }
+
+        .card-actions {
             display: flex;
             gap: 5px;
             margin-top: 10px;
@@ -632,6 +656,7 @@
             background: linear-gradient(to right, transparent, var(--accent-blue), transparent);
             z-index: 402;
             animation: sweep-anim 8s ease-in-out infinite;
+            pointer-events: none;
         }
 
         .panel-actions {
@@ -744,6 +769,27 @@
             background: #1a1a1a;
             color: var(--primary);
             border-bottom-color: var(--primary);
+        }
+
+        /* --- COMMENTS SECTION (DETAILS MODAL) --- */
+        .comment-item {
+            background: rgba(255,255,255,0.03);
+            border-left: 2px solid var(--border);
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+        }
+        .comment-header {
+            display: flex; justify-content: space-between; margin-bottom: 4px;
+            color: var(--text-dim); font-size: 0.65rem;
+        }
+        .comment-author { color: var(--secondary); font-weight: bold; }
+        .comment-text { color: #eee; line-height: 1.4; }
+        
+        .detail-meta-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            margin-bottom: 15px; background: rgba(0,0,0,0.3); padding: 10px;
+            border: 1px solid var(--border);
         }
 
         /* --- MODALS --- */
@@ -1205,6 +1251,7 @@
                     <button class="map-control-btn vision-btn thermal" onclick="setVisionMode('thermal'); playSound('click')">THRM</button>
                     <button class="map-control-btn vision-btn night" onclick="setVisionMode('night'); playSound('click')">NVG</button>
                     <button class="map-control-btn vision-btn" onclick="setVisionMode('normal'); playSound('click')">STD</button>
+                    <button class="map-control-btn vision-btn sat" onclick="setVisionMode('satellite'); playSound('click')">SAT</button>
                     <button class="map-control-btn" title="Toggle Heatmap" onclick="toggleHeatmap(); playSound('click')"><i class="fa fa-fire"></i></button>
                     <button class="map-control-btn" title="Center on HQ" onclick="centerMap(); playSound('click')"><i class="fa fa-compress-arrows-alt"></i></button>
                     <button class="map-control-btn" title="Run Satellite Sweep" onclick="runSatelliteSweep(); playSound('click')"><i class="fa fa-satellite"></i></button>
@@ -1581,6 +1628,8 @@
         let heatmapLayer;
         let weatherCanvas, weatherCtx;
         let currentVisionMode = 'normal';
+        let currentEditingId = null;
+        let isPickingLocation = false;
         let audioCtx = null;
         let audioEnabled = true;
 
@@ -1623,10 +1672,7 @@
 
             // Map Events
             map.on('click', function(e) {
-                document.getElementById('specLat').value = e.latlng.lat.toFixed(5);
-                document.getElementById('specLng').value = e.latlng.lng.toFixed(5);
-                // If modal is open, update inputs, else maybe open modal?
-                // For now, just update inputs if user opens modal later
+                handleMapClick(e.latlng.lat, e.latlng.lng);
             });
 
             map.on('move', updateHUD);
@@ -1664,10 +1710,11 @@
             if (mode === 'thermal') mapContainer.classList.add('vision-thermal');
             if (mode === 'night') mapContainer.classList.add('vision-night');
             if (mode === 'bio') mapContainer.classList.add('vision-bio');
+            if (mode === 'satellite') mapContainer.classList.add('vision-satellite');
         }
 
         // --- SIDEBAR LOGIC ---
-        function toggleSidebar() {
+        function toggleSidebar() { 
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             isSidebarOpen = !isSidebarOpen;
@@ -1758,7 +1805,6 @@
                 // Clear heatmap
                 const heatPoints = [];
 
-
                 if (data) {
                     const now = Date.now();
                     const expirationTime = 24 * 60 * 60 * 1000; // 24 hours
@@ -1774,17 +1820,28 @@
                     expiredSightings.sort((a, b) => b.timestamp - a.timestamp);
                 }
                 
-                allSightings.forEach(s => heatPoints.push([s.lat, s.lng, 0.5]));
+                // Optimize: Limit heatmap points if too many
+                const maxHeat = 500;
+                allSightings.slice(0, maxHeat).forEach(s => heatPoints.push([s.lat, s.lng, 0.5]));
                 heatmapLayer.setLatLngs(heatPoints);
 
-                renderFeed(allSightings);
-                renderMarkers(allSightings);
+                updateUI(); // Debounced render
                 renderArchive(expiredSightings);
                 
 
                 document.getElementById('active-count').innerText = `${allSightings.length} ACTIVE SIGNALS`;
                 logToTerminal("DATA SYNC COMPLETE");
             });
+        }
+
+        // Debounce UI updates to prevent lag on rapid data changes
+        let renderTimeout;
+        function updateUI() {
+            clearTimeout(renderTimeout);
+            renderTimeout = setTimeout(() => {
+                renderFeed(allSightings);
+                renderMarkers(allSightings);
+            }, 100);
         }
 
         function renderFeed(sightings) {
@@ -1796,7 +1853,8 @@
                 return;
             }
 
-            sightings.forEach(item => {
+            // Limit feed items for performance
+            sightings.slice(0, 50).forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'sighting-card';
                 card.id = `card-${item.id}`;
@@ -1805,6 +1863,15 @@
                 const timeStr = new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 const threatClass = item.threat === 'high' ? 'threat-high' : (item.threat === 'medium' ? 'threat-med' : 'threat-low');
                 const threatLabel = item.threat ? item.threat.toUpperCase() : 'UNKNOWN';
+                
+                // Edit/Delete buttons if owner
+                let ownerActions = '';
+                if (item.reportedBy === currentUser || currentUser === 'ADMIN') {
+                    ownerActions = `
+                        <button class="btn-card-action" style="color:var(--warning); border-color:var(--warning);" onclick="editSighting('${item.id}', event)"><i class="fa fa-edit"></i></button>
+                        <button class="btn-card-action" style="color:var(--danger); border-color:var(--danger);" onclick="deleteSighting('${item.id}', event)"><i class="fa fa-trash"></i></button>
+                    `;
+                }
 
                 card.innerHTML = `
                     <div class="card-top" onclick="playSound('click')">
@@ -1818,6 +1885,8 @@
                     <div class="card-actions">
                         <button class="btn-card-action" onclick="focusSighting('${item.id}', ${item.lat}, ${item.lng}); playSound('click')"><i class="fa fa-crosshairs"></i> LOCATE</button>
                         <button class="btn-card-action" onclick="launchDroneView('${item.name}'); playSound('click')"><i class="fa fa-video"></i> DRONE</button>
+                        <button class="btn-card-action" onclick="openSightingDetails('${item.id}', event)"><i class="fa fa-file-alt"></i> DETAILS</button>
+                        ${ownerActions}
                     </div>
                     <div class="card-time">${timeStr}</div>
                 `;
@@ -1826,10 +1895,13 @@
         }
 
         let currentSpeciesFilter = 'all';
+        let markerLayerGroup = L.layerGroup();
 
         function renderMarkers(sightings) {
+            if (!map) return;
             // Clear existing markers
-            Object.values(markers).forEach(m => map.removeLayer(m));
+            markerLayerGroup.clearLayers();
+            if (!map.hasLayer(markerLayerGroup)) map.addLayer(markerLayerGroup);
             markers = {};
 
             sightings.forEach(item => {
@@ -1851,7 +1923,7 @@
 
                 const imgHtml = item.image ? `<img src="${item.image}" style="width:100%; height:80px; object-fit:cover; margin-bottom:5px; border:1px solid #333;">` : '';
 
-                const marker = L.marker([item.lat, item.lng], { icon: customIcon }).addTo(map);
+                const marker = L.marker([item.lat, item.lng], { icon: customIcon });
                 marker.bindPopup(`
                     <div style="font-family:'JetBrains Mono'; font-size: 11px; line-height:1.4; width: 180px;">
                         ${imgHtml}
@@ -1861,11 +1933,16 @@
                         AGENT: ${item.reportedBy}
                     </div>
                 `);
+                markerLayerGroup.addLayer(marker);
                 markers[item.id] = marker;
                 
                 // Add click sound to marker
-                marker.on('click', () => {
-                    playSound('click');
+                marker.on('click', (e) => {
+                    if (isPickingLocation) {
+                        handleMapClick(e.latlng.lat, e.latlng.lng);
+                    } else {
+                        playSound('click');
+                    }
                 });
             });
         }
@@ -1882,7 +1959,10 @@
                 duration: 1.5
             });
             
-            if(markers[id]) markers[id].openPopup();
+            if(markers[id]) {
+                // Ensure layer is visible
+                markers[id].openPopup();
+            }
             
             // Highlight card
             document.querySelectorAll('.sighting-card').forEach(c => c.classList.remove('active'));
@@ -1923,15 +2003,18 @@
                 return;
             }
 
-            sightings.forEach(item => {
+            // Limit archive items
+            sightings.slice(0, 20).forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'sighting-card';
                 card.style.opacity = "0.7";
                 
                 const timeStr = new Date(item.timestamp).toLocaleDateString() + ' ' + new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const imgHtml = item.image ? `<div class="card-img" style="background-image: url('${item.image}')"></div>` : `<div class="card-img" style="background-color: #333;"></div>`;
 
                 card.innerHTML = `
                     <div class="card-top">
+                        ${imgHtml}
                         <div class="card-info">
                             <h4 style="color: #888;">${item.name}</h4>
                             <p><i class="fa fa-map-marker-alt"></i> ${item.location}</p>
@@ -1944,8 +2027,80 @@
         }
 
         // --- REPORTING LOGIC ---
-        function openReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('reportModal').style.display = 'none'; }
+        function getAutoGPS() {
+            if (navigator.geolocation) {
+                const latInput = document.getElementById('specLat');
+                const lngInput = document.getElementById('specLng');
+                latInput.placeholder = "Locating...";
+                lngInput.placeholder = "Locating...";
+                
+                navigator.geolocation.getCurrentPosition(position => {
+                    latInput.value = position.coords.latitude.toFixed(5);
+                    lngInput.value = position.coords.longitude.toFixed(5);
+                    showPushNotification("GPS LOCKED", "Coordinates acquired successfully.", "success");
+                }, error => {
+                    showPushNotification("GPS ERROR", "Signal lost or permission denied.", "warn");
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function selectLocationOnMap() {
+            document.getElementById('reportModal').style.display = 'none';
+            showPushNotification("MAP MODE", "Click target location on map.", "info");
+            document.getElementById('map').classList.add('picking-mode');
+            isPickingLocation = true;
+        }
+
+        function handleMapClick(lat, lng) {
+            if (isPickingLocation) {
+                const latInput = document.getElementById('specLat');
+                const lngInput = document.getElementById('specLng');
+                if (latInput && lngInput) {
+                    latInput.value = lat.toFixed(5);
+                    lngInput.value = lng.toFixed(5);
+                }
+                document.getElementById('map').classList.remove('picking-mode');
+                document.getElementById('reportModal').style.display = 'flex';
+                isPickingLocation = false;
+                playSound('click');
+            } else {
+                L.popup()
+                    .setLatLng([lat, lng])
+                    .setContent(`
+                        <div style="text-align:center; min-width: 150px;">
+                            <div style="font-family:'Orbitron'; color:var(--primary); font-size:0.8rem; margin-bottom:5px;">COORDINATES</div>
+                            <div style="font-family:monospace; color:#ccc; margin-bottom:10px;">${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+                            <button class="btn-card-action" style="width:100%; border:1px solid var(--primary); color:var(--primary);" onclick="openReportWithCoords(${lat}, ${lng})">
+                                <i class="fa fa-plus-circle"></i> REPORT HERE
+                            </button>
+                        </div>
+                    `)
+                    .openOn(map);
+            }
+        }
+
+        window.openReportWithCoords = function(lat, lng) {
+            openReportModal();
+            document.getElementById('specLat').value = lat.toFixed(5);
+            document.getElementById('specLng').value = lng.toFixed(5);
+        };
+
+        function openReportModal() { 
+            currentEditingId = null;
+            document.getElementById('reportModal').classList.remove('edit-mode');
+            document.getElementById('specName').value = "";
+            document.getElementById('specLoc').value = "";
+            document.getElementById('specLat').value = "";
+            document.getElementById('specLng').value = "";
+            document.getElementById('specImg').value = "";
+            document.getElementById('specNotes').value = "";
+            document.getElementById('submitSighting').innerText = "TRANSMIT DATA";
+            document.getElementById('reportModal').style.display = 'flex'; 
+        }
+        
+        function closeModal(id = 'reportModal') { document.getElementById(id).style.display = 'none'; }
 
         function autoFillThreat() {
             const species = document.getElementById('specName').value;
@@ -1957,6 +2112,32 @@
             if (highThreats.includes(species)) threatSelect.value = 'high';
             else if (medThreats.includes(species)) threatSelect.value = 'medium';
             else threatSelect.value = 'low';
+        }
+
+        function editSighting(id, event) {
+            if(event) event.stopPropagation();
+            const sighting = allSightings.find(s => s.id === id);
+            if (!sighting) return;
+
+            currentEditingId = id;
+            document.getElementById('specName').value = sighting.name;
+            document.getElementById('specLoc').value = sighting.location;
+            document.getElementById('specThreat').value = sighting.threat;
+            document.getElementById('specLat').value = sighting.lat;
+            document.getElementById('specLng').value = sighting.lng;
+            document.getElementById('specImg').value = sighting.image || "";
+            document.getElementById('specNotes').value = sighting.notes || "";
+            
+            document.getElementById('reportModal').classList.add('edit-mode');
+            document.getElementById('submitSighting').innerText = "UPDATE RECORD";
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+
+        function deleteSighting(id, event) {
+            if(event) event.stopPropagation();
+            if(confirm("WARNING: PERMANENTLY DELETE THIS RECORD?")) {
+                db.ref('sightings/' + id).remove();
+            }
         }
 
         document.getElementById('submitSighting').onclick = function() {
@@ -1985,25 +2166,34 @@
                 timestamp: Date.now()
             };
 
-            // Auto-upload to species DB (shared_dinos)
-            let dietType = 'carnivore';
-            if (threat === 'low') dietType = 'herbivore';
-            
-            let threatVal = 50;
-            if (threat === 'low') threatVal = 15;
-            if (threat === 'high') threatVal = 90;
+            if (currentEditingId) {
+                // Update existing
+                db.ref('sightings/' + currentEditingId).update(newSighting).then(() => {
+                    closeModal();
+                    logToTerminal("RECORD UPDATED SUCCESSFULLY.");
+                    showPushNotification("INTEL UPDATED", "Sighting record modified.", "success");
+                });
+            } else {
+                // Create new
+                // Auto-upload to species DB (shared_dinos) only on new
+                let dietType = 'carnivore';
+                if (threat === 'low') dietType = 'herbivore';
+                
+                let threatVal = 50;
+                if (threat === 'low') threatVal = 15;
+                if (threat === 'high') threatVal = 90;
 
-            db.ref('shared_dinos').push({
-                name: name,
-                diet: dietType,
-                threat: threatVal,
-                image: img || "https://via.placeholder.com/400x200?text=NO_IMAGE",
-                desc: `Auto-logged from sighting at ${loc}. ${notes}`,
-                contributor: currentUser,
-                timestamp: Date.now()
-            });
+                db.ref('shared_dinos').push({
+                    name: name,
+                    diet: dietType,
+                    threat: threatVal,
+                    image: img || "https://via.placeholder.com/400x200?text=NO_IMAGE",
+                    desc: `Auto-logged from sighting at ${loc}. ${notes}`,
+                    contributor: currentUser,
+                    timestamp: Date.now()
+                });
 
-            db.ref('sightings').push(newSighting).then(() => {
+                db.ref('sightings').push(newSighting).then(() => {
                 closeModal();
                 logToTerminal("TRANSMISSION SENT. DATA UPLOADED.");
                 showPushNotification("INTEL UPLOADED", "Asset location confirmed and logged.", "success");
@@ -2017,16 +2207,77 @@
                         timestamp: Date.now()
                     });
                 }
-
-                // Clear form
-                document.getElementById('specName').value = "";
-                document.getElementById('specLoc').value = "";
-                document.getElementById('specLat').value = "";
-                document.getElementById('specLng').value = "";
-                document.getElementById('specImg').value = "";
-                document.getElementById('specNotes').value = "";
-            });
+                });
+            }
         };
+
+        // --- SIGHTING DETAILS & COMMENTS ---
+        let activeDetailId = null;
+
+        function openSightingDetails(id, event) {
+            if(event) event.stopPropagation();
+            activeDetailId = id;
+            const sighting = allSightings.find(s => s.id === id);
+            if(!sighting) return;
+
+            const content = document.getElementById('detail-content');
+            content.innerHTML = `
+                <div style="display:flex; gap:15px; margin-bottom:15px;">
+                    <img src="${sighting.image || 'https://via.placeholder.com/150'}" style="width:120px; height:120px; object-fit:cover; border:1px solid var(--border);">
+                    <div style="flex:1;">
+                        <h2 style="color:var(--primary); font-family:'Orbitron'; margin-bottom:5px;">${sighting.name}</h2>
+                        <div class="detail-meta-grid">
+                            <div><span style="color:var(--text-dim)">LOC:</span> ${sighting.location}</div>
+                            <div><span style="color:var(--text-dim)">THREAT:</span> ${sighting.threat.toUpperCase()}</div>
+                            <div><span style="color:var(--text-dim)">AGENT:</span> ${sighting.reportedBy}</div>
+                            <div><span style="color:var(--text-dim)">TIME:</span> ${new Date(sighting.timestamp).toLocaleTimeString()}</div>
+                        </div>
+                        <p style="font-size:0.8rem; color:#ccc;">${sighting.notes || "No additional notes."}</p>
+                    </div>
+                </div>
+            `;
+            
+            loadSightingComments(id);
+            document.getElementById('sightingDetailModal').style.display = 'flex';
+        }
+
+        function loadSightingComments(id) {
+            const container = document.getElementById('detail-comments');
+            container.innerHTML = '<div style="text-align:center; color:var(--text-dim);"><i class="fa fa-circle-notch fa-spin"></i> Loading intel...</div>';
+            
+            db.ref(`sighting_comments/${id}`).on('value', snap => {
+                container.innerHTML = "";
+                const data = snap.val();
+                if(data) {
+                    Object.values(data).forEach(c => {
+                        container.innerHTML += `
+                            <div class="comment-item">
+                                <div class="comment-header">
+                                    <span class="comment-author">${c.user}</span>
+                                    <span>${new Date(c.timestamp).toLocaleString()}</span>
+                                </div>
+                                <div class="comment-text">${c.text}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = '<div style="text-align:center; color:var(--text-dim); font-size:0.7rem;">No intel logs yet.</div>';
+                }
+            });
+        }
+
+        function submitSightingComment() {
+            const input = document.getElementById('detailCommentInput');
+            const text = input.value.trim();
+            if(!text || !activeDetailId) return;
+
+            db.ref(`sighting_comments/${activeDetailId}`).push({
+                user: currentUser,
+                text: text,
+                timestamp: Date.now()
+            });
+            input.value = "";
+        }
 
         // --- CHAT LOGIC ---
         function initChat() {
@@ -2271,5 +2522,33 @@
         };
 
     </script>
+
+    <!-- New Modal for Sighting Details -->
+    <div class="modal" id="sightingDetailModal">
+        <div class="modal-content" style="max-width: 800px; display: flex; flex-direction: column; height: 80vh;">
+            <div class="modal-header">
+                <span><i class="fa fa-file-alt"></i> SIGHTING DOSSIER</span>
+                <span class="close-modal" onclick="closeModal('sightingDetailModal')"><i class="fa fa-times"></i></span>
+            </div>
+            <div class="detail-body" style="flex: 1; overflow-y: auto; padding-right: 10px;">
+                <div id="detail-content"></div>
+                <div class="comments-section" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
+                    <h4 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 10px;">INTEL LOGS</h4>
+                    <div id="detail-comments" style="margin-bottom: 15px;"></div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="detailCommentInput" placeholder="Add intel...">
+                        <button class="chat-send" onclick="submitSightingComment()"><i class="fa fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Mode Indicator in Report Modal -->
+    <style>
+        #reportModal.edit-mode .modal-content { border-color: var(--warning); }
+        #reportModal.edit-mode .btn-action { background: var(--warning); color: #000; }
+    </style>
+
 </body>
 </html>
