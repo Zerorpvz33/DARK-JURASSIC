@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dark Jurassic | Species Database V5.0</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    
+    <!-- External Assets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            --primary: #e63946;
+            --primary-dim: #8a232b;
+            --primary-glow: rgba(230, 57, 70, 0.5);
+            --secondary: #5dade2;
+            --secondary-glow: rgba(93, 173, 226, 0.3);
+            --bg-dark: #050505;
+            --bg-panel: rgba(10, 10, 10, 0.95);
+            --bg-card: #0e0e0e;
+            --card-bg: #0d0d0d;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(230, 57, 70, 0.8);
+            --text-main: #e0e0e0;
+            --text-dim: #888888;
+            --text-highlight: #ffffff;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+            --sidebar-width: 280px;
+            --nav-height: 70px;
+            --scanline-color: rgba(0, 0, 0, 0.5);
+            --herbivore: #2ecc71;
+            --carnivore: #e63946;
+            --omnivore: #f1c40f;
+            --piscivore: #5dade2;
+            --insectivore: #9b59b6;
+        }
+
+        /* --- GLOBAL RESET & SCROLLBAR --- */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dim); }
+
+        body { 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'JetBrains+Mono', monospace; 
+            overflow-x: hidden;
+            line-height: 1.6;
+            font-size: 14px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-attachment: fixed;
+        }
+
+        /* --- BACKGROUND FX (SCANLINES & NOISE) --- */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmYvP41FAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAHdElNRQfmBwUQDw0u825TAAAAHWlUWHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAABbSURBVDjL7dOxDcAgDAXRVkzABowBS2YBVsAmnSVj4Q6i/qP4010iKj5F559iJ65S816b1E5c40l6X+3Ew0y9b/biZqY+N/txM9P42+zHw0xjb/bjZabxt9mPl5n6B3D6Wv44K56WAAAAAElFTkSuQmCC');
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 9998;
+            animation: noise-anim 0.5s infinite linear;
+        }
+
+        @keyframes noise-anim {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
+
+        /* --- HEADER & NAVIGATION --- */
+        header {
+            height: var(--nav-height);
+            background: rgba(5, 5, 5, 0.95);
+            border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0; width: 100%;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .navbar {
+            max-width: 1800px;
+            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900; 
+            color: var(--text-main); 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1.2rem;
+            position: relative;
+        }
+        
+        .logo img { 
+            height: 40px; 
+            filter: drop-shadow(0 0 5px var(--primary-glow));
+            transition: 0.3s;
+        }
+
+        .logo:hover img {
+            filter: drop-shadow(0 0 10px var(--primary));
+            transform: scale(1.05);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 5px; 
+            list-style: none;
+            height: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
+        }
+
+        .nav-links li a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            padding: 0 15px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: 0.3s;
+            gap: 4px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-links li a i { font-size: 1.1rem; margin-bottom: 2px; }
+
+        .nav-links li a:hover, .nav-links li a.active { 
+            color: var(--primary); 
+            background: linear-gradient(to bottom, transparent 0%, rgba(230, 57, 70, 0.1) 100%);
+            border-bottom-color: var(--primary);
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .nav-text { 
+            font-size: 0.6rem; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        @media (max-width: 1024px) {
+            .menu-toggle { display: block; }
+        }
+
+        /* --- Sidebar (Mobile) --- */
+        .mobile-sidebar {
+            position: fixed;
+            top: 0; left: -100%;
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--primary);
+            z-index: 2000;
+            transition: 0.4s ease;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mobile-sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.8); }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #222;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+            font-family: 'Orbitron';
+            font-weight: bold;
+        }
+
+        .sidebar-header img { height: 30px; }
+
+        .sidebar-links { list-style: none; overflow-y: auto; flex: 1; }
+        .sidebar-links li a {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: 0.2s;
+            border-left: 4px solid transparent;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .sidebar-links li a:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1999;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+
+        /* --- Main Content --- */
+        main {
+            margin-top: var(--nav-height);
+            padding: 40px 20px;
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(180deg, rgba(5,5,5,0.8) 0%, rgba(5,5,5,1) 100%), 
+                        url('https://images.unsplash.com/photo-1518546305927-5a555bb7020d?q=80&w=1600');
+            background-size: cover;
+            background-position: center;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .glitch-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            color: #fff;
+            position: relative;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
+            clip: rect(0, 0, 0, 0);
+        }
+
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -2px 0 var(--secondary);
+            animation: glitch-anim 2s infinite linear alternate-reverse;
+        }
+
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -2px 0 var(--primary);
+            animation: glitch-anim2 3s infinite linear alternate-reverse;
+        }
+
+        .agent-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 20px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            backdrop-filter: blur(5px);
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            background: #00ff00;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff00;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; }
+        }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            background: var(--bg-panel);
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .search-container {
+            flex: 1;
+            position: relative;
+            min-width: 280px;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex-grow: 1;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 10px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+        }
+
+        .search-container input {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 10px 10px 10px 35px;
+            color: white;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .search-container input:focus { border-color: var(--primary); }
+
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-action:hover {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        /* --- Dino Kaarten --- */
+        .dino-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .dino-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            transition: 0.3s;
+            position: relative;
+            display: flex; flex-direction: column;
+            cursor: pointer;
+        }
+
+        .dino-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .dino-img-container {
+            width: 100%;
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            background: #111;
+        }
+
+        .dino-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: 0.5s;
+            filter: grayscale(0.5) contrast(1.2);
+        }
+
+        .dino-card:hover .dino-img-container img {
+            transform: scale(1.1);
+            filter: grayscale(0);
+        }
+
+        .diet-tag {
+            position: absolute;
+            top: 15px; right: 15px;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            z-index: 2;
+        }
+
+        .diet-carnivore { background: #e63946; color: white; }
+        .diet-herbivore { background: #2a9d8f; color: white; }
+        .diet-omnivore { background: #f4a261; color: white; }
+        .diet-piscivore { background: #5dade2; color: white; }
+        .diet-insectivore { background: var(--insectivore); color: white; }
+
+        .dino-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .dino-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .dino-desc {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .dino-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: auto;
+        }
+        
+        .card-actions {
+            display: flex; gap: 5px; margin-top: 10px;
+        }
+        .btn-card {
+            flex: 1; background: #111; border: 1px solid var(--border); color: var(--text-dim); font-size: 0.65rem; padding: 5px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-card:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* --- Modals --- */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        .modal-content {
+            background: var(--bg-panel);
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+            padding: 40px;
+            position: relative;
+            animation: modalFade 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes modalFade {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .close-modal:hover { color: var(--primary); }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 12px;
+            color: white;
+            font-family: inherit;
+            outline: none;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+
+        .form-group textarea { height: 100px; resize: none; }
+
+        /* --- PUSH NOTIFICATIONS --- */
+        .push-notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 6000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .push-alert {
+            background: rgba(10, 10, 10, 0.95);
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            width: 300px;
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* --- Animations --- */
+        @keyframes glitch-anim {
+            0% { clip: rect(44px, 9999px, 56px, 0); }
+            20% { clip: rect(10px, 9999px, 30px, 0); }
+            40% { clip: rect(67px, 9999px, 80px, 0); }
+            60% { clip: rect(2px, 9999px, 15px, 0); }
+            80% { clip: rect(89px, 9999px, 95px, 0); }
+            100% { clip: rect(33px, 9999px, 45px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(12px, 9999px, 25px, 0); }
+            30% { clip: rect(45px, 9999px, 60px, 0); }
+            60% { clip: rect(5px, 9999px, 18px, 0); }
+            90% { clip: rect(80px, 9999px, 99px, 0); }
+        }
+
+        /* --- Mobile Responsive --- */
+        @media (max-width: 992px) {
+            .nav-links { display: none; }
+            .menu-toggle { display: block; }
+            .nav-text { display: none; }
+        }
+
+        .dossier-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-panel);
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .dossier-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .dossier-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+        }
+
+        .dossier-image-frame {
+            width: 100%;
+            height: 300px;
+            border: 2px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .dossier-image-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: sepia(0.2) contrast(1.2);
+        }
+
+        .scan-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 255, 0, 0.1) 51%, transparent 52%);
+            background-size: 100% 10px;
+            animation: scan 2s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100%; }
+        }
+
+        .dossier-stats {
+            margin-top: 20px;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 0;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .stat-row span:last-child {
+            color: var(--primary);
+            font-weight: bold;
+            font-family: 'Orbitron';
+        }
+
+        .threat-assessment { margin: 20px 0; }
+
+        .threat-bar { height: 10px; background: #222; margin-top: 5px; border-radius: 5px; overflow: hidden; }
+
+        #detail-threat-fill { height: 100%; width: 0%; transition: width 1s ease; }
+
+        .dna-sequence-box {
+            margin-top: 20px; background: #000; border: 1px solid var(--secondary); padding: 10px;
+            font-family: monospace; color: var(--secondary); font-size: 0.7rem;
+            word-break: break-all; max-height: 100px; overflow-y: auto;
+        }
+
+        .contributor-tag {
+            margin-top: 20px; font-size: 0.7rem; color: var(--text-dim);
+            text-align: right; border-top: 1px solid var(--border); padding-top: 10px;
+        }
+        
+        /* --- NEW FEATURES CSS --- */
+        
+        /* Comparison Bar */
+        .comparison-bar {
+            position: fixed; bottom: -120px; left: 0; width: 100%;
+            background: var(--bg-panel); border-top: 2px solid var(--primary);
+            padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 4000;
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.9);
+            backdrop-filter: blur(10px);
+        }
+        .comparison-bar.active { bottom: 0; }
+        
+        .compare-slots { display: flex; gap: 15px; }
+        .compare-slot {
+            width: 60px; height: 60px; border: 1px dashed var(--text-dim);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; color: var(--text-dim); background: #000;
+            position: relative; border-radius: 4px; overflow: hidden;
+        }
+        .compare-slot img { width: 100%; height: 100%; object-fit: cover; }
+        .compare-slot .remove-slot {
+            position: absolute; top: 2px; right: 2px;
+            background: rgba(0,0,0,0.8); color: var(--danger); border-radius: 50%;
+            width: 16px; height: 16px; font-size: 10px; display: flex;
+            align-items: center; justify-content: center; cursor: pointer;
+            border: 1px solid var(--danger);
+        }
+        
+        /* Comparison Modal */
+        .comparison-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 5000; display: none;
+            flex-direction: column; overflow-y: auto;
+        }
+        .comparison-header {
+            padding: 20px; background: var(--bg-panel); border-bottom: 1px solid var(--primary);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .comparison-content {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+            background: var(--primary); flex-grow: 1; min-height: 0;
+        }
+        .compare-col {
+            background: var(--bg-dark); padding: 30px;
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; overflow-y: auto;
+        }
+        .compare-img {
+            width: 100%; max-width: 400px; height: 250px; object-fit: cover;
+            border: 2px solid var(--border); margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .compare-stat {
+            width: 100%; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; font-size: 0.9rem;
+        }
+        .compare-stat label { color: var(--text-dim); text-transform: uppercase; font-size: 0.7rem; }
+        .compare-stat span { color: var(--text-highlight); font-family: 'Orbitron'; }
+        
+        /* Field Notes */
+        .field-notes-section {
+            margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px;
+        }
+        .notes-list {
+            max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border); padding: 15px; margin-bottom: 15px;
+        }
+        .note-item {
+            margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 8px; font-size: 0.8rem;
+        }
+        .note-meta { font-size: 0.65rem; color: var(--secondary); margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .note-text { color: #ccc; line-height: 1.4; }
+        
+        /* Enhanced Controls */
+        .sort-select {
+            background: #000; border: 1px solid var(--border); color: white;
+            padding: 10px; font-family: inherit; outline: none; cursor: pointer;
+        }
+        .sort-select:focus { border-color: var(--primary); }
+        
+        .watchlist-btn {
+            position: absolute; top: 10px; left: 10px; z-index: 5;
+            color: rgba(255,255,255,0.3); font-size: 1.2rem; transition: 0.3s;
+        }
+        .watchlist-btn:hover, .watchlist-btn.active { color: var(--warning); text-shadow: 0 0 10px var(--warning); }
+
+        @media (max-width: 768px) {
+            .glitch-text { font-size: 1.8rem; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .btn-action { justify-content: center; }
+            .dossier-grid { grid-template-columns: 1fr; }
+            .dossier-image-frame { height: 200px; }
+            .modal-content { padding: 20px; }
+            .comparison-content { grid-template-columns: 1fr; grid-template-rows: auto auto; }
+            .compare-col { border-bottom: 2px solid var(--primary); }
+        }
+
+        /* --- THREAT CALCULATOR --- */
+        .threat-modal-content {
+            max-width: 500px;
+            background: #0a0a0a;
+            border: 1px solid var(--danger);
+            box-shadow: 0 0 30px rgba(231, 76, 60, 0.2);
+        }
+        
+        .slider-group { margin-bottom: 20px; }
+        
+        .slider-label {
+            display: flex; justify-content: space-between;
+            color: var(--text-dim); font-size: 0.8rem; margin-bottom: 5px;
+            font-family: 'Orbitron';
+        }
+        
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 16px; width: 16px;
+            border-radius: 50%; background: var(--danger);
+            cursor: pointer; margin-top: -6px;
+            box-shadow: 0 0 10px var(--danger);
+            transition: 0.2s;
+        }
+        
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer;
+            background: #333; border-radius: 2px;
+        }
+        
+        .radar-chart-container {
+            width: 100%; height: 250px; position: relative; margin: 20px 0;
+            background: radial-gradient(circle, rgba(255,0,0,0.05) 0%, transparent 70%);
+        }
+
+        /* --- BATTLE SIMULATOR --- */
+        .battle-arena {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+            height: 300px; position: relative; border: 1px solid var(--danger);
+            margin-bottom: 15px; overflow: hidden;
+        }
+        .fighter-card {
+            width: 40%; background: rgba(0,0,0,0.8); padding: 10px;
+            border: 1px solid var(--border); text-align: center; transition: 0.3s;
+            position: relative; z-index: 2;
+        }
+        .fighter-card.winner { border-color: var(--success); box-shadow: 0 0 20px var(--success); }
+        .fighter-card.loser { border-color: var(--danger); opacity: 0.5; filter: grayscale(1); }
+        .fighter-img { width: 100%; height: 150px; object-fit: cover; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+        .vs-badge {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            font-size: 3rem; font-weight: 900; color: var(--danger);
+            text-shadow: 0 0 20px #000; z-index: 1; font-family: 'Orbitron';
+        }
+        .battle-log {
+            height: 150px; overflow-y: auto; background: #000;
+            border: 1px solid var(--border); padding: 10px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+            color: #ccc;
+        }
+        .log-hit { color: var(--warning); }
+        .log-crit { color: var(--danger); font-weight: bold; }
+        .log-win { color: var(--success); font-weight: bold; border-top: 1px solid var(--success); padding-top: 5px; margin-top: 5px; }
+        .hp-bar { width: 100%; height: 6px; background: #333; margin-top: 5px; }
+        .hp-fill { height: 100%; background: var(--success); width: 100%; transition: width 0.2s; }
+
+        /* --- DNA LAB --- */
+        .dna-lab-container {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 300px;
+            background: #050505; padding: 20px; border: 1px solid var(--secondary);
+        }
+        .dna-strand {
+            height: 100%; background: rgba(0, 212, 255, 0.05);
+            border: 1px solid var(--secondary); position: relative; overflow-y: hidden;
+            display: flex; flex-direction: column;
+        }
+        .base-pair {
+            height: 20px; width: 100%; border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            display: flex; justify-content: space-between; padding: 0 10px;
+            align-items: center; font-family: monospace; color: var(--secondary); font-size: 0.7rem;
+        }
+        .base-pair.match { background: rgba(0, 212, 255, 0.2); color: #fff; }
+        .base-pair.error { background: rgba(255, 0, 0, 0.2); color: var(--danger); }
+        
+        /* --- AUDIO PLAYER --- */
+        .audio-interface {
+            display: flex; align-items: center; gap: 15px;
+            background: #0a0a0a; padding: 15px; border: 1px solid var(--border);
+            margin-top: 15px; border-radius: 4px;
+        }
+        .play-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #fff; transition: 0.2s; flex-shrink: 0;
+        }
+        .play-btn:hover { transform: scale(1.1); box-shadow: 0 0 10px var(--primary); }
+        .waveform-canvas { flex: 1; height: 40px; background: #000; border: 1px solid #333; width: 100%; }
+
+        /* --- HABITAT MAP --- */
+        .habitat-map-container {
+            height: 200px; width: 100%; background: #000;
+            border: 1px solid var(--border); margin-top: 15px;
+            position: relative; overflow: hidden;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- VISUAL OVERLAYS -->
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+    <div class="push-notification-container" id="push-container"></div>
+
+    <!-- Mobile Sidebar -->
+    <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <aside class="mobile-sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <img src="logo.png" alt="Logo">
+                <span>SYSTEM MENU</span>
+            </div>
+            <button class="menu-toggle" onclick="toggleSidebar()" style="display:block; border:none;">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <ul class="sidebar-links">
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
+        </ul>
+        <div style="padding: 20px; margin-top: auto; border-top: 1px solid #222; font-size: 0.7rem; color: #555; text-align: center;">
+            SECURE CONNECTION<br>V4.0.2 STABLE
+        </div>
+    </aside>
+
+    <header>
+        <nav class="navbar">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Logo">
+                <span>DARK JURASSIC</span>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="index.html"><i class="fa fa-home"></i><span class="nav-text">Home</span></a></li>
+                <li><a href="forum.html"><i class="fa fa-comments"></i><span class="nav-text">Intel</span></a></li>
+                <li><a href="sightings.html"><i class="fa fa-crosshairs"></i><span class="nav-text">Tracker</span></a></li>
+                <li><a href="dinosaurs.html"><i class="fa fa-dna"></i><span class="nav-text">Species</span></a></li>
+                <li><a href="users.html"><i class="fa fa-user-secret"></i><span class="nav-text">Agents</span></a></li>
+                <li><a href="dms.html"><i class="fa fa-envelope"></i><span class="nav-text">DMs</span></a></li>
+                <li><a href="blackmarket.html"><i class="fa fa-briefcase"></i><span class="nav-text">Market</span></a></li>
+                <li><a href="vault.html"><i class="fa fa-lock"></i><span class="nav-text">Vault</span></a></li>
+                <li><a href="profile.html"><i class="fa fa-cog"></i><span class="nav-text">System</span></a></li>
+                <li id="admin-nav" style="display:none;"><a href="admin.html"><i class="fa fa-terminal"></i><span class="nav-text">Admin</span></a></li>
+                <li><a href="login.html"><i class="fa fa-sign-in-alt"></i><span class="nav-text">Login</span></a></li>
+            </ul>
+
+            <button class="menu-toggle" onclick="toggleSidebar()">
+                <i class="fa fa-bars"></i>
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        
+        <section class="hero">
+            <h1 class="glitch-text" data-text="SPECIES_DB_ACCESS">SPECIES_DB_ACCESS</h1>
+            <div class="agent-badge">
+                <div class="status-dot"></div>
+                <span id="agent-display">ENCRYPTED_USER@DJ_TERMINAL</span>
+            </div>
+        </section>
+
+        <section class="controls">
+            <div class="search-container">
+                <i class="fa fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search DNA records (Name, Diet, Class)..." oninput="filterRecords()">
+            </div>
+            <div class="filter-controls">
+                <select id="sortSelect" class="sort-select" onchange="sortRecords()">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="name">Name (A-Z)</option>
+                </select>
+            </div>
+            <button class="btn-action" onclick="openModal()">
+                <i class="fa fa-plus-circle"></i> Index New Specimen
+            </button>
+            <button class="btn-action" style="border-color: var(--danger); color: var(--danger);" onclick="openBattleSim()">
+                <i class="fa fa-fist-raised"></i> Battle Sim
+            </button>
+            <button class="btn-action" style="border-color: var(--secondary); color: var(--secondary);" onclick="openDNALab()">
+                <i class="fa fa-dna"></i> DNA Lab
+            </button>
+        </section>
+
+        <div id="dinoGrid" class="dino-grid">
+            <!-- Dynamic Content Load -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                <i class="fa fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+                <p style="margin-top: 15px; color: var(--text-dim);">Connecting to Remote Genome Server...</p>
+            </div>
+        </div>
+
+        <!-- Comparison Bar -->
+        <div class="comparison-bar" id="comparisonBar">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="font-family: 'Orbitron'; color: var(--primary);">COMPARISON ENGINE</span>
+                <div class="compare-slots" id="compareSlots">
+                    <div class="compare-slot">EMPTY</div>
+                    <div class="compare-slot">EMPTY</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-action" onclick="clearComparison()">CLEAR</button>
+                <button class="btn-action" style="background: var(--primary); color: #fff;" onclick="launchComparison()">COMPARE</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">SPECIMEN UPLOAD</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <input type="hidden" id="dinoId">
+            <div class="form-group">
+                <label>Scientific Name / ID</label>
+                <input type="text" id="dinoName" placeholder="e.g. Tyrannosaurus Rex">
+            </div>
+            <div class="form-group">
+                <label>Dietary Classification</label>
+                <select id="dinoDiet">
+                    <option value="carnivore">Carnivore (Meat-Eater)</option>
+                    <option value="herbivore">Herbivore (Plant-Eater)</option>
+                    <option value="omnivore">Omnivore (Generalist)</option>
+                    <option value="piscivore">Piscivore (Fish-Eater)</option>
+                    <option value="insectivore">Insectivore (Insect-Eater)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>THREAT LEVEL:</label>
+                <input type="number" id="dinoThreat" min="0" max="100" placeholder="0-100">
+            </div>
+            <div class="form-group">
+                <label>Asset Image URL</label>
+                <input type="url" id="dinoImage" placeholder="https://image-source.com/specimen.jpg">
+            </div>
+            <div class="form-group">
+                <label>Observation Notes / DNA Breakdown</label>
+                <textarea id="dinoDesc" placeholder="Describe behavior, genetic markers, or habitat requirements..."></textarea>
+            </div>
+            <button class="btn-action" style="width: 100%;" onclick="submitDino()">
+                <i class="fa fa-cloud-upload-alt"></i> Authorize Data Indexing
+            </button>
+        </div>
+    </div>
+
+    <!-- Detail Modal (Dossier) -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content dossier-modal-content">
+            <div class="dossier-header">
+                <h2 id="detail-name" class="glitch-text" data-text="" style="font-size: 1.5rem; margin: 0;"></h2>
+                <button class="close-modal" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="dossier-body">
+                <div class="dossier-grid">
+                    <div class="dossier-left">
+                        <div class="dossier-image-frame">
+                            <img id="detail-img" src="" alt="">
+                            <div class="scan-overlay"></div>
+                        </div>
+                        <div class="dossier-stats">
+                            <div class="stat-row"><span>DIET:</span> <span id="detail-diet"></span></div>
+                            <div class="stat-row"><span>ERA:</span> <span id="detail-era">CRETACEOUS</span></div>
+                            <div class="stat-row"><span>HEIGHT:</span> <span id="detail-height">--</span></div>
+                            <div class="stat-row"><span>WEIGHT:</span> <span id="detail-weight">--</span></div>
+                        </div>
+                        
+                        <!-- Habitat Map -->
+                        <div class="habitat-map-container" id="habitatMap">
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png') no-repeat center; opacity: 0.5; filter: invert(1);"></div>
+                            <div style="position: absolute; bottom: 5px; left: 5px; font-size: 0.6rem; color: var(--success);">
+                                <i class="fa fa-satellite"></i> LIVE TRACKING: SECTOR <span id="detail-sector">7G</span>
+                            </div>
+                        </div>
+                        <canvas id="dna-canvas" style="margin-top: 20px; height: 150px;"></canvas>
+                    </div>
+                    <div class="dossier-right">
+                        <div class="threat-assessment">
+                            <span style="font-size: 0.7rem; color: var(--text-dim);">THREAT LEVEL:</span>
+                            <div class="threat-bar"><div id="detail-threat-fill"></div></div>
+                        </div>
+                        <p id="detail-desc" style="font-size: 0.9rem; color: #ccc; line-height: 1.6; margin-bottom: 20px;"></p>
+                        
+                        <!-- Audio Player -->
+                        <div class="audio-interface">
+                            <div class="play-btn" onclick="playDinoRoar()"><i class="fa fa-play" id="audio-icon"></i></div>
+                            <canvas id="audioVisualizer" class="waveform-canvas"></canvas>
+                        </div>
+                        
+                        <div class="dna-sequence-box">
+                            <h4 style="color: var(--primary); margin-bottom: 5px;">GENETIC SEQUENCE FRAGMENT</h4>
+                            <div id="detail-dna"></div>
+                        </div>
+
+                        <div class="contributor-tag">
+                            INDEXED BY: <span id="detail-contributor" style="color: var(--success);"></span>
+                        </div>
+
+                        <!-- Field Notes Section -->
+                        <div class="field-notes-section">
+                            <h4 style="color: var(--secondary); font-family: 'Orbitron'; margin-bottom: 10px;">FIELD NOTES</h4>
+                            <div class="notes-list" id="notesList">
+                                <div style="text-align: center; color: var(--text-dim); padding: 10px;">Loading encrypted notes...</div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="newNoteInput" placeholder="Add observation..." style="flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 8px;">
+                                <button class="btn-action" onclick="submitFieldNote()">
+                                    <i class="fa fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Modal -->
+    <div id="comparisonModal" class="comparison-modal">
+        <div class="comparison-header">
+            <h2 class="glitch-text" data-text="GENETIC COMPARISON" style="font-size: 1.5rem; margin: 0;">GENETIC COMPARISON</h2>
+            <button class="close-modal" onclick="closeComparison()">&times;</button>
+        </div>
+        <div class="comparison-content" id="comparisonContent">
+            <!-- Injected via JS -->
+        </div>
+    </div>
+
+    <!-- Threat Calculator Modal -->
+    <div id="threatModal" class="modal">
+        <div class="modal-content threat-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: var(--danger);">THREAT ASSESSMENT</h2>
+                <button class="close-modal" onclick="closeThreatCalc()">&times;</button>
+            </div>
+            
+            <div class="radar-chart-container">
+                <canvas id="threatRadarCanvas"></canvas>
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label"><span>AGGRESSION</span> <span id="val-agg">5</span></div>
+                <input type="range" min="1" max="10" value="5" oninput="updateThreatCalc('agg', this.value)">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>INTELLIGENCE</span> <span id="val-int">5</span></div>
+                <input type="range" min="1" max="10" value="5" oninput="updateThreatCalc('int', this.value)">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>SPEED</span> <span id="val-spd">5</span></div>
+                <input type="range" min="1" max="10" value="5" oninput="updateThreatCalc('spd', this.value)">
+            </div>
+            <div class="slider-group">
+                <div class="slider-label"><span>SIZE</span> <span id="val-siz">5</span></div>
+                <input type="range" min="1" max="10" value="5" oninput="updateThreatCalc('siz', this.value)">
+            </div>
+
+            <div style="text-align: center; margin: 20px 0; font-family: 'Orbitron';">
+                CALCULATED THREAT: <span id="calc-threat-level" style="font-size: 1.5rem; color: var(--danger);">MODERATE</span>
+            </div>
+
+            <button class="btn-action" style="width: 100%; border-color: var(--danger); color: var(--danger);" onclick="saveThreatData()">LOG ASSESSMENT</button>
+        </div>
+    </div>
+
+    <!-- Battle Simulator Modal -->
+    <div id="battleModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: var(--danger);">COMBAT SIMULATION</h2>
+                <button class="close-modal" onclick="closeBattleSim()">&times;</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <select id="fighter1-select" class="form-group" style="flex:1; background:#000; color:#fff; padding:10px; border:1px solid var(--border);" onchange="updateFighter(1)">
+                    <option value="">Select Challenger 1</option>
+                </select>
+                <select id="fighter2-select" class="form-group" style="flex:1; background:#000; color:#fff; padding:10px; border:1px solid var(--border);" onchange="updateFighter(2)">
+                    <option value="">Select Challenger 2</option>
+                </select>
+            </div>
+
+            <div class="battle-arena">
+                <div class="fighter-card" id="fighter1-card">
+                    <img src="" class="fighter-img" id="fighter1-img" onerror="this.style.display='none'">
+                    <h3 id="fighter1-name">EMPTY</h3>
+                    <div class="hp-bar"><div class="hp-fill" id="fighter1-hp"></div></div>
+                </div>
+                <div class="vs-badge">VS</div>
+                <div class="fighter-card" id="fighter2-card">
+                    <img src="" class="fighter-img" id="fighter2-img" onerror="this.style.display='none'">
+                    <h3 id="fighter2-name">EMPTY</h3>
+                    <div class="hp-bar"><div class="hp-fill" id="fighter2-hp"></div></div>
+                </div>
+            </div>
+
+            <button class="btn-action" style="width: 100%; background: var(--danger); color: #fff; border: none;" onclick="startBattle()">INITIATE COMBAT</button>
+            
+            <div class="battle-log" id="battleLog">
+                > WAITING FOR INPUT...
+            </div>
+        </div>
+    </div>
+
+    <!-- DNA Lab Modal -->
+    <div id="dnaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: var(--secondary);">GENETIC SEQUENCER</h2>
+                <button class="close-modal" onclick="closeDNALab()">&times;</button>
+            </div>
+            <div class="dna-lab-container" id="dnaLabGrid"></div>
+            <button class="btn-action" style="width: 100%; margin-top: 15px; border-color: var(--secondary); color: var(--secondary);" onclick="runSequencer()">RUN SEQUENCE ANALYSIS</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxYUTNlBuhPQ2neLPAYCLDg0e-J76DIuU",
+            authDomain: "dark-jurassic-378b5.firebaseapp.com",
+            databaseURL: "https://dark-jurassic-378b5-default-rtdb.firebaseio.com/",
+            projectId: "dark-jurassic-378b5",
+            storageBucket: "dark-jurassic-378b5.firebasestorage.app",
+            messagingSenderId: "144100722100",
+            appId: "1:144100722100:web:be3b4690724a7a117fdee1"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let currentAgent = "Guest_Agent";
+        let allDinos = [];
+        let compareList = [];
+        let watchlist = JSON.parse(localStorage.getItem('dj_watchlist')) || [];
+        let currentDetailId = null;
+        let activeThreatDino = null;
+        let threatStats = { agg: 5, int: 5, spd: 5, siz: 5 };
+        let audioCtx, audioAnalyser, audioCanvasCtx;
+
+        // --- Auth & Init ---
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                const username = user.email.split('@')[0].replace(/\./g, '_');
+                currentAgent = username;
+                document.getElementById('agent-display').innerText = `${currentAgent.toUpperCase()}@SECURE_LINK`;
+
+                db.ref('users/' + username).once('value').then(snapshot => {
+                    const data = snapshot.val();
+                    if (data && data.role === 'admin') {
+                        document.getElementById('admin-nav').style.display = 'block';
+                        document.getElementById('admin-sidebar').style.display = 'block';
+                    }
+                });
+            } else {
+                // Allow read-only access for guests
+                document.getElementById('agent-display').innerText = `GUEST_SESSION@READ_ONLY`;
+            }
+            loadDatabase();
+        });
+
+        // --- Core Functions ---
+        function loadDatabase() {
+            db.ref('shared_dinos').on('value', snap => {
+                const data = snap.val();
+                allDinos = [];
+                if (data) {
+                    for (let id in data) {
+                        allDinos.push({ id, ...data[id] });
+                    }
+                }
+                renderDinos(allDinos);
+            });
+        }
+
+        function renderDinos(data) {
+            const grid = document.getElementById('dinoGrid');
+            if (data.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">No DNA records found in database. Start indexing.</div>`;
+                return;
+            }
+
+            grid.innerHTML = data.map(dino => {
+                const isWatched = watchlist.includes(dino.id);
+                const isOwner = dino.contributor === currentAgent;
+                return `
+                <div class="dino-card" style="animation: fadeIn 0.5s ease-out;">
+                    <i class="fa fa-star watchlist-btn ${isWatched ? 'active' : ''}" onclick="toggleWatchlist('${dino.id}', event)"></i>
+                    <div class="dino-img-container">
+                        <span class="diet-tag diet-${dino.diet}">${dino.diet}</span>
+                        <img src="${dino.image}" onerror="this.src='https://via.placeholder.com/400x200?text=DNA_RECONSTRUCTION_FAILED'" alt="${dino.name}" onclick="openDetail('${dino.id}')">
+                    </div>
+                    <div class="dino-info">
+                        <h3 class="dino-name">${dino.name}</h3>
+                        <p class="dino-desc">${dino.desc || 'No additional data provided.'}</p>
+                        <div class="dino-meta">
+                            <span><i class="fa fa-user-secret"></i> ${dino.contributor || 'ANONYMOUS'}</span>
+                            <span><i class="fa fa-clock"></i> ${new Date(dino.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-card" onclick="openDetail('${dino.id}')"><i class="fa fa-file-alt"></i> DOSSIER</button>
+                            <button class="btn-card" onclick="addToCompare('${dino.id}')"><i class="fa fa-balance-scale"></i> COMPARE</button>
+                            ${isOwner ? `<button class="btn-card" style="border-color: var(--warning); color: var(--warning);" onclick="editDino('${dino.id}')"><i class="fa fa-edit"></i> EDIT</button>` : `<button class="btn-card" onclick="openThreatCalc('${dino.id}')"><i class="fa fa-radiation"></i> THREAT</button>`}
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function filterRecords() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = allDinos.filter(d => 
+                d.name.toLowerCase().includes(query) || 
+                d.diet.toLowerCase().includes(query) ||
+                (d.desc && d.desc.toLowerCase().includes(query))
+            );
+            
+            // Apply Sort
+            const sortType = document.getElementById('sortSelect').value;
+            if (sortType === 'newest') {
+                filtered.sort((a, b) => b.timestamp - a.timestamp);
+            } else if (sortType === 'oldest') {
+                filtered.sort((a, b) => a.timestamp - b.timestamp);
+            } else if (sortType === 'name') {
+                filtered.sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            // Prioritize Watchlist
+            filtered.sort((a, b) => {
+                const aW = watchlist.includes(a.id) ? 1 : 0;
+                const bW = watchlist.includes(b.id) ? 1 : 0;
+                return bW - aW;
+            });
+
+            renderDinos(filtered);
+        }
+
+        function sortRecords() {
+            filterRecords();
+        }
+
+        function submitDino() {
+            const id = document.getElementById('dinoId').value;
+            const name = document.getElementById('dinoName').value;
+            const diet = document.getElementById('dinoDiet').value;
+            const threat = document.getElementById('dinoThreat').value;
+            const image = document.getElementById('dinoImage').value;
+            const desc = document.getElementById('dinoDesc').value;
+
+            if (currentAgent === "Guest_Agent") {
+                showNotification("ACCESS_DENIED: Guest agents cannot index new data.", "error");
+                return;
+            }
+
+            if (!name || !image || !desc) {
+                showNotification("CRITICAL_ERROR: Missing mandatory data fields.", "error");
+                return;
+            }
+
+            const dinoData = {
+                name, diet, threat, image, desc,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            if (id) {
+                // Update existing
+                db.ref('shared_dinos/' + id).update(dinoData).then(() => {
+                    showNotification("DATABASE UPDATED: Specimen modified.", "success");
+                    closeModal();
+                }).catch(err => {
+                    showNotification("UPDATE_FAILED: " + err.message, "error");
+                });
+            } else {
+                // Create new
+                dinoData.contributor = currentAgent;
+                db.ref('shared_dinos').push(dinoData).then(() => {
+                    showNotification("PROTOCOL_SUCCESS: Asset uploaded to secure server.", "success");
+                    closeModal();
+                }).catch(err => {
+                    showNotification("UPLOAD_FAILED: Check network encryption.", "error");
+                    console.error(err);
+                });
+            }
+        }
+
+        function editDino(id) {
+            const dino = allDinos.find(d => d.id === id);
+            if (!dino) return;
+            
+            document.getElementById('dinoId').value = id;
+            document.getElementById('dinoName').value = dino.name;
+            document.getElementById('dinoDiet').value = dino.diet;
+            document.getElementById('dinoThreat').value = dino.threat;
+            document.getElementById('dinoImage').value = dino.image;
+            document.getElementById('dinoDesc').value = dino.desc;
+            
+            document.querySelector('#uploadModal .modal-title').innerText = "EDIT SPECIMEN";
+            const btn = document.querySelector('#uploadModal .btn-action');
+            btn.innerHTML = '<i class="fa fa-save"></i> Update Database';
+            
+            document.getElementById('uploadModal').style.display = 'flex';
+        }
+
+        // --- Detail View & Field Notes ---
+        function openDetail(id) {
+            const dino = allDinos.find(d => d.id === id);
+            if (!dino) return;
+            
+            currentDetailId = id;
+            document.getElementById('detail-name').innerText = dino.name;
+            document.getElementById('detail-name').setAttribute('data-text', dino.name);
+            document.getElementById('detail-img').src = dino.image;
+            document.getElementById('detail-diet').innerText = dino.diet.toUpperCase();
+            document.getElementById('detail-desc').innerText = dino.desc;
+            document.getElementById('detail-contributor').innerText = dino.contributor;
+            document.getElementById('detail-dna').innerText = generateFakeDNA();
+            
+            // Random Stats
+            document.getElementById('detail-height').innerText = (Math.random() * 5 + 2).toFixed(1) + " M";
+            document.getElementById('detail-weight').innerText = (Math.random() * 8000 + 500).toFixed(0) + " KG";
+            document.getElementById('detail-sector').innerText = Math.floor(Math.random() * 10) + String.fromCharCode(65 + Math.floor(Math.random() * 6));
+            
+            // Random threat level
+            const threat = (dino.threat !== undefined && dino.threat !== "") ? parseInt(dino.threat) : Math.floor(Math.random() * 100);
+            const bar = document.getElementById('detail-threat-fill');
+            bar.style.width = threat + "%";
+            bar.style.backgroundColor = threat > 70 ? "var(--danger)" : (threat > 40 ? "var(--warning)" : "var(--success)");
+
+            document.getElementById('detailModal').style.display = 'flex';
+            loadFieldNotes(id);
+            initAudioVisualizer();
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+            currentDetailId = null;
+        }
+
+        function generateFakeDNA() {
+            let dna = "";
+            const bases = "ATCG";
+            for(let i=0; i<150; i++) {
+                dna += bases.charAt(Math.floor(Math.random() * bases.length));
+                if(i % 50 === 0 && i > 0) dna += " ";
+            }
+            return dna;
+        }
+
+        function loadFieldNotes(dinoId) {
+            const list = document.getElementById('notesList');
+            list.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 10px;">Scanning secure channel...</div>';
+            
+            db.ref(`dino_notes/${dinoId}`).on('value', snap => {
+                const notes = snap.val();
+                list.innerHTML = "";
+                if (notes) {
+                    Object.values(notes).forEach(note => {
+                        const div = document.createElement('div');
+                        div.className = 'note-item';
+                        div.innerHTML = `
+                            <div class="note-meta">
+                                <span><i class="fa fa-user-secret"></i> ${note.agent}</span>
+                                <span>${new Date(note.timestamp).toLocaleTimeString()}</span>
+                            </div>
+                            <div class="note-text">${note.text}</div>
+                        `;
+                        list.appendChild(div);
+                    });
+                    list.scrollTop = list.scrollHeight;
+                } else {
+                    list.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 10px;">No field notes recorded.</div>';
+                }
+            });
+        }
+
+        function submitFieldNote() {
+            const text = document.getElementById('newNoteInput').value.trim();
+            if (!text || !currentDetailId) return;
+            
+            if (currentAgent === "Guest_Agent") {
+                showNotification("LOGIN REQUIRED FOR FIELD NOTES", "error");
+                return;
+            }
+
+            db.ref(`dino_notes/${currentDetailId}`).push({
+                agent: currentAgent,
+                text: text,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            document.getElementById('newNoteInput').value = "";
+        }
+
+        // --- THREAT CALCULATOR LOGIC ---
+        function openThreatCalc(id) {
+            activeThreatDino = id;
+            document.getElementById('threatModal').style.display = 'flex';
+            // Reset stats
+            threatStats = { agg: 5, int: 5, spd: 5, siz: 5 };
+            ['agg', 'int', 'spd', 'siz'].forEach(k => {
+                document.getElementById(`val-${k}`).innerText = 5;
+                document.querySelector(`input[oninput*="'${k}'"]`).value = 5;
+            });
+            drawRadarChart();
+            updateThreatLabel();
+        }
+
+        function closeThreatCalc() {
+            document.getElementById('threatModal').style.display = 'none';
+        }
+
+        function updateThreatCalc(key, val) {
+            threatStats[key] = parseInt(val);
+            document.getElementById(`val-${key}`).innerText = val;
+            drawRadarChart();
+            updateThreatLabel();
+        }
+
+        function updateThreatLabel() {
+            const avg = (threatStats.agg * 2 + threatStats.int + threatStats.spd + threatStats.siz) / 5;
+            const label = document.getElementById('calc-threat-level');
+            if(avg < 3) { label.innerText = "LOW"; label.style.color = "var(--success)"; }
+            else if(avg < 6) { label.innerText = "MODERATE"; label.style.color = "var(--warning)"; }
+            else if(avg < 8) { label.innerText = "HIGH"; label.style.color = "#e67e22"; }
+            else { label.innerText = "CRITICAL"; label.style.color = "var(--danger)"; }
+        }
+
+        function drawRadarChart() {
+            const canvas = document.getElementById('threatRadarCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 40;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Grid
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            for(let i=1; i<=5; i++) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius * (i/5), 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Draw Data
+            const keys = ['agg', 'int', 'spd', 'siz'];
+            const labels = ['AGGRESSION', 'INTEL', 'SPEED', 'SIZE'];
+            const angles = [0, Math.PI/2, Math.PI, Math.PI*1.5];
+            
+            ctx.beginPath();
+            ctx.fillStyle = 'rgba(231, 76, 60, 0.5)';
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 2;
+
+            keys.forEach((k, i) => {
+                const val = threatStats[k] / 10;
+                const x = centerX + Math.cos(angles[i] - Math.PI/2) * (radius * val);
+                const y = centerY + Math.sin(angles[i] - Math.PI/2) * (radius * val);
+                if(i===0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                
+                // Labels
+                const lx = centerX + Math.cos(angles[i] - Math.PI/2) * (radius + 20);
+                const ly = centerY + Math.sin(angles[i] - Math.PI/2) * (radius + 20);
+                ctx.font = "10px Orbitron";
+                ctx.fillStyle = "#888";
+                ctx.textAlign = "center";
+                ctx.fillText(labels[i], lx, ly + 5);
+            });
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(231, 76, 60, 0.5)';
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function saveThreatData() {
+            showNotification("THREAT ASSESSMENT LOGGED", "success");
+            closeThreatCalc();
+            // In a real app, save to Firebase here
+        }
+
+        // --- BATTLE SIMULATOR ---
+        function openBattleSim() {
+            document.getElementById('battleModal').style.display = 'flex';
+            const s1 = document.getElementById('fighter1-select');
+            const s2 = document.getElementById('fighter2-select');
+            s1.innerHTML = '<option value="">Select Challenger 1</option>';
+            s2.innerHTML = '<option value="">Select Challenger 2</option>';
+            
+            allDinos.forEach(d => {
+                s1.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+                s2.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+            });
+        }
+
+        function closeBattleSim() { document.getElementById('battleModal').style.display = 'none'; }
+
+        function updateFighter(slot) {
+            const id = document.getElementById(`fighter${slot}-select`).value;
+            const dino = allDinos.find(d => d.id === id);
+            if(dino) {
+                document.getElementById(`fighter${slot}-img`).src = dino.image;
+                document.getElementById(`fighter${slot}-img`).style.display = 'block';
+                document.getElementById(`fighter${slot}-name`).innerText = dino.name;
+                document.getElementById(`fighter${slot}-hp`).style.width = '100%';
+                document.getElementById(`fighter${slot}-card`).className = 'fighter-card'; // Reset classes
+            }
+        }
+
+        function startBattle() {
+            const id1 = document.getElementById('fighter1-select').value;
+            const id2 = document.getElementById('fighter2-select').value;
+            if(!id1 || !id2 || id1 === id2) {
+                showNotification("SELECT TWO DIFFERENT FIGHTERS", "error");
+                return;
+            }
+
+            const d1 = allDinos.find(d => d.id === id1);
+            const d2 = allDinos.find(d => d.id === id2);
+            const log = document.getElementById('battleLog');
+            log.innerHTML = `> SIMULATION STARTED: ${d1.name} VS ${d2.name}<br>`;
+
+            let hp1 = 100, hp2 = 100;
+            
+            const interval = setInterval(() => {
+                // Turn 1
+                const dmg1 = Math.floor(Math.random() * 15) + 5;
+                const crit1 = Math.random() > 0.8;
+                const finalDmg1 = crit1 ? dmg1 * 2 : dmg1;
+                hp2 -= finalDmg1;
+                log.innerHTML += `> ${d1.name} attacks! ${crit1 ? '<span class="log-crit">CRITICAL HIT!</span>' : ''} <span class="log-hit">-${finalDmg1} HP</span><br>`;
+                document.getElementById('fighter2-hp').style.width = Math.max(0, hp2) + "%";
+
+                if(hp2 <= 0) {
+                    endBattle(d1, d2, 1, interval);
+                    return;
+                }
+
+                // Turn 2
+                const dmg2 = Math.floor(Math.random() * 15) + 5;
+                const crit2 = Math.random() > 0.8;
+                const finalDmg2 = crit2 ? dmg2 * 2 : dmg2;
+                hp1 -= finalDmg2;
+                log.innerHTML += `> ${d2.name} counters! ${crit2 ? '<span class="log-crit">CRITICAL HIT!</span>' : ''} <span class="log-hit">-${finalDmg2} HP</span><br>`;
+                document.getElementById('fighter1-hp').style.width = Math.max(0, hp1) + "%";
+
+                if(hp1 <= 0) {
+                    endBattle(d2, d1, 2, interval);
+                    return;
+                }
+                log.scrollTop = log.scrollHeight;
+            }, 1000);
+        }
+
+        function endBattle(winner, loser, winnerSlot, interval) {
+            clearInterval(interval);
+            const log = document.getElementById('battleLog');
+            log.innerHTML += `<div class="log-win">> WINNER: ${winner.name.toUpperCase()}</div>`;
+            log.scrollTop = log.scrollHeight;
+            
+            document.getElementById(`fighter${winnerSlot}-card`).classList.add('winner');
+            document.getElementById(`fighter${winnerSlot === 1 ? 2 : 1}-card`).classList.add('loser');
+        }
+
+        // --- DNA LAB ---
+        function openDNALab() {
+            document.getElementById('dnaModal').style.display = 'flex';
+            const grid = document.getElementById('dnaLabGrid');
+            grid.innerHTML = '';
+            
+            // Generate random strands
+            for(let i=0; i<2; i++) {
+                const strand = document.createElement('div');
+                strand.className = 'dna-strand';
+                for(let j=0; j<10; j++) {
+                    const bases = ['A', 'T', 'C', 'G'];
+                    const b1 = bases[Math.floor(Math.random()*4)];
+                    const b2 = bases[Math.floor(Math.random()*4)];
+                    strand.innerHTML += `
+                        <div class="base-pair">
+                            <span>${b1}</span>
+                            <span>--</span>
+                            <span>${b2}</span>
+                        </div>
+                    `;
+                }
+                grid.appendChild(strand);
+            }
+        }
+
+        function closeDNALab() { document.getElementById('dnaModal').style.display = 'none'; }
+
+        function runSequencer() {
+            const pairs = document.querySelectorAll('.base-pair');
+            pairs.forEach((p, i) => {
+                setTimeout(() => {
+                    if(Math.random() > 0.5) p.classList.add('match');
+                    else p.classList.add('error');
+                }, i * 100);
+            });
+            setTimeout(() => showNotification("SEQUENCE ANALYSIS COMPLETE", "success"), pairs.length * 100 + 500);
+        }
+
+        // --- AUDIO VISUALIZER ---
+        function initAudioVisualizer() {
+            const canvas = document.getElementById('audioVisualizer');
+            audioCanvasCtx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            drawSilence();
+        }
+
+        function drawSilence() {
+            audioCanvasCtx.fillStyle = '#000';
+            audioCanvasCtx.fillRect(0, 0, document.getElementById('audioVisualizer').width, document.getElementById('audioVisualizer').height);
+            audioCanvasCtx.strokeStyle = '#333';
+            audioCanvasCtx.beginPath();
+            audioCanvasCtx.moveTo(0, 20);
+            audioCanvasCtx.lineTo(300, 20);
+            audioCanvasCtx.stroke();
+        }
+
+        function playDinoRoar() {
+            const icon = document.getElementById('audio-icon');
+            if(icon.classList.contains('fa-pause')) {
+                icon.className = 'fa fa-play';
+                drawSilence();
+                return;
+            }
+            
+            icon.className = 'fa fa-pause';
+            let frame = 0;
+            const animate = () => {
+                if(icon.classList.contains('fa-play')) return;
+                audioCanvasCtx.fillStyle = 'rgba(0,0,0,0.1)';
+                audioCanvasCtx.fillRect(0, 0, 300, 40);
+                audioCanvasCtx.fillStyle = '#e63946';
+                const h = Math.random() * 30;
+                audioCanvasCtx.fillRect(frame % 300, 20 - h/2, 2, h);
+                frame += 2;
+                requestAnimationFrame(animate);
+            };
+            animate();
+            setTimeout(() => { icon.className = 'fa fa-play'; drawSilence(); }, 3000);
+        }
+
+        // --- Comparison Logic ---
+        function addToCompare(id) {
+            if (compareList.find(d => d.id === id)) {
+                showNotification("ALREADY IN COMPARISON BUFFER", "warning");
+                return;
+            }
+            if (compareList.length >= 2) {
+                showNotification("COMPARISON BUFFER FULL (MAX 2)", "error");
+                return;
+            }
+            
+            const dino = allDinos.find(d => d.id === id);
+            compareList.push(dino);
+            updateCompareUI();
+            showNotification(`${dino.name} ADDED TO COMPARE`, "success");
+        }
+
+        function updateCompareUI() {
+            const bar = document.getElementById('comparisonBar');
+            const slots = document.getElementById('compareSlots');
+            
+            if (compareList.length > 0) bar.classList.add('active');
+            else bar.classList.remove('active');
+
+            slots.innerHTML = "";
+            for (let i = 0; i < 2; i++) {
+                if (compareList[i]) {
+                    slots.innerHTML += `
+                        <div class="compare-slot">
+                            <img src="${compareList[i].image}">
+                            <div class="remove-slot" onclick="removeFromCompare(${i})">&times;</div>
+                        </div>
+                    `;
+                } else {
+                    slots.innerHTML += `<div class="compare-slot">EMPTY</div>`;
+                }
+            }
+        }
+
+        function removeFromCompare(index) {
+            compareList.splice(index, 1);
+            updateCompareUI();
+        }
+
+        function clearComparison() {
+            compareList = [];
+            updateCompareUI();
+        }
+
+        function launchComparison() {
+            if (compareList.length < 2) {
+                showNotification("NEED 2 SPECIMENS TO COMPARE", "warning");
+                return;
+            }
+            
+            const content = document.getElementById('comparisonContent');
+            content.innerHTML = compareList.map(d => `
+                <div class="compare-col">
+                    <h3 style="font-family:'Orbitron'; color:var(--primary); margin-bottom:15px;">${d.name}</h3>
+                    <img src="${d.image}" class="compare-img">
+                    <div class="compare-stat"><label>DIET</label> <span>${d.diet.toUpperCase()}</span></div>
+                    <div class="compare-stat"><label>INDEXED</label> <span>${new Date(d.timestamp).toLocaleDateString()}</span></div>
+                    <div class="compare-stat"><label>CONTRIBUTOR</label> <span>${d.contributor}</span></div>
+                    <div style="margin-top:20px; text-align:left; font-size:0.8rem; color:#ccc;">${d.desc}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('comparisonModal').style.display = 'flex';
+        }
+
+        function closeComparison() {
+            document.getElementById('comparisonModal').style.display = 'none';
+        }
+
+        // --- Watchlist ---
+        function toggleWatchlist(id, event) {
+            event.stopPropagation();
+            if (watchlist.includes(id)) {
+                watchlist = watchlist.filter(w => w !== id);
+                showNotification("REMOVED FROM WATCHLIST", "info");
+            } else {
+                watchlist.push(id);
+                showNotification("ADDED TO WATCHLIST", "success");
+            }
+            localStorage.setItem('dj_watchlist', JSON.stringify(watchlist));
+            filterRecords(); // Re-render to update stars and sort
+        }
+
+        // --- UI Utils ---
+        function showNotification(msg, type="info") {
+            const container = document.getElementById('push-container');
+            const div = document.createElement('div');
+            div.className = 'push-alert';
+            let color = 'var(--primary)';
+            if(type === 'success') color = 'var(--success)';
+            if(type === 'error') color = 'var(--danger)';
+            
+            div.style.borderLeftColor = color;
+            div.innerHTML = `
+                <div style="color:${color}; font-family:'Orbitron'; font-size:0.8rem; margin-bottom:5px;">SYSTEM ALERT</div>
+                <div style="font-size:0.75rem; color:#ccc;">${msg}</div>
+            `;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 4000);
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const isOpen = sidebar.classList.contains('open');
+            
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                overlay.style.display = 'none';
+            } else {
+                sidebar.classList.add('open');
+                overlay.style.display = 'block';
+            }
+        }
+
+        function openModal() { 
+            // Reset form
+            document.getElementById('dinoId').value = "";
+            document.getElementById('dinoName').value = "";
+            document.getElementById('dinoImage').value = "";
+            document.getElementById('dinoThreat').value = "";
+            document.getElementById('dinoDesc').value = "";
+            document.querySelector('#uploadModal .modal-title').innerText = "SPECIMEN UPLOAD";
+            document.querySelector('#uploadModal .btn-action').innerHTML = '<i class="fa fa-cloud-upload-alt"></i> Authorize Data Indexing';
+            document.getElementById('uploadModal').style.display = 'flex'; 
+        }
+        function closeModal() { document.getElementById('uploadModal').style.display = 'none'; }
+
+        // Listen for global alerts
+        db.ref('alerts').limitToLast(1).on('child_added', snap => {
+            const alert = snap.val();
+            if (alert.timestamp && Date.now() - alert.timestamp < 60000) {
+                showNotification(alert.title + ": " + alert.message);
+            }
+        });
+
+        // Random Glitch Effect on Hover
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.closest('.dino-card')) {
+                const card = e.target.closest('.dino-card');
+                if (Math.random() > 0.9) {
+                    card.style.transform = `translateY(-10px) translate(${Math.random()*2-1}px, ${Math.random()*2-1}px)`;
+                    setTimeout(() => card.style.transform = 'translateY(-10px)', 50);
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>

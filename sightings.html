@@ -2054,31 +2054,8 @@
         }
 
         function handleMapClick(lat, lng) {
-            if (isPickingLocation) {
-                const latInput = document.getElementById('specLat');
-                const lngInput = document.getElementById('specLng');
-                if (latInput && lngInput) {
-                    latInput.value = lat.toFixed(5);
-                    lngInput.value = lng.toFixed(5);
-                }
-                document.getElementById('map').classList.remove('picking-mode');
-                document.getElementById('reportModal').style.display = 'flex';
-                isPickingLocation = false;
-                playSound('click');
-            } else {
-                L.popup()
-                    .setLatLng([lat, lng])
-                    .setContent(`
-                        <div style="text-align:center; min-width: 150px;">
-                            <div style="font-family:'Orbitron'; color:var(--primary); font-size:0.8rem; margin-bottom:5px;">COORDINATES</div>
-                            <div style="font-family:monospace; color:#ccc; margin-bottom:10px;">${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
-                            <button class="btn-card-action" style="width:100%; border:1px solid var(--primary); color:var(--primary);" onclick="openReportWithCoords(${lat}, ${lng})">
-                                <i class="fa fa-plus-circle"></i> REPORT HERE
-                            </button>
-                        </div>
-                    `)
-                    .openOn(map);
-            }
+            // For debugging, change the body background color to see if the click is registered.
+            document.body.style.backgroundColor = 'purple';
         }
 
         window.openReportWithCoords = function(lat, lng) {
