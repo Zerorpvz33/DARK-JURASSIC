@@ -642,6 +642,43 @@
         .game-cell.active { background: var(--primary); color: #fff; box-shadow: 0 0 10px var(--primary); }
         .game-cell.success { background: var(--success); border-color: var(--success); }
         
+        /* --- RECENT ACTIVITY --- */
+        .recent-activity {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .activity-item {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 10px;
+            border-left: 3px solid var(--border);
+            transition: 0.3s;
+        }
+
+        .activity-item:hover {
+            border-color: var(--primary);
+        }
+
+        .activity-title {
+            font-weight: bold;
+            color: var(--text-highlight);
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+
+        .activity-meta {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+        }
+
         /* --- MISSION BRIEFING --- */
         .mission-briefing {
             grid-column: 1 / -1;
@@ -1133,6 +1170,39 @@
                         <h3>MANAGE YOUR PROFILE</h3>
                         <p>Update your agent profile, manage your settings, and track your progress.</p>
                     </a>
+            </div>
+        </section>
+
+        <!-- RECENT ACTIVITY SECTION -->
+        <section class="recent-activity">
+            <div class="activity-column">
+                <div class="terminal-panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="fa fa-comments"></i> RECENT INTEL</span>
+                    </div>
+                    <div id="recent-intel-list" class="activity-list">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </div>
+            <div class="activity-column">
+                <div class="terminal-panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="fa fa-crosshairs"></i> LATEST SIGHTINGS</span>
+                    </div>
+                    <div id="recent-sightings-list" class="activity-list">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </div>
+            <div class="activity-column">
+                <div class="terminal-panel">
+                    <div class="panel-header">
+                        <span class="panel-title"><i class="fa fa-dna"></i> NEW SPECIES</span>
+                    </div>
+                    <div id="recent-dinosaurs-list" class="activity-list">
+                        <!-- JS will populate this -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -2026,6 +2096,71 @@
             addLog("SETTING UPDATED", "info");
         }
 
+        function initRecentActivity() {
+            // Fetch Recent Intel
+            db.ref('forum_threads').orderByChild('timestamp').limitToLast(3).on('value', snap => {
+                const container = document.getElementById('recent-intel-list');
+                container.innerHTML = '';
+                let items = [];
+                snap.forEach(child => {
+                    items.push(child.val());
+                });
+                items.reverse(); // Show newest first
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'activity-item';
+                    const postDate = new Date(item.timestamp).toLocaleDateString();
+                    div.innerHTML = `
+                        <div class="activity-title">${item.title}</div>
+                        <div class="activity-meta">by @${item.author} on ${postDate}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+
+            // Fetch Recent Sightings
+            db.ref('sightings').orderByChild('timestamp').limitToLast(3).on('value', snap => {
+                const container = document.getElementById('recent-sightings-list');
+                container.innerHTML = '';
+                let items = [];
+                snap.forEach(child => {
+                    items.push(child.val());
+                });
+                items.reverse();
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'activity-item';
+                    const postDate = new Date(item.timestamp).toLocaleDateString();
+                    div.innerHTML = `
+                        <div class="activity-title">${item.dinosaur}</div>
+                        <div class="activity-meta">at ${item.location} on ${postDate}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+
+            // Fetch New Species
+            db.ref('dinosaurs').orderByChild('timestamp').limitToLast(3).on('value', snap => {
+                const container = document.getElementById('recent-dinosaurs-list');
+                container.innerHTML = '';
+                let items = [];
+                snap.forEach(child => {
+                    items.push(child.val());
+                });
+                items.reverse();
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'activity-item';
+                    const postDate = new Date(item.timestamp).toLocaleDateString();
+                    div.innerHTML = `
+                        <div class="activity-title">${item.name}</div>
+                        <div class="activity-meta">Classification: ${item.classification}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+        }
+
         // --- SIMULATION LOOPS ---
         
         // 1. Integrity Bar Fluctuation
@@ -2079,6 +2214,7 @@
             initTasks();
             initGame();
             initRadar();
+            initRecentActivity();
             
             // Simulate a welcome push notification
             setTimeout(() => {
